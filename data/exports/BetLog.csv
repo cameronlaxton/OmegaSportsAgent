@@ -1,0 +1,7 @@
+Date,League,Game_ID,Pick,Odds_American,Implied_Prob,Model_Prob,Edge_%,Confidence_Tier,Predicted_Outcome,Factors,Final_Box_Score,Result
+2025-12-22,NBA,Lakers vs Warriors,LAL -3.5,-110,0.524,0.58,5.6,High,"Lakers 115, Warriors 108","Lakers home court advantage, Warriors missing key players","Lakers 118, Warriors 105",Win
+2025-12-25,NBA,Lakers vs Warriors,Lakers -3.5,-110,0.524,,5.6,High,,,,
+2025-12-25,NBA,DAL,Luka Doncic Over 33.5 Points,-115,0.535,,6.2,Medium,,Player prop: Luka Doncic,,
+2025-12-25,NBA,Denver Nuggets,Nikola Jokic Assists O 9.5,-110,0.524,,5.5,Medium,,Player prop: Nikola Jokic,,
+2025-12-25,NBA,DEN,Nikola Jokic Over 9.5 Assists,-110,0.524,,5.5,Medium,,Player prop: Nikola Jokic,,
+2025-12-25,NBA,ATL,Trae Young Under 11.5 Assists,-110,0.524,,4.8,Low,,Player prop: Trae Young,,
