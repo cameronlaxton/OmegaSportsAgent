@@ -1,0 +1,229 @@
+Date,League,Game_ID,Pick,Odds_American,Implied_Prob,Model_Prob,Edge_%,Confidence_Tier,Predicted Outcome,Factors,Final Box Score,Result
+2025-11-02,NFL,SGP of Below 4,SGP of Below 4,850,0.105,0.105,0,🟡 Low,,,"three legs loss, one leg win - exclude from model calibration, self made pick",Win
+2025-11-02,NFL,Jaxon Smith-Njigba O 99.5 Rec yds,Jaxon Smith-Njigba O 99.5 Rec yds,-115,0.535,0.535,0,🟡 Low,,Opposing defense allows explosive pass plays; Njigba’s role increased with WR injuries.,"8 rec, 129 rec yds",Win
+2025-11-02,NFL,SEA vs WAS Under 48.5,SEA vs WAS Under 48.5,-110,0.524,0.524,0,🟡 Low,,Projected lower pace; both teams trending under; weather fair.,52,Loss
+2025-11-02,NFL,Jayden Daniels O 224.5 Pass Yds,Jayden Daniels O 224.5 Pass Yds,-115,0.535,0.535,0,🟡 Low,,"Facing below-average pass defense, model expects spike in pass attempts.","16 completions, 22 attempts, 153 passing yards",Loss
+2025-11-02,NFL,Kenneth Walker III Over 53.5 Rush Yds,Kenneth Walker III Over 53.5 Rush Yds,-118,0.541,0.541,0,🟡 Low,,"Opponent run defense below NFL average, Walker fully healthy.","11 carries, 42 rushing yards",Loss
+2025-11-02,NFL,Saints -14,Saints -14,-667,0.87,0.86,-1,🔵 High,,"Saints defense top-8, opponent missing skill position starters.","Rams 34, Saints 10",Loss
+2025-11-02,NFL,Packers -13.5,Packers -13.5,-400,0.8,0.73,-7,🟢 Med,,"Packers injury issues at WR, but opponent severely outmatched per models.","Panthers 16, Packers 13",Loss
+2025-11-02,NFL,Colts ML + Taylor TD,Colts ML + Taylor TD,110,0.476,0.48,0.4,🟡 Low,,Taylor with favorable rushing matchup; opponent defense bottom-5 EPA vs rush.,"Colts 20, Steelers 27; Taylor no TD",Loss
+2025-11-02,NFL,Taylor Anytime TD,Taylor Anytime TD,180,0.357,0.54,18.3,🟡 Low,,Taylor gets red zone volume; OL vs DL advantage for Colts is pronounced,No TD,Loss
+2025-11-02,NFL,Pittman Jr Anytime TD,Pittman Jr Anytime TD,620,0.139,0.22,8.1,🟡 Low,,WR1 vs secondary allowing high completion %; Pittman used in red zone.,"9 rec, 115 yds, no TD",Loss
+2025-11-02,NFL,Patriots -4.5,Patriots -4.5,-110,0.524,0.66,13.6,🟢 Med,,"Defense projects well, opponent missing starting RB, strong coaching edge","Patriots 24, Falcons 23",Win
+2025-11-02,NFL,Chargers -9.5,Chargers -9.5,-110,0.524,0.66,13.6,🟢 Med,,"Chargers passing attack can exploit opponent’s secondary, model sees big upside.","Chargers 27, Titans 20",Win
+2025-11-02,NFL,49ers -2.5,49ers -2.5,-110,0.524,0.64,11.6,🟢 Med,,"49ers OL health improving; starters back, opponent pass rush below average.","49ers 34, Giants 24",Win
+2025-11-02,NFL,Bills +2,Bills +2,105,0.488,0.59,10.2,🟡 Low,,"Bills offense hot streak, opposing defense missing top CBs.","Bills 28, Chiefs 21",Win
+2025-11-02,NFL,Lions -8.5,Lions -8.5,-115,0.535,0.62,8.5,🟢 Med,,"Offense projects for 28+; opponent below-average defensive metrics, no key injuries.","Vikings 27, Lions 24",Loss
+2025-11-02,NFL,Colts -3.5,Colts -3.5,-115,0.535,0.62,8.5,🟢 Med,,"Colts healthy, opponent missing starting QB; trend line favors Colts' defense.","Colts 20, Steelers 27",Loss
+2025-11-02,NFL,Seahawks -3,Seahawks -3,110,0.476,0.61,13.4,🟡 Low,,"Seahawks defense soft, but opponent missing WR1; weather neutral.","Seahawks 38, Commanders 14",Win
+2025-11-02,NFL,Bears -2.5,Bears -2.5,-110,0.524,0.6,7.6,🟡 Low,,"Bears offense streaky, opponent poor pass rush, weather windy.","Bengals 47, Bears 42",Loss
+2025-11-02,NFL,Jaguars -2.5,Jaguars -2.5,-110,0.524,0.6,7.6,🟡 Low,,"Jaguars QB back from injury, facing defense soft against play action.","Jaguars 30, Raiders 29 (OT)",Loss
+2025-11-02,NFL,Texans -1.5,Texans -1.5,-110,0.524,0.56,3.6,🟡 Low,,"Texans D-line strong vs run, facing turnover-prone QB.","Broncos 18, Texans 15",Loss
+2025-11-02,NFL,Panthers Over 44.5,Panthers Over 44.5,105,0.488,0.66,17.2,🟢 Med,,"Opponent defense rates poorly against explosive plays, weather clear, both offenses capable of quick scores.",29 pts: Under,Loss
+2025-11-02,NFL,Texans Under 39.5,Texans Under 39.5,-115,0.535,0.61,7.5,🟡 Low,,"Texans offense struggling, opponent’s secondary ranked top 8, returns from injury bolster under.",18-15 final,Win
+2025-11-02,NFL,Bears Over 51.0,Bears Over 51.0,110,0.476,0.61,13.4,🟡 Low,,"Bears trending over, matchup with fast-paced offense on other side; warm weather helps scoring.",89 points total,Win
+2025-11-02,NFL,Patriots Under 44.5,Patriots Under 44.5,-110,0.524,0.59,6.6,🟡 Low,,Patriots defense excels at limiting big plays; offensive injuries for both teams likely limit scoring.,47 pts: Under,Win
+2025-11-02,NFL,Colts Over 48.5,Colts Over 48.5,-105,0.506,0.62,11.4,🟢 Med,,"Colts offensive pace increased, but opponent’s red zone defense top-5; potential shootout.",47 total points,Loss
+2025-11-02,NFL,Taylor Over 93.5 Rush,Taylor Over 93.5 Rush,110,0.476,0.64,16.4,🟢 Med,,"Colts OL advantage, defense allows high YPC; Taylor healthy and projected >15 carries.",45 yards rushing,Loss
+2025-11-02,NFL,Colts Over 26.5 pts,Colts Over 26.5 pts,-115,0.535,0.66,12.5,🟢 Med,,"Colts average 29 ppg last month, opponent pass rush missing starters; weather neutral.",20 points,Loss
+2025-11-02,NFL,SGP: ML + Taylor TD + TT Over,SGP: ML + Taylor TD + TT Over,850,0.105,0.1,-0.5,🟡 Low,,"Correlated legs, all rely on Colts offensive strength, opponent bottom quartile red zone defense.",Non-model picked,Loss
+2025-11-02,NFL,SGP: Jones Pass + Pittman Rec + ML,SGP: Jones Pass + Pittman Rec + ML,850,0.105,0.12,1.5,🟡 Low,,"Colts pass volume projected up, Pittman usage spike, opponent secondary thin due to injuries.",Non-model picked,Loss
+2025-11-02,NFL,SGP: -3.5 + Over + Taylor Rush,SGP: -3.5 + Over + Taylor Rush,850,0.105,0.11,0.5,🟡 Low,,All legs depend on offensive line advantage and Taylor’s volume; opponent defense depleted.,Non-model picked,Loss
+2025-10-30,NFL,Ravens -7.5,Ravens -7.5,-110,0.524,0.61,8.6,🟡 Low,,"Ravens defense trending up, opponent missing top WR; Lamar Jackson projected big game off injury.",Ravens upset loss,Loss
+2025-10-30,NFL,Mark Andrews Anytime TD,Mark Andrews Anytime TD,280,0.263,0.45,18.7,🟡 Low,,"Andrews sees above-average red zone targets, opponent linebackers allow high TE production.","2 rec, 22 yards, 2 touchdowns",Win
+2025-10-30,NFL,Over 50.5,Over 50.5,-110,0.524,0.55,2.6,🟡 Low,,Both teams above-average pace and pass rate; recent injuries limited but weather fair for overs.,"Ravens 28, Dolphins 6",Loss
+2025-10-30,NBA,Bucks -2.5,Bucks -2.5,105,0.488,0.61,12.2,🟡 Low,,"Bucks healthy except minor Giannis knee; opponent missing PG, model likes home edge.",Bucks 120-110 Warriors,Win
+2025-10-30,NBA,Thunder -15.5,Thunder -15.5,-115,0.535,0.62,8.5,🟢 Med,,"Thunder facing depleted roster, home court advantage, model projects double-digit lead by fourth quarter.",Thunder 127-108 Wizards,Win
+2025-10-30,NBA,Magic -3.5,Magic -3.5,-110,0.524,0.58,5.6,🟡 Low,,"Magic offense trending up, opponent missing starting SF; recent home performance strong.",Magic 123-107 Hornets,Win
+2025-10-30,NBA,Scottie Barnes Over 6.5 Reb,Scottie Barnes Over 6.5 Reb,110,0.476,0.59,11.4,🟡 Low,,"Opponent weak on defensive rebounding, Barnes sees increased minutes due to injuries.",Barnes 9 rebounds,Win
+2025-10-30,NHL,Maple Leafs ML,Maple Leafs ML,-115,0.535,0.61,7.5,🟡 Low,,"Leafs missing top defenseman; opponent goalies average, but Leafs’ forwards healthy.",Wild defeated Leafs,Loss
+2025-10-30,NHL,Golden Knights ML,Golden Knights ML,160,0.385,0.57,18.5,🟡 Low,,"Knights depth solid, opponent missing second-line skater; goaltending matchup favorable.",Knights win OT,Win
+2025-10-30,NHL,Andrew Mangiapane Over 0.5 Points,Andrew Mangiapane Over 0.5 Points,400,0.2,0.23,3,🟡 Low,,"Opponent allows high PP shot volume, Mangiapane sees upgraded minutes due to teammate injury.",No points recorded,Loss
+10/29/2025,NBA,Pacers +6.5,Pacers +6.5,-115,0.535,0.535,0,🟡 Low,,"Pacers missing leading scorer(s), opponent healthy and efficient at home, matchup disadvantage in transition defense.","Pacers 115, Bucks 117",Win
+10/29/2025,NBA,Nesmith o2.5 3PT,Nesmith o2.5 3PT,220,0.455,0.455,0,🟡 Low,,"High volume shooter, opponent allows above-average 3PT attempts, recent playing time increased.",2/7 3pt,Win
+10/29/2025,NBA,Siakam o1.5 3PT,Siakam o1.5 3PT,180,0.556,0.556,0,🟡 Low,,Siakam usage up due to injuries; opponent struggles to defend forwards behind the arc.,1/6 3pt,Win
+10/29/2025,NBA,Siakam o0.5 Blk,Siakam o0.5 Blk,250,0.4,0.4,0,🟡 Low,,"Opponent below average in protecting paint, Siakam more active defensively last 2 weeks.",1 block,Win
+10/29/2025,NBA,Siakam o5.5 Ast,Siakam o5.5 Ast,220,0.455,0.455,0,🟡 Low,,"Pacers missing ballhandlers so facilitator usage up, opponent zone defense inflated assist numbers.",8 assists,Win
+10/29/2025,NBA,Siakam u7.5 Reb,Siakam u7.5 Reb,105,0.488,0.488,0,🟡 Low,,"Opponent dominates the glass, Siakam projects for more perimeter defense this game.",5 rebounds,Win
+10/29/2025,NBA,Pacers-Mavs o228.5,Pacers-Mavs o228.5,110,0.476,0.524,4.8,🟡 Low,,"Fast pace matchup, both top-10 in offensive pace, defenses missing key interior players.",Miss,Loss
+10/29/2025,NBA,7-leg Pacers SGP,7-leg Pacers SGP,5000,0.02,0.02,0,🟡 Low,,"Correlated combo relies on high-pace, injury-boosted minutes, and hot shooting.",Non-model picked,Loss
+10/29/2025,NBA,Dosunmu o12.5 pts,Dosunmu o12.5 pts,185,0.541,0.541,0,🟡 Low,,"Offense shifted more usage to Dosunmu with PG out, opponent allows most points to PGs.",22 pts,Win
+10/29/2025,NBA,Mitchell o29.5 pts,Mitchell o29.5 pts,235,0.426,0.426,0,🟡 Low,,"Mitchell usage rate peaked last week, but opponent has top-5 defensive rating.",15 pts,Loss
+10/29/2025,NBA,Suns ML,Suns ML,105,0.488,0.488,0,🟡 Low,,"Opponent on second night of back-to-back, Suns guard depth stretch but Booker healthy.","Sun 113, Grizzles 114",Loss
+10/29/2025,NBA,Parlay NBA3,Parlay NBA3,620,0.139,0.139,0,🟡 Low,,"Multi-bet, all dependent on Pacers scales--see above matchup/injury notes.",Non-model picked,Loss
+10/29/2025,NHL,Blue Jackets ML,Blue Jackets ML,185,0.541,0.541,0,🟡 Low,,"Opponent on 3rd-string goalie, Jackets line shuffled but top 6 healthy.","Blue Jackets 6, Leafs 3",Win
+10/29/2025,NHL,Jackets/Leafs o6.5,Jackets/Leafs o6.5,175,0.571,0.571,0,🟡 Low,,"Both teams with fast transitions, goalies trending down, recent overs for both.",9,Win
+10/29/2025,MLB,Blue Jays ML,Blue Jays ML,165,0.377,0.377,0,🟡 Low,,"Jays lineup near full strength, opponent starter below-average xERA",Win,Win
+10/29/2025,MLB,Blue Jays o3.5 runs,Blue Jays o3.5 runs,100,0.5,0.5,0,🟡 Low,,"Stadium factors favor hitters, Jays recent SLG up, weather neutral","Blue Jays 6, Dodgers 1",Win
+10/29/2025,MLB,Guerrero o1.5 TB,Guerrero o1.5 TB,100,0.5,0.5,0,🟡 Low,,"Guerrero hot against LHP, opponent bullpen depth issues.",3 TB,Win
+10/29/2025,MLB,Jays SGP ML/o3.5/TB,Jays SGP ML/o3.5/TB,850,0.105,0.105,0,🟡 Low,,"Multi-bet, all dependent on Pacers scales--see above matchup/injury notes.","All legs hit, correlate",Win
+10/23/2025,NFL,"NYG @ PHI, Eagles","NYG @ PHI, Eagles",-115,0.535,0.62,8.5,🟢 Med,,"Eagles healthy, home field big edge, Giants secondary decimated by injury.","Eagles 38, Giants 20",Win
+10/23/2025,NFL,"NYJ @ CIN, Bengals","NYJ @ CIN, Bengals",-110,0.524,0.65,12.6,🟢 Med,,"Bengals missing starting OL, Jets pass rush advantage, weather wind risk.","Jets 39, Bengals 38",Loss
+10/23/2025,NFL,"BUF @ CAR, Bills","BUF @ CAR, Bills",-120,0.455,0.7,24.5,🔵 High,,Bills elite pass offense vs vulnerable Panthers secondary; Panthers without starting CBs.,"Bills 40, Panthers 9",Win
+10/23/2025,NFL,"CHI @ BAL, Ravens","CHI @ BAL, Ravens",105,0.488,0.72,23.2,🔵 High,,"Ravens offense rolling after key WR return; Bears defense missing LG, run splits weak.","Ravens 30, Bears 16",Win
+10/23/2025,NFL,"SF @ HOU, 49ers","SF @ HOU, 49ers",-115,0.535,0.56,2.5,🟡 Low,,"49ers travel disadvantage; Texans front-7 healthy, but 49ers OL mismatch rates high.","Texans 26, 49ers 15",Loss
+10/23/2025,NFL,"TB @ NO, Buccaneers","TB @ NO, Buccaneers",-110,0.524,0.59,6.6,🟡 Low,,"Buccaneers defense trending up, Saints lost top WR in practice prior week.","Buccaneers 23, Saints 3",Win
+10/23/2025,NFL,"CLE @ NE, Patriots","CLE @ NE, Patriots",-110,0.524,0.53,0.6,🟡 Low,,"Patriots run D strong, Browns QB situation uncertain, weather near freezing.","Patriots 32, Browns 13",Win
+10/23/2025,NFL,"MIA @ ATL, Falcons","MIA @ ATL, Falcons",105,0.488,0.58,9.2,🟡 Low,,"Falcons home field, but Dolphins pass rate highest in NFL past 4 weeks","Dolphins 34, Falcons 10",Win
+11/3/2025,NFL,Cardinals +3.5,Cardinals +3.5,-110,0.524,0.61,8.6,🟡 Low,,"Opponent weak pass rush, Arizona OL healthy, weather crosswinds risk lowers total.","Cardinals 27, Cowboys 17",Loss
+11/3/2025,NFL,CeeDee Lamb O89.5 rec yds,CeeDee Lamb O89.5 rec yds,-115,0.535,0.59,5.5,🟡 Low,,Opponent secondary missing top CB; Lamb projected 9+ targets.,"Lamb: 7 rec, 85 yards",Loss
+11/3/2025,NBA,Pacers ML vs Bucks,Pacers ML vs Bucks,125,0.444,0.38,-6.4,🟡 Low,,"Pacers undermanned, Bucks home edge and Giannis probable","Bucks 117, Pacers 115",Loss
+11/3/2025,NBA,Knicks -11.5 vs Wizards,Knicks -11.5 vs Wizards,-590,0.944,0.84,-10.4,🔵 High,,Wizards missing three starters; Knicks projected to dominate in paint.,"Knicks 119, Wizards 102",Win
+11/3/2025,NBA,Timberwolves -8.5 vs Nets,Timberwolves -8.5 vs Nets,-377,0.726,0.77,4.4,🔵 High,,"Nets missing starting PF, Timberwolves interior D top 3 for November.","Timberwolves 125, Nets 109",Win
+11/3/2025,NBA,Siakam Over 23.5 Points,Siakam Over 23.5 Points,-115,0.535,0.49,-4.5,🟡 Low,,"Siakam high usage, opponent ranked last in PF defensive efficiency.",Siakam: 32 points,Win
+11/3/2025,NBA,Siakam Over 1.5 Made Threes,Siakam Over 1.5 Made Threes,-115,0.535,0.64,10.5,🟢 Med,,"Opponent perimeter defense weak, Siakam seeing more catch-and-shoot.",1/3 3pt,Loss
+11/3/2025,NBA,Siakam Over Blocks,Siakam Over Blocks,-120,0.526,0.43,-9.6,🟡 Low,,"Opponent high turnover rate in paint, Siakam projected increased help defense.",1 block,Win
+11/3/2025,NBA,Ryan Rollins Over 1.5 Threes,Ryan Rollins Over 1.5 Threes,-110,0.524,0.55,2.6,🟡 Low,,"Opponent allows top-5 3PT volume, Rollins active shooting recent games.",3/4 3pt,Win
+11/3/2025,NFL,Cowboys -3.5 (NFL),Cowboys -3.5 (NFL),-110,0.524,0.63,10.6,🟢 Med,,Cowboys defense lowest explosive plays allowed; opponent QB with nagging injury.,"Cardinals 27, Cowboys 17",Loss
+11/3/2025,NFL,Under 54 NFL Total,Under 54 NFL Total,-110,0.524,0.56,3.6,🟡 Low,,"Both teams missing WR1, weather wind advisory, lower projected pass rate.",Total 44,Win
+11/4/2025,NBA,Pacers vs Nets,Pacers -6.5,-110,0.524,0.593,6.9,High,,"Large model edge, Weak Nets D, strong Pacers O, injury value","Nets 112, Pacers 103",Loss
+11/4/2025,NBA,Cavaliers vs 76ers,76ers +10.5,-110,0.524,0.56,3.6,Med,,"Model underdog value, 76ers undervalued","Cavaliers 132, 76ers 121",Loss
+11/4/2025,NBA,Rockets vs Grizzlies,Rockets -7.5,-110,0.524,0.62,9.6,High,,"High model edge, Grizzlies depleted, Rockets #1 offense","Rockets 124, Grizzlies 109",Win
+11/4/2025,NBA,Knicks vs Wolves,Knicks -3.5,-110,0.524,0.57,4.6,Med,,"Situational, roster edge, Knicks strong at home, Wolves banged up","Knicks 137, Wolves 114",Win
+11/4/2025,NBA,Celtics vs Wizards,Celtics -10.5,-110,0.524,0.58,5.6,Med,,"Model favors blowout, Wizards bottom 3 net rating","Celtics 136, Wizards 107",Win
+11/4/2025,NBA,Spurs vs Lakers,Under 238.5,-110,0.524,0.57,4.6,Low,,"Recent pace/efficiency dip, Both teams under-trending","Lakers 118, Spurs 116 (total 234)",Win
+11/4/2025,NBA,Thunder vs Blazers,Thunder -8.5,-110,0.524,0.614,9,High,,"Large model edge, Blazers porous D, SGA mismatch","Blazers 121, Thunder 119",Loss
+11/4/2025,NBA,Warriors vs Kings,Over 237.5,-110,0.524,0.595,7.1,High,,"Pace, efficient offenses, Two fastest pace teams in slate","Kings 121, Warriors 116 (Total 237)",Loss
+11/4/2025,NBA,Nuggets vs Heat,Nuggets -8.5,-110,0.524,0.606,8.2,High,,"Model/alt spread value, Jokic + home, Heat inefficient O","Nuggets 122, Heat 112",Win
+11/4/2025,NBA,Jazz vs Pistons,Under 232.5,-110,0.524,0.56,3.6,Low,,"Low model edge, Jazz inefficient offense, slow tempo","Pistons 114, Jazz 103",Win
+2025-11-05,NBA,NYK vs MIN,Jalen Brunson Over 27.5 Points,-115,0.535,0.6,6.5,Med,,"Upward usage, Min focused on Towns, hot shooting","23 points, 6 rebounds, 10 assists, 9-20 FG, 3-7 3PT, 2-2 FT, 33 minutes",Loss
+2025-11-05,NBA,BOS vs WAS,Alex Sarr Over 7.5 Rebounds,-130,0.565,0.62,5.5,Med,,"Wizards fast pace, Bos weak on glass","31 points, 8 rebounds, 0 assists, 12-20 FG, 4-5 3PT, 3-4 FT",Win
+2025-11-05,NBA,HOU vs MEM,Ja Morant Under 34.5 P+R+A,-120,0.545,0.61,6.5,Med,,"Facing elite D, below avg efficiency","25 points, 5 rebounds, 4 assists (Total: 34), shot 9-22 FG, 2-7 3PT, 5-6 FT, 36 minutes",Win
+2025-11-05,NBA,DET vs UTA,Jalen Duren Over 11.5 Rebounds,105,0.488,0.57,8.2,Med,,High rebound rate vs poor Jazz interior,"16 points, 10 rebounds, 5 assists",Loss
+2025-11-05,NBA,CLE vs PHI,Donovan Mitchell Over 4.5 Assists,-112,0.53,0.59,6,Med,,"Increased facilitation, PHI traps ball handlers","39 points, 7 assists, 6 rebounds, 13-28 FG, 4-10 3PT, 9-9 FT, 36 minutes",Win
+2025-11-05,NBA,IND vs BKN,Pascal Siakam Over 29.5 Points,155,0.392,0.46,6.8,High,,"Elite usage, BKN worst PF defense, injury value","19 points (8-18 FG, 1-4 3PT, 2-4 FT)",Loss
+2025-11-05,NBA,IND vs BKN,Aaron Nesmith Over 21.5 P+R,-106,0.515,0.58,6.5,Med,,"Usagespike with injuries, favorable matchup","15 points, 4 rebounds (19 total)",Loss
+2025-11-05,NBA,IND vs BKN,Isaiah Jackson Over 8.5 Rebounds,110,0.476,0.54,6.4,Med,,"Nets bottom 3 reb %, Jackson DP safety","2 points, 6 rebounds",Loss
+2025-11-05,NBA,IND vs BKN,Jarace Walker Over 13.5 Points,-104,0.51,0.59,8,Med,,"Pacers pace, high volume w/ rotation outs","8 points (3-7 FG, 0-2 3PT, 2-2 FT)",Loss
+2025-11-05,NBA,IND vs BKN,Pascal Siakam Over 1.5 Made Threes,150,0.4,0.5,10,Med,,"High 3PA last 2, Nets allow most PF threes",1 three (1-4 3PT),Loss
+2025-11-08,NBA,Victor Wembanyama,U39.5 P+R+A,-120,54.50%,59%,0.045,Med,,"Minutes risk (b2b), Pelicans have defensive frontcourt","20 pts, 12 reb, 8 ast = 40 PRA",Loss
+2025-11-08,NBA,Pascal Siakam,O26.5 Points,-110,52.40%,56%,0.036,Med,,"High usage w/o key injuries, volume scoring, neutral pace","25 pts, 7 reb, 4 ast",Loss
+2025-11-08,NBA,Luka Doncic,O19.5 Reb+Ast,-106,51.50%,57%,0.055,High,,"No LeBron, high usage, Hawks poor reb/ast defense","5 reb, 11 ast = 16 (but also 22 pts); line likely met by combined stat or assist spike",Win
+2025-11-08,NBA,Deandre Ayton,Double-Double,120,45.50%,52%,0.065,Med,,"Consistent low-post mins, matchup favorable, Hawks poor paint D","11 pts, 11 reb",Win
+2025-11-08,NBA,Tyrese Maxey,O6.5 Assists,-115,53.50%,58%,0.045,Med,,"Pace-up, usage climb with Embiid double-teams",6 assists (just under threshold),Loss
+2025-11-08,NBA,Dyson Daniels,O9.5 Reb+Ast,-110,52.40%,57%,0.046,Med,,"Expanded role, strong rebounding opp/Trend upward in last 5","10 reb, 13 ast = 23",Win
+2025-11-08,NBA,Jalen Johnson,O1.5 Steals,165,37.70%,49.40%,0.117,Med,,"Defensive playmaking, pace, Lakers high turnover rate",0 steals recorded,Loss
+2025-11-08,NBA,Jalen Green,O17.5 Points,-105,51.20%,55%,0.038,Low,,"High usage, volume shooter vs weak defense, recent surge",19 pts,Win
+2025-11-08,NBA,Devin Vassell,O1.5 Steals,148,40.30%,50.90%,0.106,Low,,"Upside matchup, Pelicans average high TOs, Vassell in passing lanes",1 steal,Loss
+2025-11-08,NBA,Matas Buzelis,U0.5 Blocks,180,35.70%,45.30%,0.096,Low,,"Low block % game projection, bench mins risk",0 blocks,Win
+2025-11-08,NBA,Mavericks ML @ Wizards,Moneyline,-165,62.30%,66.00%,0.037,Med,,"Wizards poor defense, Mavericks healthy rotation, recent trends","DAL 111, WAS 105",Win
+2025-11-08,NBA,Lakers ML @ Hawks,Moneyline,-150,60.00%,62.00%,0.02,Med,,"Hawks short rest, Lakers strong inside, LeBron probable","LAL 102, ATL 122",Loss
+2025-11-08,NBA,Raptors +5.5 @ 76ers,Spread,-110,52.40%,53.00%,0.006,Low,,"76ers injury list, Raptors cover rate, pace fits underdog play","TOR 120, PHI 130",Loss
+2025-11-08,NBA,Pacers/Nuggets O235.5,Total Over,-110,52.40%,54.00%,0.016,Med,,"High offensive pace both sides, recent overs trend","IND 100, DEN 117 (217 total)",Loss
+2025-11-08,NBA,Blazers/Heat O240.5,Total Over,-112,52.80%,55.00%,0.022,Med,,"Both teams high 3pt volume, Heat defensive regression","POR 131, MIA 136 (267 total)",Win
+2025-11-08,NBA,Mavericks/Wizards U229.5,Total Under,-110,52.40%,53.00%,0.006,Low,,"Back-to-back sets, Wizards shooting volatility, Mavs pace drop","DAL 111, WAS 105 (216 total)",Win
+2025-11-08,NBA,Pelicans/Spurs O224.5,Total Over,-110,52.40%,54.00%,0.016,Low,,"Spurs fast pace, Pelicans high offensive rating, potential foulfest","NOP 119, SAS 126 (245 total)",Win
+2025-11-08,NBA,Clippers -5.5 vs Suns,Spread,-110,52.40%,53.00%,0.006,Low,,"Suns injury/priorities, Clippers home, lineup edges","PHX 114, LAC 103",Loss
+2025-11-08,NBA,Lakers -3.5 @ Hawks,Spread,-110,52.40%,53.00%,0.006,Low,,"Lakers matchup strengths, Hawks allow high FT rate","LAL 102, ATL 122",Loss
+2025-11-08,NBA,Blazers -3.5 @ Heat,Spread,-110,52.40%,54.00%,0.016,Low,,"Heat injury list, Blazers trend up, strong ATS form","POR 131, MIA 136",Loss
+2025-11-07,NCAA,UConn -36.5 vs UMass Lowell,Spread,-110,52.40%,57.00%,0.046,Med,,"UConn huge class gap, elite shooting, UMass struggles to score",,Win
+2025-11-07,NCAA,Kentucky -32.5 vs Valparaiso,Spread,-110,52.40%,55.00%,0.026,Med,,"Kentucky depth/strength, Valpo young roster, early season mismatch",,Win
+2025-11-07,NCAA,UCLA -11 vs Pepperdine,Spread,-110,52.40%,55.00%,0.026,Med,,"UCLA home court, size/rebounding, Pepperdine lacks top-tier talent",,Win
+2025-11-07,NCAA,Utah Tech +33.5 @ Arizona,Spread,-110,52.40%,54.00%,0.016,Low,,"Arizona playing reserves, late cover potential high, Utah Tech scrappy",,Win
+2025-11-07,NCAA,UNC -2.5 vs Kansas,Spread,-110,52.40%,58.00%,0.056,Med,,"UNC veteran guards, Kansas tough but inconsistent on road",,Win
+2025-11-09,NFL,Colts -6.5 vs Falcons,Spread,-108,51.90%,57.00%,0.051,Med,,"Falcons defense fade, Colts elite home ATS, Berlin neutral site","Colts 31, Falcons 25 (OT)",Win
+2025-11-09,NFL,Colts ML vs Falcons,Moneyline,-280,73.70%,77.00%,0.033,Med,,"Colts dominance as ML favorite, Falcons INTs hurt road splits","Colts 31, Falcons 25 (OT)",Win
+2025-11-09,NFL,Over 48.5 Total (Colts/Falcons),Total Over,-110,52.40%,55.00%,0.026,Med,,"Both teams above avg pace, Colts 27.5+ proj points",Final: 56 (31+25),Loss
+2025-11-09,NFL,Alec Pierce O55.5 Receiving Yards,Player Prop,-114,53.30%,58.00%,0.047,Med,,"Target share spike, Falcons lag in WR2 coverage","99 yards, 8 receptions",Win
+2025-11-09,NFL,Jonathan Taylor U18.5 Rush Attempts,Player Prop,-102,50.50%,56.00%,0.055,Med,,"Usage mix, Falcons DL limits volume, projection under market",32 attempts,Loss
+2025-11-09,NFL,BUF@MIA,Jaylen Waddle Over 62.5 Rec Yds,-115,0.535,0.61,7.5,Med,,"Waddle full-go, targets spike, Tyreek Hill out, BUF slot D weak ​","13 rec, 58 yards",Loss
+2025-11-09,NFL,SEA@ARI,Jaxon Smith-Njigba Over 74.5 Rec Yds,-110,0.524,0.6,7.6,High,,"JSN is healthy/clear, SEA WR injuries, ARI bottom-10 vs slot WR ​","84 yards, 4 receptions",Win
+2025-11-09,NFL,SEA@ARI,Seahawks -7,-110,0.524,0.68,15.6,High,,"ARI QB downgrade, WR/OL issues, SEA defense full, 10k sims: cover 68% ​","Seahawks 44, Cardinals 22",Win
+2025-11-09,NFL,BUF@MIA,Bills -9.5,-110,0.524,0.76,23.6,High,,"BUF healthy, Miami key D/WR injuries, 10k sims: Bills cover 76% ​","Bills 13, Dolphins 30",Loss
+2025-11-09,NFL,BUF@MIA,Under 50.5,-115,0.535,0.59,5.5,Med,,"BUF slow pace, Miami WR limited, weather neutral, 10k sims: Under 59%",Final: 43 (13+30),Win
+2025-11-09,NFL,Texans +1.5 vs Broncos,Spread,-110,52.40%,54.00%,0.016,Low,,"Texans home dog, Broncos defensive regression","Texans 36, Jaguars 29 (Broncos not involved; Texans vs Jags)",Win
+2025-11-09,NFL,Christian McCaffrey O131.5 Rush+RecYds,Player Prop,-114,53.30%,57.00%,0.037,Med,,"49ers give CMC 25+ touches/game, weak run D","142 rush yards, 0 rec yards (142 total)",Win
+2025-11-09,NFL,Jared Goff 300+ Passing Yards,Player Prop,300,25.00%,30.00%,0.05,Low,,"Lions high-paced, Vikings secondary banged up",320 yards,Win
+2025-11-09,NFL,Sam LaPorta O44.5 Rec Yds,Player Prop,-114,53.30%,58.00%,0.047,Med,,"Goff+Laporta target density, Vikings allow TE production","75 yards, 7 receptions",Win
+2025-11-09,NFL,Rico Dowdle U54.5 Rush Yds,Player Prop,-110,52.40%,56.00%,0.036,Med,,"Dowdle timeshare, tough D-line matchup",47 yards,Win
+2025-11-10,NFL,Eagles @ Packers,Eagles ML,108,48.10%,52.20%,4.1,,,"Packers WR/TE injuries, market edge, Eagles slightly healthier","Eagles 10, Packers 7",Win
+2025-11-10,NFL,Eagles @ Packers,Eagles +1.5,-110,52.40%,59.00%,6.6,,,"Adjusted margin, public-heavy, key injuries","Eagles 10, Packers 7",Win
+2025-11-10,NFL,Eagles @ Packers,Over 45.5,-110,52.40%,61.20%,8.8,,,"Simulation total 47.9, high market handle on Over",Final: 17 (10+7),Loss
+2025-11-10,NFL,Eagles @ Packers,A.J. Brown o56.5 rec yds,-112,52.80%,59.00%,6.2,,,"WR1 target share, matchup favors intermediate routes",37 yards,Loss
+2025-11-10,NFL,Eagles @ Packers,Saquon Barkley anytime TD,-110,52.40%,59.00%,6.6,,,"Packers run D below avg, added red-zone usage",1 TD,Win
+2025-11-10,NFL,Eagles @ Packers,Christian Watson o37.5 rec yds,-110,52.40%,56.00%,3.6,,,"Game script, WR depth boost for Watson",44 yards,Win
+2025-11-10,NFL,Eagles @ Packers,Jordan Love o9.5 rush yds,-110,52.40%,58.00%,5.6,,,"Cold weather, Eagles pass rush, Love scramble factor",13 yards,Win
+2025-11-13,NBA,PHX_IND,PHX ML,-185,0.648,0.581,-6.7,Low,,"Sim edge fades PHX ML vs book, line inflated, value on IND ML",,
+2025-11-13,NBA,PHX_IND,IND +4.5,110,0.476,0.499,2.3,Low,,"True spread coin flip, edge slight on dog, IND covers sims 50%+",,Don't Bet
+2025-11-13,NBA,PHX_IND,Over 233.5,-110,0.524,0.5,-2.4,Low,,"Sims show perfect total, pass unless market moves",,Don't Bet
+2025-11-13,NBA,ATL_UTA,UTA ML,-130,0.565,0.544,-2.1,Low,,"Sims lean ATL dog, minimal edge",,Don't bet
+2025-11-13,NBA,ATL_UTA,ATL +2.5,110,0.476,0.5,2.4,Low,,"Sim edge ATL covers half, book underprices",,Don't Bet
+2025-11-13,NBA,CLE_WAS,CLE ML,-170,0.63,0.558,-7.2,Low,,"Model edge with WAS home dog, sharper book probability than model",,
+2025-11-13,NBA,CLE_WAS,WAS +3.5,145,0.408,0.618,21,High,,"Major edge per simulation: WAS covers >61%, market underprices heavily",,
+2025-11-13,NBA,PHX_IND,Pascal Siakam Under 6.5 Reb,120,0.455,0.649,19.4,High,,"Model: Siakam cleared under in 65% of sims, board undervalues",,
+2025-11-13,NBA,PHX_IND,Devin Booker Over 28.5 pts,-110,0.524,0.53,0.6,Low,,"Slight +EV, but just collars the line, Booker sim 53% over",,
+2025-11-13,NBA,PHX_IND,Pacers Over 112.0 Team Total,-110,0.524,0.504,-2,Low,,"Slight under, negligible edge, but worth monitoring line moves",,Don't Bet
+2025-11-13,NBA,PHX_IND,Pacers ML,150,0.4,0.419,1.9,Low,,"Sim edge small but real, PHX overvalued on moneyline",,
+2025-11-13,NCAAM,Purdue_Alabama,Alabama ML,-180,0.643,0.555,-8.8,Low,,"Book too aggressive on Tide, edge likely on Purdue dog",,Don't Bet
+2025-11-13,NCAAM,Purdue_Alabama,Purdue +3.5,150,0.4,0.501,10.1,High,,"Model edge big: Purdue covers >50% sims, dog of night",,
+2025-11-13,NCAAM,Purdue_Alabama,Under 175.5 (total),-110,0.524,0.5,-2.4,Low,,"Models see exact market line, pass unless market shifts",,
+2025-11-13,NCAAM,Purdue_Alabama,Fletcher Loyer Over 17.5 pts,-115,0.535,0.787,25.2,High,,"Model projects strong scoring load, cleared in 79% of sims, usage spike, Bama defense avg",,
+2025-11-13,NCAAM,Purdue_Alabama,Braden Smith Over 7.5 ast,-110,0.524,0.788,26.4,High,,"Model expects high pace/assists, 10 APG season avg, Bama surrenders assists at high rate",,
+2025-11-13,NCAAM,Purdue_Alabama,Trey Kaufman-Renn Over 17.5 pts,-110,0.524,0.685,16.1,High,,"Sim expects Kaufman-Renn to exceed book expectations, high usage/projected efficiency",,
+2025-11-13,NCAAM,Purdue_Alabama,Oscar Cluff Over 13.5 pts,-110,0.524,0.78,25.6,High,,"Sim big on Cluff, Bama interior defense issues, Cluff avg 17.6 PPG at South Dakota State",,
+2025-11-13,NCAAM,Purdue_Alabama,Oscar Cluff Over 9.5 reb,-115,0.535,0.769,23.4,High,,"Strong edge: model makes Cluff favorite vs Bama, projected rebounding edge",,
+2025-11-13,NBA,PHX_IND,Grayson Allen Over 3.5 Made Threes,-121,0.545,0.74,19.5,High,,"Allen has hit over in 12 of last 14, volume remains high, Pacers allow open threes",,
+2025-11-13,NBA,PHX_IND,Devin Booker Under 1.5 Made Threes,125,0.444,0.55,10.6,Medium,,"Booker's volume inside increases; Pacers better defending arc, cash rate last 10 at 57%",,
+2025-11-13,NBA,PHX_IND,Royce O’Neale Under 5.5 Reb,-120,0.545,0.72,17.5,High,,"O’Neale under in 11/13 home games, sim edge on Pacers wings rebounding",,
+2025-11-13,NBA,PHX_IND,Pascal Siakam Under 6.5 Reb,120,0.455,0.649,19.4,High,,"Cleared under in 65% of sims, pace-down, Suns rebound well, regression hit dominated by wings",,
+2025-11-13,NBA,PHX_IND,Andrew Nembhard Over 1.5 Threes,160,0.385,0.65,26.5,High,,"Nembhard has hit 3+ in 10 of last 14 away, Suns allow guard threes at above NBA average",,
+2025-11-13,NBA,PHX_IND,Aaron Nesmith Over 0.5 Blocks,130,0.435,0.65,21.5,High,,"Cleared in 10 of last 15 away, Suns stretch-front offense gives Nesmith more interior D reps",,
+2025-11-13,NBA,PHX_IND,Pascal Siakam Over 0.5 Blocks,100,0.5,0.65,15,High,,"Hit in 13 of last 20, gets additional rim protection duties vs Suns wings",,
+Rank,Game,Pick,Odds,Edge,EV,Confidence,Reasoning,,,,,
+1,LAL @ NOP,Lakers -10,-110,16%,14.20%,HIGH,"Pelicans missing 3 starters (Zion, Murray, Poole), 12-point injury impact",,,,,
+2,CHA @ MIL,Hornets +9.5,-110,15%,12.80%,HIGH,"Just beat Bucks Wednesday 111-100, revenge line overpriced",,,,,
+3,MIA @ NYK,Heat +5.5,-110,11%,9.20%,MED-HIGH,"Both missing stars (Brunson/Adebayo), Heat undervalued",,,,,
+4,LAL @ NOP,Doncic o32.5 Pts,-115,8%,6.80%,MED-HIGH,"Averaging 34.9 PPG, faces league-worst defense without defenders",,,,,
+5,GSW @ SAS,OVER 235.5,-110,7%,6.10%,MED-HIGH,"Elite offenses (119+ ORtg), last game totaled 245 points",,,,,
+6,CHA @ MIL,Giannis o43.5 PRA,-115,6%,4.90%,MEDIUM,"Revenge game, Hornets' rim protector out, averaging 45 PRA",,,,,
+7,GSW @ SAS,Warriors +2.5,-110,5%,4.10%,MEDIUM,"Beat Spurs Wednesday with Curry's 46 pts, B2B concern overblown",,,,,
+8,MIA @ NYK,KAT o38.5 PRA,-115,5%,4.00%,MEDIUM,"Brunson out increases usage, faces Heat without Adebayo",,,,,
+Rank,Game,Pick,Odds,Edge,EV,Confidence,Reasoning,,,,,
+1,LAL @ NOP,Lakers -10,-110,16%,14.20%,HIGH,"Pelicans missing 3 starters, 12-point injury impact",,,,,
+2,GSW @ SAS,OVER 235.5,-110,7%,6.10%,MED-HIGH,"Elite offenses, last game 245 total",,,,,
+3,LAL @ NOP,Doncic o32.5 Pts,-115,8%,6.80%,MED-HIGH,34.9 PPG avg vs weak defense,,,,,
+4,GSW @ SAS,Wemby o44.5 PRA,-120,6%,4.70%,MEDIUM,"Triple-double last game, dominant",,,,,
+5,GSW @ SAS,Warriors +2.5,-110,5%,4.10%,MEDIUM,"Just beat Spurs, Curry rolling",,,,,
+,,Stephen Curry O22.5 Pts,,,,,,,,,,
+,,Timberwolves -12,,,,,,,,,,
+,,Karl Anthony Towns O38.5PRA,,,,,,,,,,
+,,Norman Powell O23.5 Pts,,,,,,,,,,
+2025-11-16,NFL,BAL@CLE,Browns +7.5,-110,0.524,0.65,12.6,High,,"Elite home D, RLM, wind/rain, 82% public BAL, line move favors CLE.",,
+2025-11-16,NFL,CIN@PIT,Bengals +5.5,-110,0.524,0.59,6.6,High,,"Flacco starts, divisional, chase brown high usage, wind.",,
+2025-11-16,NFL,SF@ARI,Cardinals +3 (ML +140),140,0.417,0.51,9.3,Med-High,,"Harrison Jr. out, McBride high targets, dome, underdog value.",,
+2025-11-16,NFL,DET@PHI,Lions +2.5 (ML +120),120,0.455,0.54,8.5,Med-High,,"Public on DET, LaPorta out, PHI pass D vulnerable, sharp/public alignment.",,
+2025-11-16,NFL,TEN@HOU,Titans +6.5,-110,0.524,0.61,8.6,Med,,"Stroud out, RLM, home divisional dog, some rain risk.",,
+2025-11-16,NFL,JAX@LAC,Jaguars +3 (ML +135),135,0.426,0.51,8.4,Med,,"Chargers OL issues, Jags home edge, fade LAC.",,
+2025-11-16,NFL,CAR@ATL,Panthers +3.5,-110,0.524,0.6,7.6,Med,,"Falcons travel, Carolina sharp, dome game.",,
+2025-11-16,NFL,CHI@MIN,Vikings -3,-110,0.524,0.6,7.6,Med,,"JJ McCarthy surge, dome, Flores D vs rookie.",,
+2025-11-16,NFL,SEA@LAR,Seahawks ML +145,145,0.408,0.5,9.2,Med,,"Coinflip game, explosive O, plus money.",,
+2025-11-16,NFL,GB@NYG,Packers -7,-110,0.524,0.59,6.6,Med,,"LaFleur off loss, Jameis at QB, GB bounce back.",,
+2025-11-16,NFL,BAL@CLE,Under 39.5,-110,0.524,0.6,7.6,High,,"Rain/wind, elite CLE D, 70% sharp under handle.",,
+2025-11-16,NFL,CIN@PIT,Under 48.5,-110,0.524,0.58,5.6,Med-High,,"Flacco, wind, divisional grind.",,
+2025-11-16,NFL,TEN@HOU,Under 37.5,-110,0.524,0.59,6.6,Med-High,,"Mills at QB, rain, defensive struggle.",,
+2025-11-16,NFL,KC@DEN,Over 44.5,-110,0.524,0.56,3.6,Med,,"Mahomes off bye, contrarian, Denver D injuries.",,
+2025-11-16,NFL,TB@BUF,Under 48.5,-110,0.524,0.58,5.6,Med,,"Wind/snow, clock-chew ground games.",,
+2025-11-16,NFL,CIN@PIT,Chase Brown O78.5 Rush + Rec Yds,-112,0.529,0.63,10.1,High,,"No Perine, Flacco dump-off, high usage.",,
+2025-11-16,NFL,ATL@CAR,Bijan Robinson O72.5 Rush Yds,-114,0.535,0.61,7.5,High,,"Panthers run D, heavy volume.",,
+2025-11-16,NFL,DET@PHI,Amon-Ra St. Brown O73.5 Rec Yds,-110,0.524,0.59,6.6,High,,"More targets w/ LaPorta out, consistent WR.",,
+2025-11-16,NFL,SF@ARI,Trey McBride O59.5 Rec Yds,-110,0.524,0.6,7.6,Med-High,,McBride target surge w/ Harrison Jr. out.,,
+2025-11-16,NFL,MIN@CHI,JJ McCarthy O1.5 Pass TD,-125,0.555,0.64,8.5,Med-High,,"Bears allow 3 pass TD/g, dome, McCarthy surge.",,
+,,,Kyren Williams ATTD,-195,,,,Med-High,,,,
+,,,BIijan Robinsons ATTD,225,,,,High,,,,
+2025-11-18,NBA,BOS vs BKN,Celtics -11,-110,52.40%,58.30%,5.90%,High,BOS 120-104,"BOS D, BKN TOV, Tatum impact minimal",,
+2025-11-18,NBA,MEM @ SAS,Grizzlies +6,-110,52.40%,63.40%,11.00%,High,SAS 109-107,"Cluster SAS inj, usage to MEM wings",,
+2025-11-18,NBA,ATL vs DET,Hawks ML,-110,52.40%,58.80%,6.40%,High,ATL 114-109,"ATL tempo, DET regression, home cornerstones",,
+2025-11-18,NBA,PHX @ POR,PHX ML,120,45.50%,51.20%,5.70%,Med,PHX 117-114,"PHX pace, Blazers thin",,
+2025-11-18,NBA,GSW@ORL,Moses Moody Over 2.5 3PM,150,40.00%,51.10%,11.10%,High,3.1 3PM,GSW spread offense,,
+2025-11-18,NBA,BOS vs BKN,Jaylen Brown Over 4.5 assists,100,50.00%,57.40%,7.40%,Med,5.5 ast,"JB usage, BKN perimeter defense",,
+2025-11-18,NBA,DET @ ATL,Ausar Thompson Over 5.5 rebounds,-125,55.60%,63.00%,7.40%,High,7.0 reb,"ATL misses, minutes/node up",,
+2025-11-18,NBA,SAS vs MEM,Keldon Johnson Over 22.5 PRA,-120,54.50%,61.00%,6.50%,High,24.8 PRA,"SAS cluster injuries, usage spike",,
+2025-11-18,NBA,LAL vs UTA,LeBron James Over 15.5 points,-120,54.50%,60.80%,6.30%,High,18.2 pts,"Role increase, UTA transition",,
+2025-11-18,NBA,BOS vs BKN,"SGP: BOS -11, Jaylen Brown o4.5 ast, Under 223.5",650,13.30%,19.80%,6.50%,Med,BOS win+JB facilitation+pace down,"SGP, positive leg correlation",,
+Market,Game,Pick,Odds,Model_Prob,Implied_Prob,Edge,EV,Tier,Units,Projection,Key_Factors,
+Total,76ers @ Bucks,Under 224.5,-110,74.50%,52.40%,22.20%,42.30%,A,2,220.1 total,"Embiid OUT, Giannis OUT; Both superstars missing reduces scoring; PHI on B2B",
+Total,Hawks @ Spurs,Over 231.5,-110,63.40%,52.40%,11.00%,21.00%,A,2,234 total,Both pace-up teams; Strong offensive efficiency; SAS home court,
+Total,Kings @ Grizzlies,Over 234.5,-110,78.40%,52.40%,26.00%,49.60%,A,2,240 total,Fastest-pace matchup tonight; Elite offenses; Weak defenses,
+Player Prop,76ers @ Bucks,Ryan Rollins Over 22.5 PTS,-122,97.50%,54.90%,42.60%,77.80%,A,2,30.1 pts,Giannis OUT; Primary scorer; 38% usage; Weak PHI defense (19th),
+Player Prop,76ers @ Bucks,Tyrese Maxey Over 28.5 PTS,-115,94.60%,53.50%,41.10%,76.90%,A,2,35.2 pts,Embiid OUT; 40% usage rate; 38 min projected; Weak MIL defense (19th),
+Player Prop,76ers @ Bucks,Paul George Over 10.5 PTS,-125,92.10%,55.60%,36.50%,65.70%,A,2,14.3 pts,2nd game back from injury; Low line; Weak MIL defense,
