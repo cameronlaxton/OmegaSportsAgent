@@ -166,7 +166,7 @@ def analyze_player_prop_markov(
     stake_info = {}
     if recommended_bet != "pass":
         stake_info = recommend_stake(
-            prob=selected_prob,
+            true_prob=selected_prob,
             odds=selected_odds,
             bankroll=1000.0,
             confidence_tier=confidence_tier
