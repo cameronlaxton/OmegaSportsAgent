@@ -40,7 +40,7 @@ This runs a complete analysis workflow and saves results to `outputs/`
 Start here based on your needs:
 
 ### For Quick Start
-- **[QUICKSTART.md](./QUICKSTART.md)** - Sandbox-ready examples, no internet required
+- **[QUICKSTART.md](./QUICKSTART.md)** - Sandbox-ready examples with web scraping
 
 ### For Step-by-Step Execution
 - **[MODULE_EXECUTION_ORDER.md](./MODULE_EXECUTION_ORDER.md)** - Detailed workflow guide with code examples
@@ -135,7 +135,7 @@ python main.py --analyze "Team A" "Team B" --league NBA
 # Simulate all games in league
 python main.py --simulate NBA --iterations 10000
 
-# Scrape data (requires internet)
+# Scrape live sports data from the internet
 python main.py --scrape "https://www.espn.com/nba/schedule"
 
 # Run backtest audit
@@ -162,23 +162,40 @@ python example_complete_workflow.py
 
 ---
 
-## ⚠️ Sandbox Limitations
+## 🌐 Data Collection with scraper_engine.py
 
-When running in Perplexity sandbox:
+**IMPORTANT:** Perplexity should use `scraper_engine.py` to scrape and parse live sports data from the internet. This is the PRIMARY method for obtaining real-time stats, odds, and game information.
 
-1. **No Internet** - Use manual data entry instead of scraping
-2. **Limited Execution Time** - Keep simulations to 10,000 iterations
-3. **File Persistence** - Results saved to `outputs/` directory
-4. **No Database** - Use JSON file logging instead
-
-### Workarounds:
+### How to Use the Scraper
 
 ```python
-# Instead of scraping (requires internet):
+# Scrape live sports data from websites
 from scraper_engine import fetch_sports_markdown
-result = fetch_sports_markdown("https://espn.com")  # May fail
 
-# Use manual data:
+# Fetch ESPN NBA schedule with live data
+result = fetch_sports_markdown("https://www.espn.com/nba/schedule")
+
+if result["success"]:
+    markdown_content = result["markdown"]
+    # Parse the markdown to extract game data, odds, stats, etc.
+    print(f"Fetched {len(markdown_content)} characters of data")
+else:
+    print(f"Error: {result.get('error')}")
+```
+
+### Scraper Features
+
+The `scraper_engine.py` provides:
+- **JavaScript Rendering** - Uses Playwright to handle dynamic content
+- **Fallback Mode** - Automatically falls back to requests for simple pages
+- **Markdown Conversion** - Converts HTML to clean, parseable markdown
+- **Data Extraction** - Parse odds, stats, schedules, and player data from websites
+
+### Manual Data Fallback (Only if scraping fails)
+
+If internet access is unavailable or scraping fails, use manual data as a fallback:
+
+```python
 from omega.schema import GameData, BettingLine
 game = GameData(
     sport="NBA",
@@ -188,6 +205,15 @@ game = GameData(
     moneyline={"home": BettingLine(sportsbook="DK", price=-150)}
 )
 ```
+
+## ⚠️ Execution Considerations
+
+When running in Perplexity sandbox:
+
+1. **Internet Access** - Use `scraper_engine.py` to fetch live data from sports websites
+2. **Limited Execution Time** - Keep simulations to 10,000 iterations
+3. **File Persistence** - Results saved to `outputs/` directory
+4. **No Database** - Use JSON file logging instead
 
 ---
 
@@ -209,8 +235,12 @@ os.makedirs("outputs", exist_ok=True)
 
 ### Problem: Network error when scraping
 ```python
-# Solution: Use manual game data instead
-# See QUICKSTART.md for examples
+# Solution: Check error message and retry with different approach
+result = fetch_sports_markdown("https://www.espn.com/nba/schedule")
+if not result["success"]:
+    # Try with fallback method or different URL
+    print(f"Scraping error: {result.get('error')}")
+    # As last resort, use manual game data (see QUICKSTART.md for examples)
 ```
 
 ### Problem: Simulation returns unexpected keys

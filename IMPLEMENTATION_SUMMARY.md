@@ -37,8 +37,8 @@ All requirements from the problem statement have been addressed and verified.
    - Troubleshooting guide
 
 2. **QUICKSTART.md** (12.0 KB)
-   - Sandbox-ready examples
-   - No internet required
+   - Web scraping examples with scraper_engine.py
+   - Internet-based data fetching
    - Module loading order
    - Error handling patterns
 
@@ -49,7 +49,7 @@ All requirements from the problem statement have been addressed and verified.
    - Complete code examples
 
 4. **AGENT_INSTRUCTIONS.md** (15.2 KB - enhanced)
-   - Added sandbox execution section
+   - Added internet-based scraping guidance
    - Enhanced troubleshooting
    - Validation checklist
    - Error handling examples
@@ -128,14 +128,15 @@ All requirements from the problem statement have been addressed and verified.
 
 All steps documented with code examples in QUICKSTART.md and MODULE_EXECUTION_ORDER.md.
 
-### 7. Scraper Engine Sandbox Compatibility
+### 7. Scraper Engine Internet Compatibility
 
 **Confirmed Working:**
+- ✅ Web scraping via Playwright for JavaScript-rendered sites
 - ✅ Fallback to requests when Playwright unavailable
 - ✅ Graceful error handling for network failures
-- ✅ Manual data entry as alternative
+- ✅ Manual data entry as fallback alternative
 - ✅ Validation functions for schema compliance
-- ✅ Works in offline/sandboxed environments
+- ✅ Works with internet-based data sources
 
 **Testing:**
 ```bash
