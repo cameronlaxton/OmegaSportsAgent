@@ -365,11 +365,17 @@ def simulate_game_with_markov(
     results = simulator.run_simulation(n_iter=n_iter)
     
     # Calculate team scores from player stats
+    # Sample a subset of games for team-level analysis (for efficiency)
+    SCORE_SAMPLE_SIZE = 1000
+    sample_count = min(n_iter, SCORE_SAMPLE_SIZE)
     home_score_samples = []
     away_score_samples = []
     
-    for _ in range(min(n_iter, 1000)):  # Sample subset for efficiency
-        state = simulator.simulate_game()
+    # Calculate number of possessions based on league and team pace
+    n_possessions = simulator._base_n_possessions if hasattr(simulator, '_base_n_possessions') else 200
+    
+    for _ in range(sample_count):
+        state = simulator.simulate_game(n_possessions=n_possessions)
         home_score_samples.append(state.home_score)
         away_score_samples.append(state.away_score)
     
