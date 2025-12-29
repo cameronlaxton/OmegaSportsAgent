@@ -528,7 +528,7 @@ validate_environment()
 ### Data Collection
 
 1. **Use scraper_engine.py** for live data from websites
-2. **Validate data** with `validate_game_data()` before simulation
+2. **Validate data** with `scraper_engine.validate_game_data()` before simulation
 3. **Parse carefully** - Extract odds, stats, and schedules accurately
 4. **Handle errors** - Implement fallbacks for network failures
 
