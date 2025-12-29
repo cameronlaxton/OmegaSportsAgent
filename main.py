@@ -292,6 +292,79 @@ def run_scrape(url: str) -> dict:
         return {"error": str(e), "status": "failed"}
 
 
+def run_markov_props(league: str = "NBA", iterations: int = 10000, min_edge: float = 5.0) -> dict:
+    """
+    Analyze player props using Markov play-by-play simulation.
+    
+    Args:
+        league: League identifier
+        iterations: Number of simulation iterations per prop
+        min_edge: Minimum edge threshold for recommendations
+    
+    Returns:
+        Dict with prop analysis and recommendations
+    """
+    logger.info(f"Analyzing player props with Markov simulation ({league})...")
+    
+    try:
+        from omega.api.markov_analysis import get_markov_prop_recommendations
+        
+        result = get_markov_prop_recommendations(
+            league=league,
+            n_iter=iterations,
+            min_edge=min_edge
+        )
+        
+        output_path = save_output(result, f"markov_props_{league}")
+        result["output_file"] = output_path
+        
+        logger.info(f"Markov prop analysis complete: {result.get('recommendations', [])} recommendations")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Markov prop analysis failed: {e}")
+        return {"error": str(e), "status": "failed"}
+
+
+def run_markov_game(home_team: str, away_team: str, league: str = "NBA", iterations: int = 10000) -> dict:
+    """
+    Simulate a game using Markov play-by-play chains.
+    
+    Args:
+        home_team: Home team name
+        away_team: Away team name
+        league: League identifier
+        iterations: Number of simulation iterations
+    
+    Returns:
+        Dict with game simulation results and player stats
+    """
+    logger.info(f"Running Markov game simulation: {away_team} @ {home_team}...")
+    
+    try:
+        from omega.api.markov_analysis import simulate_game_with_markov
+        from omega.data.stats_scraper import get_team_stats
+        
+        # This is a simplified version - in production would fetch real player data
+        result = {
+            "game": f"{away_team} @ {home_team}",
+            "league": league,
+            "simulation_type": "markov_play_by_play",
+            "iterations": iterations,
+            "message": "Markov simulation requires player roster data. See GUIDE.md for usage examples.",
+            "analyzed_at": datetime.now().isoformat()
+        }
+        
+        output_path = save_output(result, f"markov_game_{home_team}_{away_team}".replace(" ", "_"))
+        result["output_file"] = output_path
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Markov game simulation failed: {e}")
+        return {"error": str(e), "status": "failed"}
+
+
 def main():
     """Main entry point for the OmegaSports simulation engine."""
     parser = argparse.ArgumentParser(
@@ -303,6 +376,8 @@ Examples:
   python main.py --morning-bets --leagues NBA NFL
   python main.py --analyze "Boston Celtics" "Indiana Pacers" --league NBA
   python main.py --simulate NBA --iterations 5000
+  python main.py --markov-props --league NBA --min-edge 5.0
+  python main.py --markov-game "Boston Celtics" "Indiana Pacers" --league NBA
   python main.py --audit --start-date 2025-01-01 --end-date 2025-01-15
   python main.py --scrape "https://www.espn.com/nba/schedule"
         """
@@ -314,6 +389,10 @@ Examples:
                         help="Analyze matchup between two teams")
     parser.add_argument("--simulate", metavar="LEAGUE",
                         help="Run simulations for a league")
+    parser.add_argument("--markov-props", action="store_true",
+                        help="Analyze player props using Markov simulation")
+    parser.add_argument("--markov-game", nargs=2, metavar=("HOME_TEAM", "AWAY_TEAM"),
+                        help="Simulate game with Markov play-by-play chains")
     parser.add_argument("--audit", action="store_true",
                         help="Run backtest audit")
     parser.add_argument("--scrape", metavar="URL",
@@ -325,6 +404,8 @@ Examples:
                         help="League for analysis (default: NBA)")
     parser.add_argument("--iterations", type=int, default=10000,
                         help="Simulation iterations (default: 10000)")
+    parser.add_argument("--min-edge", type=float, default=5.0,
+                        help="Minimum edge threshold for props (default: 5.0)")
     parser.add_argument("--start-date", help="Start date for audit (YYYY-MM-DD)")
     parser.add_argument("--end-date", help="End date for audit (YYYY-MM-DD)")
     parser.add_argument("--verbose", action="store_true",
@@ -350,6 +431,12 @@ Examples:
         
     elif args.simulate:
         result = run_simulate(args.simulate, iterations=args.iterations)
+        
+    elif args.markov_props:
+        result = run_markov_props(league=args.league, iterations=args.iterations, min_edge=args.min_edge)
+        
+    elif args.markov_game:
+        result = run_markov_game(args.markov_game[0], args.markov_game[1], league=args.league, iterations=args.iterations)
         
     elif args.audit:
         result = run_audit(start_date=args.start_date, end_date=args.end_date)

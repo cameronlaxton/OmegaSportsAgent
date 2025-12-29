@@ -28,6 +28,9 @@ python main.py --morning-bets --leagues NBA NFL
 # Analyze a specific matchup
 python main.py --analyze "Boston Celtics" "Indiana Pacers" --league NBA
 
+# Analyze player props with Markov simulation
+python main.py --markov-props --league NBA --min-edge 5.0
+
 # Scrape live sports data
 python main.py --scrape "https://www.espn.com/nba/schedule"
 ```
@@ -37,6 +40,7 @@ python main.py --scrape "https://www.espn.com/nba/schedule"
 - **[GUIDE.md](./GUIDE.md)** - Complete setup, scraping, simulation, and analysis guide
 - **[test_engine.py](./test_engine.py)** - Test suite
 - **[example_complete_workflow.py](./example_complete_workflow.py)** - Working example
+- **[example_markov_simulation.py](./example_markov_simulation.py)** - Markov simulation example
 
 ## Overview
 
@@ -57,6 +61,7 @@ For detailed usage and examples, see **[GUIDE.md](./GUIDE.md)**.
 
 - **Web Scraping**: JavaScript-rendered scraping via `scraper_engine.py`
 - **Monte Carlo Simulations**: ≥10,000 iterations per market
+- **Markov Play-by-Play Simulation**: Strategic player prop analysis with detailed game modeling
 - **Edge Calculation**: Automated +EV identification
 - **Kelly Staking**: Bankroll-optimized recommendations
 - **File-Based Output**: All results saved as JSON
@@ -69,7 +74,8 @@ omega-sports-engine/
 ├── main.py                    # CLI entry point
 ├── scraper_engine.py          # Web scraper
 ├── omega/                     # Core modules
-│   ├── simulation/            # Monte Carlo engines
+│   ├── simulation/            # Monte Carlo & Markov engines
+│   ├── api/                   # High-level analysis APIs
 │   ├── data/                  # Data ingestion & APIs
 │   ├── betting/               # Edge evaluation & staking
 │   ├── analytics/             # League baselines
