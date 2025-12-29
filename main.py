@@ -25,6 +25,13 @@ from typing import Optional, List
 
 from omega.schema import GameData, BettingLine, PropBet, DailySlate, SimulationInput, BetRecommendation
 
+# Create required directories first
+os.makedirs("logs", exist_ok=True)
+os.makedirs("outputs", exist_ok=True)
+os.makedirs("data/logs", exist_ok=True)
+os.makedirs("data/outputs", exist_ok=True)
+
+# Configure logging after directories exist
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -34,11 +41,6 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("omega")
-
-os.makedirs("logs", exist_ok=True)
-os.makedirs("outputs", exist_ok=True)
-os.makedirs("data/logs", exist_ok=True)
-os.makedirs("data/outputs", exist_ok=True)
 
 
 def save_output(data: dict, filename: str, format: str = "json") -> str:

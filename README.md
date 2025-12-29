@@ -1,10 +1,20 @@
 # OmegaSports Headless Simulation Engine
 
+> **🚀 For Perplexity Agents:** Start with **[PERPLEXITY_SETUP.md](./PERPLEXITY_SETUP.md)** for quick setup guide
+
 A modular, quantitative sports analytics engine designed as a **headless data & simulation pipeline** for Perplexity Spaces/Agents. This engine identifies +EV (positive expected value) wagers by running Monte Carlo simulations and comparing model probabilities against market-implied probabilities.
 
 ## Quick Start
 
 ### For Perplexity Agent / External AI
+
+**🚀 NEW USERS START HERE:**
+
+1. **[QUICKSTART.md](./QUICKSTART.md)** - Sandbox-ready examples and step-by-step guide
+2. **[MODULE_EXECUTION_ORDER.md](./MODULE_EXECUTION_ORDER.md)** - Detailed workflow execution order
+3. **[AGENT_INSTRUCTIONS.md](./AGENT_INSTRUCTIONS.md)** - Complete API reference and integration guide
+
+### For Human Developers
 
 See **[AGENT_INSTRUCTIONS.md](./AGENT_INSTRUCTIONS.md)** for complete integration guide.
 
