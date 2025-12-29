@@ -6,6 +6,14 @@ A modular, quantitative sports analytics engine designed as a **headless data & 
 
 ### For Perplexity Agent / External AI
 
+**🚀 NEW USERS START HERE:**
+
+1. **[QUICKSTART.md](./QUICKSTART.md)** - Sandbox-ready examples and step-by-step guide
+2. **[MODULE_EXECUTION_ORDER.md](./MODULE_EXECUTION_ORDER.md)** - Detailed workflow execution order
+3. **[AGENT_INSTRUCTIONS.md](./AGENT_INSTRUCTIONS.md)** - Complete API reference and integration guide
+
+### For Human Developers
+
 See **[AGENT_INSTRUCTIONS.md](./AGENT_INSTRUCTIONS.md)** for complete integration guide.
 
 ### CLI Commands

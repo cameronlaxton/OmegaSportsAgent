@@ -2,6 +2,33 @@
 
 This document explains how an external AI agent (such as Perplexity) can use this repository to fetch live sports data, run simulations, and generate betting recommendations.
 
+## 🚀 QUICK START FOR PERPLEXITY
+
+**New users:** Start with [QUICKSTART.md](./QUICKSTART.md) for sandbox-ready examples and step-by-step execution guide.
+
+## Important: Sandbox Execution Mode
+
+This engine is designed to run in **sandboxed environments** including:
+- Perplexity AI Sandbox IDE
+- Isolated Python environments
+- Environments with limited/no internet access
+
+### Sandbox Compatibility Features:
+✅ **No external services required** - All core functionality works offline  
+✅ **File-based outputs** - Results saved to local filesystem  
+✅ **Manual data input** - Can operate without live data APIs  
+✅ **Graceful degradation** - Handles missing data/network failures  
+✅ **Pre-validated modules** - All imports tested and working  
+
+### Prerequisites:
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Verify installation
+python -c "from omega.workflows.morning_bets import run_morning_workflow; print('✓ Ready')"
+```
+
 ## Repository Overview
 
 OmegaSports is a **headless simulation engine** for sports analytics. It has no web interface - all operations are performed via Python scripts that output results as JSON or Markdown files.
@@ -292,6 +319,136 @@ Format your final analysis as a JSON object matching the `GameData` class before
 
 ## Troubleshooting
 
+### Common Issues in Sandbox Environments
+
+#### 1. Network/Internet Access Issues
+```python
+# Problem: Cannot connect to external APIs
+# Solution: Use manual data entry or cached data
+
+from scraper_engine import fetch_sports_markdown
+
+result = fetch_sports_markdown("https://www.espn.com/nba/schedule")
+if not result["success"]:
+    print(f"Network unavailable: {result.get('error')}")
+    print("Proceeding with manual game data...")
+    # Use manual GameData construction instead
+```
+
+#### 2. Missing Data APIs
+```python
+# Problem: API returns None or empty data
+# Solution: Use league defaults or manual input
+
+from omega.data.stats_scraper import get_team_stats
+
+stats = get_team_stats("Boston Celtics", "NBA")
+if not stats:
+    print("Using league defaults")
+    stats = {
+        "off_rating": 110.0,  # League average
+        "def_rating": 110.0,
+        "pace": 100.0
+    }
+```
+
+#### 3. Module Import Errors
+```python
+# Problem: ImportError when loading modules
+# Solution: Verify requirements.txt installed
+
+try:
+    from omega.workflows.morning_bets import run_morning_workflow
+    print("✓ Module loaded successfully")
+except ImportError as e:
+    print(f"✗ Import failed: {e}")
+    print("Run: pip install -r requirements.txt")
+    raise
+```
+
+#### 4. Directory Creation Failures
+```python
+# Problem: Permission errors or missing directories
+# Solution: Ensure directories exist before operations
+
+import os
+for dir_path in ["logs", "outputs", "data/logs", "data/outputs"]:
+    os.makedirs(dir_path, exist_ok=True)
+    print(f"✓ Directory ready: {dir_path}")
+```
+
+#### 5. Playwright/Chromium Not Available
+```bash
+# Problem: Scraper cannot render JavaScript
+# Solution: Install Playwright browsers or use fallback
+
+pip install playwright
+playwright install chromium
+
+# Or use requests-only mode (no JS rendering)
+# The scraper automatically falls back to requests
+```
+
+### Validation Checklist
+
+Run this validation script to verify sandbox readiness:
+
+```python
+def validate_sandbox_environment():
+    """Validate that the OmegaSports engine is ready to run."""
+    import sys
+    import os
+    
+    checks = []
+    
+    # Check Python version
+    py_version = sys.version_info
+    if py_version >= (3, 10):
+        checks.append(("✓", f"Python {py_version.major}.{py_version.minor}"))
+    else:
+        checks.append(("✗", f"Python {py_version.major}.{py_version.minor} (need 3.10+)"))
+    
+    # Check directories
+    for dir_path in ["logs", "outputs", "data/logs", "data/outputs"]:
+        if os.path.exists(dir_path):
+            checks.append(("✓", f"Directory: {dir_path}"))
+        else:
+            os.makedirs(dir_path, exist_ok=True)
+            checks.append(("⚠", f"Created: {dir_path}"))
+    
+    # Check core imports
+    core_modules = [
+        "omega.schema",
+        "omega.simulation.simulation_engine",
+        "omega.workflows.morning_bets",
+        "scraper_engine"
+    ]
+    
+    for module in core_modules:
+        try:
+            __import__(module)
+            checks.append(("✓", f"Module: {module}"))
+        except ImportError as e:
+            checks.append(("✗", f"Module: {module} - {e}"))
+    
+    # Print results
+    print("\n=== OmegaSports Sandbox Validation ===\n")
+    for status, message in checks:
+        print(f"{status} {message}")
+    
+    # Summary
+    failures = [c for c in checks if c[0] == "✗"]
+    if not failures:
+        print("\n✓ All checks passed - Ready to run!")
+        return True
+    else:
+        print(f"\n✗ {len(failures)} check(s) failed - See errors above")
+        return False
+
+# Run validation
+validate_sandbox_environment()
+```
+
 ### Crawl4AI Not Working
 ```bash
 pip install crawl4ai
@@ -307,6 +464,12 @@ pip install -r requirements.txt
 - Check that the league has games scheduled for today
 - Verify ESPN API is accessible
 - Check `data/cache/` for cached responses
+- Use manual GameData construction as fallback
+
+### Output Files Not Created
+- Verify write permissions for `outputs/` and `logs/` directories
+- Check `logs/omega_engine.log` for error messages
+- Ensure `os.makedirs()` calls succeed
 
 ---
 
