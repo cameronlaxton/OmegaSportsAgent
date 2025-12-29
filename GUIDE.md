@@ -203,6 +203,180 @@ else:
 
 ---
 
+## Markov Play-by-Play Simulation
+
+The Markov simulation engine models games at the **play-by-play level**, tracking individual player involvement and stat accumulation throughout the game. This is particularly powerful for **player props** where traditional Monte Carlo simulations may not capture the dynamics of possession-by-possession play.
+
+### Key Features
+
+- **Play-by-Play Modeling**: Simulates each possession/play with state transitions
+- **Player Usage Tracking**: Models individual player involvement based on usage rates
+- **Team Context Integration**: Adjusts probabilities based on offensive/defensive ratings and pace
+- **Multi-Sport Support**: NBA, NFL, MLB, NHL with league-specific transitions
+- **Statistical Accuracy**: Produces realistic stat distributions over 10,000+ iterations
+
+### When to Use Markov vs Monte Carlo
+
+**Use Markov Simulation for:**
+- Player props (points, rebounds, assists, receiving yards, etc.)
+- Games where play-by-play dynamics matter
+- Understanding individual player involvement patterns
+- Correlated player performances on the same team
+
+**Use Monte Carlo for:**
+- Game outcomes (moneyline, spread, total)
+- Team-level analysis
+- Faster computation when play-level detail isn't needed
+
+### Analyze Player Prop with Markov
+
+```python
+from omega.api.markov_analysis import analyze_player_prop_markov
+
+# Define player with usage rates and stats
+player = {
+    "name": "Jayson Tatum",
+    "team": "Boston Celtics",
+    "usage_rate": 0.32,  # 32% of possessions when on court
+    "pts_mean": 27.5,
+    "reb_mean": 8.2,
+    "ast_mean": 4.8
+}
+
+# Define teammates (for realistic game flow)
+teammates = [
+    {"name": "Jaylen Brown", "team": "Boston Celtics", "usage_rate": 0.28, "pts_mean": 23.1},
+    {"name": "Kristaps Porzingis", "team": "Boston Celtics", "usage_rate": 0.20, "pts_mean": 19.8}
+]
+
+# Define opponents
+opponents = [
+    {"name": "Tyrese Haliburton", "team": "Indiana Pacers", "usage_rate": 0.25, "pts_mean": 22.4},
+    {"name": "Pascal Siakam", "team": "Indiana Pacers", "usage_rate": 0.23, "pts_mean": 20.8}
+]
+
+# Optional: Team context for more accurate simulation
+home_context = {
+    "name": "Boston Celtics",
+    "off_rating": 118.5,
+    "def_rating": 110.2,
+    "pace": 99.5
+}
+
+away_context = {
+    "name": "Indiana Pacers",
+    "off_rating": 120.1,
+    "def_rating": 112.5,
+    "pace": 101.3
+}
+
+# Run Markov simulation
+result = analyze_player_prop_markov(
+    player=player,
+    teammates=teammates,
+    opponents=opponents,
+    prop_type="pts",  # Points prop
+    market_line=27.5,
+    over_odds=-110,
+    under_odds=-110,
+    league="NBA",
+    n_iter=10000,
+    home_context=home_context,
+    away_context=away_context
+)
+
+# Display results
+print(f"Projected Mean: {result['projected_mean']:.2f}")
+print(f"Over Probability: {result['over_prob']:.2%}")
+print(f"Over Edge: {result['over_edge_pct']:.2f}%")
+print(f"Recommendation: {result['recommended_bet'].upper()}")
+print(f"Confidence: Tier {result['confidence_tier']}")
+```
+
+### Analyze Multiple Props
+
+```python
+from omega.api.markov_analysis import analyze_multiple_props
+
+# Define multiple props to analyze
+props = [
+    {
+        "player": {"name": "Jayson Tatum", "team": "Boston Celtics", "usage_rate": 0.32, "pts_mean": 27.5},
+        "teammates": teammates,
+        "opponents": opponents,
+        "prop_type": "pts",
+        "market_line": 27.5,
+        "over_odds": -110,
+        "under_odds": -110,
+        "league": "NBA"
+    },
+    {
+        "player": {"name": "Tyrese Haliburton", "team": "Indiana Pacers", "usage_rate": 0.25, "ast_mean": 10.8},
+        "teammates": opponents,  # Swap for Pacers
+        "opponents": teammates,
+        "prop_type": "ast",
+        "market_line": 10.5,
+        "over_odds": -115,
+        "under_odds": -105,
+        "league": "NBA"
+    }
+]
+
+# Analyze all props
+results = analyze_multiple_props(
+    props=props,
+    league="NBA",
+    n_iter=10000,
+    min_edge=5.0
+)
+
+# Display qualified bets
+print(f"Qualified Bets: {results['qualified_bets_count']}")
+for bet in results['qualified_bets']:
+    print(f"\n{bet['player_name']} {bet['prop_type'].upper()} {bet['recommended_bet'].upper()}")
+    print(f"  Line: {bet['market_line']}")
+    print(f"  Edge: {bet['best_edge_pct']:.2f}%")
+    print(f"  Tier: {bet['confidence_tier']}")
+```
+
+### Markov Transition Probabilities
+
+The engine uses league-specific transition matrices:
+
+**NBA Transitions:**
+- Two-point make: 35%
+- Two-point miss: 20%
+- Three-point make: 12%
+- Three-point miss: 18%
+- Free throws: 8%
+- Turnover: 7%
+
+These are **dynamically adjusted** based on team offensive/defensive ratings.
+
+**NFL Transitions:**
+- Pass: 58%
+- Rush: 38%
+- Sack: 4%
+
+Each with sub-outcomes (complete, incomplete, yards gained, etc.)
+
+### Example Workflow
+
+See `example_markov_simulation.py` for a complete working example.
+
+```bash
+python example_markov_simulation.py
+```
+
+This demonstrates:
+1. Setting up player and team data
+2. Running Markov simulations
+3. Analyzing results and edges
+4. Making betting recommendations
+5. Saving outputs
+
+---
+
 ## Betting Analysis
 
 ### Calculate Edge
@@ -282,6 +456,26 @@ python main.py --simulate NBA --iterations 10000
 
 Output: `outputs/simulation_*.json`
 
+### Markov Player Props Analysis
+
+```bash
+python main.py --markov-props --league NBA --min-edge 5.0
+```
+
+Output: `outputs/markov_props_*.json`
+
+Analyzes player props using play-by-play Markov simulation for detailed stat projections.
+
+### Markov Game Simulation
+
+```bash
+python main.py --markov-game "Boston Celtics" "Indiana Pacers" --league NBA
+```
+
+Output: `outputs/markov_game_*.json`
+
+Simulates game with Markov play-by-play chains, tracking individual player stats.
+
 ### Scrape Live Data
 
 ```bash
@@ -325,6 +519,18 @@ from omega.data.injury_api import get_injured_players
 # Simulation
 from omega.simulation.simulation_engine import run_game_simulation
 from omega.simulation.correlated_simulation import run_correlated_simulation
+from omega.simulation.markov_engine import (
+    MarkovSimulator,
+    MarkovState,
+    run_markov_player_prop_simulation
+)
+
+# Markov Analysis API
+from omega.api.markov_analysis import (
+    analyze_player_prop_markov,
+    analyze_multiple_props,
+    simulate_game_with_markov
+)
 
 # Betting Analysis
 from omega.betting.odds_eval import edge_percentage, expected_value_percent

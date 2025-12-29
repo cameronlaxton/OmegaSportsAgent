@@ -80,7 +80,44 @@ All tables must follow exact column specifications from `config/CombinedInstruct
 - Minimum 10,000 Monte Carlo iterations per market
 - Escalate to 25,000 iterations if edge margin < 1.5× threshold
 - Always report simulation summary with iterations, distribution, mean, variance, and 95% CI
-- Use league-specific simulation mechanics 
+- Use league-specific simulation mechanics
+- **For player props**: Consider using Markov play-by-play simulation for more accurate individual player stat modeling
+- **Markov simulation** models games possession-by-possession with player usage rates and provides detailed stat distributions
+
+### 6a. Markov Simulation for Player Props
+
+When analyzing player props (points, rebounds, assists, receiving yards, etc.), the Markov play-by-play simulation engine provides more accurate projections than traditional Monte Carlo:
+
+**Use Markov simulation when:**
+- Analyzing individual player props
+- Player usage rates and team context are available
+- More granular play-by-play modeling is needed
+- Understanding correlated player performances
+
+**Markov simulation features:**
+- Models each possession/play with state transitions
+- Tracks individual player involvement and stat accumulation
+- Adjusts probabilities based on team offensive/defensive ratings
+- Provides realistic stat distributions over 10,000+ iterations
+
+**Example usage:**
+```python
+from omega.api.markov_analysis import analyze_player_prop_markov
+
+result = analyze_player_prop_markov(
+    player=player_data,
+    teammates=teammates_list,
+    opponents=opponents_list,
+    prop_type="pts",
+    market_line=27.5,
+    over_odds=-110,
+    under_odds=-110,
+    league="NBA",
+    n_iter=10000
+)
+```
+
+See `example_markov_simulation.py` for complete working example.
 
 ### 7. Edge & Confidence Filtering
 
