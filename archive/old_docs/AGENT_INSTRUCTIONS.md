@@ -6,17 +6,17 @@ This document explains how an external AI agent (such as Perplexity) can use thi
 
 **New users:** Start with [QUICKSTART.md](./QUICKSTART.md) for sandbox-ready examples and step-by-step execution guide.
 
-## Important: Sandbox Execution Mode
+## Important: Data Sourcing
 
-This engine is designed to run in **sandboxed environments** including:
-- Perplexity AI Sandbox IDE
-- Isolated Python environments
-- Environments with limited/no internet access
+This engine uses **internet-based data scraping** as the primary method for obtaining real-time sports data:
+- Use `scraper_engine.py` to fetch live data from sports websites
+- Scrape schedules, odds, stats, and injury reports
+- Parse data into structured formats for simulation
 
-### Sandbox Compatibility Features:
-✅ **No external services required** - All core functionality works offline  
+### Scraping Compatibility Features:
+✅ **Internet-based scraping** - Primary data source via `scraper_engine.py`  
 ✅ **File-based outputs** - Results saved to local filesystem  
-✅ **Manual data input** - Can operate without live data APIs  
+✅ **Manual data fallback** - Can operate without live data if needed  
 ✅ **Graceful degradation** - Handles missing data/network failures  
 ✅ **Pre-validated modules** - All imports tested and working  
 
@@ -324,16 +324,18 @@ Format your final analysis as a JSON object matching the `GameData` class before
 
 #### 1. Network/Internet Access Issues
 ```python
-# Problem: Cannot connect to external APIs
-# Solution: Use manual data entry or cached data
+# Use scraper_engine.py to fetch live data from the internet
 
 from scraper_engine import fetch_sports_markdown
 
 result = fetch_sports_markdown("https://www.espn.com/nba/schedule")
-if not result["success"]:
-    print(f"Network unavailable: {result.get('error')}")
-    print("Proceeding with manual game data...")
-    # Use manual GameData construction instead
+if result["success"]:
+    print(f"✓ Successfully scraped data: {len(result['markdown'])} chars")
+    # Proceed with data parsing and analysis
+else:
+    print(f"Network error: {result.get('error')}")
+    print("Check internet connection or try alternative URL")
+    # As last resort, use manual GameData construction
 ```
 
 #### 2. Missing Data APIs

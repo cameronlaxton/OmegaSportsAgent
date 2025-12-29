@@ -32,11 +32,42 @@ print("✓ All core modules imported successfully")
 
 ---
 
-## Quick Start Workflow (No Internet Required)
+## Quick Start Workflow
 
-If running in a sandboxed environment **without internet access**, you can still use the engine with manually provided data.
+The OmegaSports engine is designed to work with live internet data via `scraper_engine.py`. You can fetch real-time sports data, stats, and odds from websites.
 
-### Option 1: Use Pre-Structured Game Data
+### Option 1: Use Web Scraping (Recommended)
+
+```python
+from scraper_engine import fetch_sports_markdown, parse_to_game_data
+
+# Scrape live sports data from the internet
+url = "https://www.espn.com/nba/schedule"
+result = fetch_sports_markdown(url)
+
+if result["success"]:
+    print(f"✓ Scraped {len(result['markdown'])} characters")
+    print(f"Method: {result.get('method')}")  # playwright or requests
+    
+    # Parse to game data template
+    template = parse_to_game_data(
+        markdown=result['markdown'],
+        sport="NBA",
+        home_team="Boston Celtics",
+        away_team="Indiana Pacers",
+        source_url=url
+    )
+    
+    print("\n✓ Game data template created")
+    # Now fill in betting lines from scraped data and run simulation
+else:
+    print(f"✗ Scraping failed: {result.get('error')}")
+    # Fall back to manual data entry
+```
+
+### Option 2: Use Manual Data (Fallback Only)
+
+If web scraping is unavailable, you can manually provide data:
 
 ```python
 from omega.schema import GameData, BettingLine
@@ -94,7 +125,7 @@ print(f"Team B (second team) Win Prob: {result['true_prob_b']:.2%}")
 # Team A is typically the first team in your projection dict
 ```
 
-### Option 2: Generate Daily Bets (Requires Data APIs)
+### Option 3: Generate Daily Bets with Live Data
 
 ```python
 from omega.workflows.morning_bets import run_morning_workflow
@@ -125,9 +156,9 @@ print(f"\nResults saved to: {result.get('output_file')}")
 
 ---
 
-## Web Scraping (With Internet Access)
+## Web Scraping for Live Data
 
-If the sandbox environment has internet access:
+The primary way to get data is through web scraping with `scraper_engine.py`:
 
 ```python
 from scraper_engine import fetch_sports_markdown, parse_to_game_data
@@ -151,7 +182,7 @@ if result["success"]:
     )
     
     print("\n✓ Game data template created")
-    print("Note: Fill in betting lines before simulation")
+    print("Note: Fill in betting lines from scraped data before simulation")
 else:
     print(f"✗ Scraping failed: {result.get('error')}")
 ```
@@ -293,7 +324,8 @@ All results are saved to the file system:
 
 ## Error Handling
 
-### Network Errors (No Internet)
+### Network Errors
+
 ```python
 from scraper_engine import fetch_sports_markdown
 
@@ -301,8 +333,8 @@ result = fetch_sports_markdown("https://www.espn.com/nba/schedule")
 
 if not result["success"]:
     print(f"Network error: {result.get('error')}")
-    print("Solution: Use manual game data or wait for internet access")
-    # Proceed with manual data entry
+    print("Check internet connection or try a different URL")
+    # As last resort, use manual data entry
 ```
 
 ### Missing Data
@@ -423,4 +455,4 @@ If encountering issues:
 3. Test with a simple simulation example (Option 1 in Quick Start)
 4. Review error messages for missing dependencies or data
 
-**Remember:** The engine is designed to work in sandboxed environments. Most features work without internet access when provided with manual game data.
+**Remember:** The engine is designed to use `scraper_engine.py` to fetch live sports data from the internet. Manual game data is available as a fallback option.
