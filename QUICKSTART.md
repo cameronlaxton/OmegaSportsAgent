@@ -88,9 +88,10 @@ result = run_game_simulation(
 )
 
 print("Simulation Results:")
-print(f"Home Win Probability: {result['home_win_prob']:.2%}")
-print(f"Predicted Spread: {result['predicted_spread']:.1f}")
-print(f"Predicted Total: {result['predicted_total']:.1f}")
+print(f"Team A (first team) Win Prob: {result['true_prob_a']:.2%}")
+print(f"Team B (second team) Win Prob: {result['true_prob_b']:.2%}")
+# Note: The simulation engine returns team_a/team_b based on projection dict order
+# Team A is typically the first team in your projection dict
 ```
 
 ### Option 2: Generate Daily Bets (Requires Data APIs)

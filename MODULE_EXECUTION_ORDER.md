@@ -185,13 +185,15 @@ sim_result = run_game_simulation(
 print(f"✓ Simulation complete: {sim_result['home_win_prob']:.2%} home win probability")
 
 # Step 4.4: Extract simulation results
-home_win_prob = sim_result.get("home_win_prob", 0.5)
-away_win_prob = sim_result.get("away_win_prob", 0.5)
+# Note: The simulation returns team_a/team_b based on projection dict order
+# The first team in the projection dict is team_a (Boston Celtics in this case)
+home_win_prob = sim_result.get("true_prob_a", 0.5)  # Celtics (team_a)
+away_win_prob = sim_result.get("true_prob_b", 0.5)  # Pacers (team_b)
 predicted_spread = sim_result.get("predicted_spread", 0)
 predicted_total = sim_result.get("predicted_total", 220)
 
-print(f"  Home Win: {home_win_prob:.2%}")
-print(f"  Away Win: {away_win_prob:.2%}")
+print(f"  Home Win (Celtics): {home_win_prob:.2%}")
+print(f"  Away Win (Pacers): {away_win_prob:.2%}")
 print(f"  Spread: {predicted_spread:.1f}")
 print(f"  Total: {predicted_total:.1f}")
 ```

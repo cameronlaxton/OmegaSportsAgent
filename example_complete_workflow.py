@@ -123,10 +123,12 @@ def main():
         league="NBA"
     )
     
-    # Extract results (simulation returns team_a, team_b based on projection order)
-    # First team in projection dict is team_a (Boston Celtics)
-    celtics_win_prob = simulation["true_prob_a"]
-    pacers_win_prob = simulation["true_prob_b"]
+    # Extract results
+    # Important: The simulation returns team_a/team_b based on projection dict order
+    # First team in the projection dict is team_a (Boston Celtics)
+    # Second team in the projection dict is team_b (Indiana Pacers)
+    celtics_win_prob = simulation["true_prob_a"]  # team_a = Boston Celtics
+    pacers_win_prob = simulation["true_prob_b"]   # team_b = Indiana Pacers
     
     print(f"✓ Simulation complete")
     print(f"  Boston Celtics win probability: {celtics_win_prob:.2%}")

@@ -8,7 +8,13 @@ import sys
 import os
 
 def test_environment_setup():
-    """Test 1: Environment Setup"""
+    """
+    Test 1: Environment Setup
+    
+    Validates:
+    - Python version is 3.10 or higher
+    - Required directories can be created (logs/, outputs/, data/logs/, data/outputs/)
+    """
     print("\n=== Test 1: Environment Setup ===")
     
     # Check Python version

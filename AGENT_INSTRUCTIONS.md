@@ -114,7 +114,8 @@ projection = {
 
 # Run simulation
 sim_results = run_game_simulation(projection, n_iter=10000, league="NBA")
-# Returns: home_win_prob, away_win_prob, predicted_spread, predicted_total
+# Returns: true_prob_a, true_prob_b (win probabilities for team_a and team_b)
+# Note: team_a is the first team in the projection dict order
 ```
 
 **CLI Usage:**
