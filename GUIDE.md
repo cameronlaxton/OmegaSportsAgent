@@ -559,17 +559,27 @@ Customize calibration behavior:
 ```python
 config = CalibrationConfig(
     auto_tune_enabled=True,
-    auto_tune_frequency=100,  # Tune every 100 predictions
-    min_samples_for_tuning=50,  # Need 50 settled bets before tuning
+    auto_tune_mode="time_based",        # "time_based" or "prediction_count"
+    auto_tune_schedule="weekly",        # "daily" or "weekly" (for time_based)
+    auto_tune_frequency=100,            # For prediction_count mode
+    min_samples_for_tuning=30,          # Need 30 settled bets before tuning
     tuning_strategy=TuningStrategy.ADAPTIVE,
-    performance_window=100,  # Analyze last 100 predictions
+    performance_window=200,             # Analyze last 200 predictions
     alert_on_poor_performance=True,
-    roi_alert_threshold=-10.0,  # Alert if ROI < -10%
-    brier_alert_threshold=0.25  # Alert if Brier > 0.25
+    roi_alert_threshold=-10.0,          # Alert if ROI < -10%
+    brier_alert_threshold=0.25          # Alert if Brier > 0.25
 )
 
 calibrator = AutoCalibrator(config=config)
 ```
+
+**Recommended: Use time-based mode with weekly schedule**
+- Calibrates every Sunday (or weekly interval)
+- Better sample size (20-50+ bets per week)
+- Avoids over-reaction to short-term variance
+- Parameters stay stable during the week
+
+See `CALIBRATION_AUTOMATION.md` for complete automation setup guide.
 
 ### Example Output
 

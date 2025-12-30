@@ -24,22 +24,28 @@ class CalibrationConfig:
     
     Attributes:
         auto_tune_enabled: Enable automatic parameter tuning
-        auto_tune_frequency: How often to run auto-tuning (in predictions)
+        auto_tune_frequency: How often to run auto-tuning (in predictions or time-based)
+        auto_tune_mode: "prediction_count" or "time_based"
+        auto_tune_schedule: For time_based mode: "daily", "weekly", or cron expression
         min_samples_for_tuning: Minimum settled predictions before tuning
         tuning_strategy: Which tuning strategy to use
         performance_window: Number of recent predictions to analyze
         alert_on_poor_performance: Send alerts when performance drops
         roi_alert_threshold: ROI threshold for alerts (negative)
         brier_alert_threshold: Brier score threshold for alerts
+        last_calibration_time: Timestamp of last calibration (internal use)
     """
     auto_tune_enabled: bool = True
-    auto_tune_frequency: int = 100  # Tune every 100 predictions
+    auto_tune_frequency: int = 100  # Tune every 100 predictions (if prediction_count mode)
+    auto_tune_mode: str = "prediction_count"  # "prediction_count" or "time_based"
+    auto_tune_schedule: str = "weekly"  # "daily", "weekly", or cron expression
     min_samples_for_tuning: int = 50
     tuning_strategy: TuningStrategy = TuningStrategy.ADAPTIVE
     performance_window: int = 100
     alert_on_poor_performance: bool = True
     roi_alert_threshold: float = -10.0
     brier_alert_threshold: float = 0.25
+    last_calibration_time: Optional[str] = None
 
 
 class AutoCalibrator:
@@ -139,12 +145,53 @@ class AutoCalibrator:
         self._predictions_since_tune += 1
         
         if self.config.auto_tune_enabled:
-            if self._predictions_since_tune >= self.config.auto_tune_frequency:
+            should_calibrate = False
+            
+            if self.config.auto_tune_mode == "prediction_count":
+                # Original behavior: calibrate every N predictions
+                if self._predictions_since_tune >= self.config.auto_tune_frequency:
+                    should_calibrate = True
+            elif self.config.auto_tune_mode == "time_based":
+                # New behavior: calibrate based on time schedule
+                should_calibrate = self._should_run_time_based_calibration()
+            
+            if should_calibrate:
                 logger.info("Auto-tune threshold reached, running calibration...")
                 self.run_calibration()
                 self._predictions_since_tune = 0
+                self.config.last_calibration_time = datetime.now().isoformat()
         
         return prediction_id
+    
+    def _should_run_time_based_calibration(self) -> bool:
+        """
+        Check if time-based calibration should run.
+        
+        Returns:
+            True if enough time has passed since last calibration
+        """
+        if not self.config.last_calibration_time:
+            # First time, run calibration
+            return True
+        
+        try:
+            from datetime import timedelta
+            last_cal = datetime.fromisoformat(self.config.last_calibration_time)
+            now = datetime.now()
+            time_diff = now - last_cal
+            
+            if self.config.auto_tune_schedule == "daily":
+                # Run once per day (after 24 hours)
+                return time_diff >= timedelta(days=1)
+            elif self.config.auto_tune_schedule == "weekly":
+                # Run once per week (after 7 days)
+                return time_diff >= timedelta(days=7)
+            else:
+                # For custom schedules, default to weekly
+                return time_diff >= timedelta(days=7)
+        except Exception as e:
+            logger.error(f"Error checking time-based calibration: {e}")
+            return False
     
     def update_outcome(
         self,
