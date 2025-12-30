@@ -274,6 +274,9 @@ class PerformanceTracker:
         
         avg_brier = sum(brier_scores) / len(brier_scores) if brier_scores else 0.0
         
+        # Note: Win rate excludes pushes from denominator (industry standard)
+        # Win% = Wins / (Wins + Losses), not including pushes
+        
         return {
             "total_predictions": len(records),
             "settled_predictions": wins + losses + pushes,

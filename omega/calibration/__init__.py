@@ -11,7 +11,12 @@ Components:
     - FeedbackLoop: Implements learning from historical performance
 """
 
-from omega.calibration.auto_calibrator import AutoCalibrator, CalibrationConfig
+from omega.calibration.auto_calibrator import (
+    AutoCalibrator,
+    CalibrationConfig,
+    get_global_calibrator,
+    get_tuned_parameter
+)
 from omega.calibration.performance_tracker import PerformanceTracker, PredictionRecord
 from omega.calibration.parameter_tuner import ParameterTuner, TuningStrategy
 
@@ -22,4 +27,6 @@ __all__ = [
     "PredictionRecord",
     "ParameterTuner",
     "TuningStrategy",
+    "get_global_calibrator",
+    "get_tuned_parameter",
 ]

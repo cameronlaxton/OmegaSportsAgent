@@ -13,9 +13,10 @@ This comprehensive guide covers everything you need to use the OmegaSports engin
 2. [Web Scraping for Live Data](#web-scraping-for-live-data)
 3. [Running Simulations](#running-simulations)
 4. [Betting Analysis](#betting-analysis)
-5. [CLI Commands](#cli-commands)
-6. [Module Reference](#module-reference)
-7. [Troubleshooting](#troubleshooting)
+5. [Autonomous Calibration](#autonomous-calibration)
+6. [CLI Commands](#cli-commands)
+7. [Module Reference](#module-reference)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -427,6 +428,189 @@ if edge >= threshold:
 else:
     print(f"❌ NO BET: Edge {edge:.2f}% below threshold {threshold}%")
 ```
+
+---
+
+## Autonomous Calibration
+
+**NEW**: The OmegaSportsAgent now features autonomous calibration and self-enhancement capabilities. The system continuously learns from predictions vs actual outcomes and auto-tunes parameters to improve accuracy.
+
+### Overview
+
+The calibration system consists of three main components:
+
+1. **Performance Tracker** - Logs all predictions and outcomes
+2. **Parameter Tuner** - Autonomously adjusts model parameters
+3. **Auto-Calibrator** - Coordinates everything with feedback loops
+
+### Quick Start
+
+```python
+from omega.calibration import AutoCalibrator, CalibrationConfig, TuningStrategy
+
+# Initialize calibrator
+calibrator = AutoCalibrator()
+
+# Log a prediction
+pred_id = calibrator.log_prediction(
+    prediction_type="player_prop",
+    league="NBA",
+    predicted_value=27.5,
+    predicted_probability=0.58,
+    confidence_tier="B",
+    edge_pct=6.5,
+    stake_amount=20.0,
+    parameters_used={"iterations": 10000, "threshold": 5.0}
+)
+
+# Later, update with actual outcome
+calibrator.update_outcome(
+    prediction_id=pred_id,
+    actual_value=28.5,
+    actual_result="Win",
+    profit_loss=18.0
+)
+
+# System auto-tunes every N predictions
+# Or manually trigger:
+calibrator.run_calibration()
+```
+
+### Using Calibrated Parameters
+
+Any module can access auto-tuned parameters:
+
+```python
+from omega.calibration import get_tuned_parameter
+
+# In your analysis code
+edge_threshold = get_tuned_parameter("edge_threshold_prop", default=5.0)
+
+if calculated_edge >= edge_threshold:
+    # Place bet
+    pass
+
+# In Markov simulation
+star_allocation = get_tuned_parameter("markov_shot_allocation_star", default=0.30)
+
+# In probability calibration
+shrink_factor = get_tuned_parameter("calibration_shrink_factor", default=0.70)
+```
+
+### Tuning Strategies
+
+The system supports multiple tuning strategies:
+
+**1. Adaptive (Default)**
+- Aggressive adjustments when losing money (ROI < 0)
+- Conservative adjustments when profitable
+- Increases edge thresholds when win rate is low
+- Adjusts calibration when Brier score is poor
+
+**2. Conservative**
+- Makes small, safe adjustments only
+- Only acts on clearly problematic performance
+- Use when you want minimal changes
+
+**3. Gradient Descent**
+- Analyzes which parameter values led to best ROI
+- Moves parameters toward historically successful values
+- Data-driven optimization
+
+### Tunable Parameters
+
+The system automatically tunes:
+
+- `edge_threshold_spread` - Minimum edge for spread bets
+- `edge_threshold_prop` - Minimum edge for prop bets
+- `kelly_fraction` - Kelly criterion stake sizing
+- `calibration_shrink_factor` - Probability shrinkage
+- `calibration_cap_max/min` - Probability caps
+- `markov_shot_allocation_star` - Star player usage in Markov
+- `markov_possession_adjustment_factor` - Possession count calibration
+- `monte_carlo_iterations` - Simulation sample size
+- `monte_carlo_variance_multiplier` - Variance adjustment
+
+### Performance Monitoring
+
+Get comprehensive performance reports:
+
+```python
+# Overall performance
+report = calibrator.get_performance_report(include_details=True)
+
+print(f"Win Rate: {report['overall_performance']['win_rate']:.2%}")
+print(f"ROI: {report['overall_performance']['roi']:.2f}%")
+print(f"Brier Score: {report['overall_performance']['brier_score']:.3f}")
+
+# Performance by league
+for league, metrics in report['by_league'].items():
+    print(f"{league}: {metrics['win_rate']:.2%} win rate, {metrics['roi']:.1f}% ROI")
+
+# Current parameter values
+for param, value in report['current_parameters'].items():
+    print(f"{param}: {value}")
+```
+
+### Configuration
+
+Customize calibration behavior:
+
+```python
+config = CalibrationConfig(
+    auto_tune_enabled=True,
+    auto_tune_frequency=100,  # Tune every 100 predictions
+    min_samples_for_tuning=50,  # Need 50 settled bets before tuning
+    tuning_strategy=TuningStrategy.ADAPTIVE,
+    performance_window=100,  # Analyze last 100 predictions
+    alert_on_poor_performance=True,
+    roi_alert_threshold=-10.0,  # Alert if ROI < -10%
+    brier_alert_threshold=0.25  # Alert if Brier > 0.25
+)
+
+calibrator = AutoCalibrator(config=config)
+```
+
+### Example Output
+
+When calibration runs, you'll see adjustments like:
+
+```
+📝 PARAMETER ADJUSTMENTS:
+  edge_threshold_prop: 5.0000 → 5.5000
+    Reason: Win rate low (46.2%), increasing selectivity
+  
+  calibration_shrink_factor: 0.7000 → 0.6250
+    Reason: Brier score high (0.258), increasing shrinkage
+```
+
+### Run Demo
+
+```bash
+python example_autonomous_calibration.py
+```
+
+This demonstrates:
+- Logging predictions and outcomes
+- Automatic performance monitoring
+- Parameter tuning in action
+- Integration with existing code
+
+### Best Practices
+
+1. **Log Every Prediction** - The more data, the better calibration works
+2. **Update Outcomes Promptly** - Don't wait too long to log results
+3. **Start Conservative** - Use conservative strategy initially
+4. **Monitor Alerts** - Pay attention to ROI and Brier score warnings
+5. **Review Adjustments** - Check what parameters changed and why
+6. **Reset if Needed** - Can reset to defaults if tuning goes wrong
+
+### Persistence
+
+All calibration data persists across sessions:
+- Predictions stored in `data/logs/predictions.json`
+- Tuned parameters in `data/config/tuned_parameters.json`
+- System learns continuously over time
 
 ---
 

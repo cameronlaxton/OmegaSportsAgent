@@ -242,7 +242,7 @@ class AutoCalibrator:
                 brier, self.config.brier_alert_threshold
             )
     
-    def get_calibrated_parameter(self, name: str, default: Any = None) -> Any:
+    def get_calibrated_parameter(self, name: str, default: float = None) -> Optional[float]:
         """
         Get current calibrated value for a parameter.
         
@@ -253,7 +253,7 @@ class AutoCalibrator:
             default: Default value if parameter not found
         
         Returns:
-            Current tuned value or default
+            Current tuned value or default (typically float, but could be int)
         """
         value = self.tuner.get_parameter(name)
         return value if value is not None else default
