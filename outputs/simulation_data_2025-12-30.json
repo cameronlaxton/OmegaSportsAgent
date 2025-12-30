@@ -1,0 +1,196 @@
+{
+  "date": "2025-12-30",
+  "timestamp": "2025-12-30T14:25:00-05:00",
+  "games": [
+    {
+      "game_id": "NBA-20251230-001",
+      "matchup": "Detroit Pistons @ Los Angeles Lakers",
+      "league": "NBA",
+      "home_team": "Los Angeles Lakers",
+      "away_team": "Detroit Pistons",
+      "simulation": {
+        "iterations": 10000,
+        "engine": "Monte Carlo",
+        "variance_model": "Poisson"
+      },
+      "team_ratings": {
+        "Los Angeles Lakers": {
+          "offensive_rating": 114.9,
+          "defensive_rating": 112.3,
+          "pace": 100.8,
+          "injury_adjustment": -4.2,
+          "adjusted_rating": 110.7
+        },
+        "Detroit Pistons": {
+          "offensive_rating": 113.1,
+          "defensive_rating": 113.1,
+          "pace": 98.5,
+          "injury_adjustment": 0.0,
+          "adjusted_rating": 113.1
+        }
+      },
+      "results": {
+        "away_win_prob": 0.582,
+        "home_win_prob": 0.418,
+        "tie_prob": 0.0,
+        "avg_away_score": 112.4,
+        "avg_home_score": 108.1,
+        "median_away_score": 112,
+        "median_home_score": 108,
+        "std_dev_away": 8.2,
+        "std_dev_home": 8.5,
+        "projected_margin": -5.5,
+        "margin_confidence_90": [-2.1, -9.3],
+        "total_avg": 220.5,
+        "total_median": 220,
+        "over_240_prob": 0.124,
+        "under_200_prob": 0.089
+      },
+      "market_comparison": {
+        "spread": {
+          "market_line": -2.5,
+          "model_line": -5.5,
+          "difference": 3.0,
+          "edge": "away"
+        },
+        "total": {
+          "market_line": 232.5,
+          "model_line": 220.5,
+          "difference": -12.0,
+          "edge": "under"
+        }
+      }
+    },
+    {
+      "game_id": "NBA-20251230-002",
+      "matchup": "Boston Celtics @ Utah Jazz",
+      "league": "NBA",
+      "home_team": "Utah Jazz",
+      "away_team": "Boston Celtics",
+      "simulation": {
+        "iterations": 10000,
+        "engine": "Monte Carlo",
+        "variance_model": "Poisson"
+      },
+      "team_ratings": {
+        "Utah Jazz": {
+          "offensive_rating": 112.1,
+          "defensive_rating": 118.3,
+          "pace": 99.2,
+          "injury_adjustment": -1.8,
+          "adjusted_rating": 110.3
+        },
+        "Boston Celtics": {
+          "offensive_rating": 116.9,
+          "defensive_rating": 109.7,
+          "pace": 98.2,
+          "injury_adjustment": -2.1,
+          "adjusted_rating": 114.8
+        }
+      },
+      "results": {
+        "away_win_prob": 0.721,
+        "home_win_prob": 0.279,
+        "tie_prob": 0.0,
+        "avg_away_score": 119.2,
+        "avg_home_score": 110.8,
+        "median_away_score": 119,
+        "median_home_score": 111,
+        "std_dev_away": 9.1,
+        "std_dev_home": 9.4,
+        "projected_margin": 9.5,
+        "margin_confidence_90": [5.8, 13.2],
+        "total_avg": 230.0,
+        "total_median": 230,
+        "over_240_prob": 0.434,
+        "under_220_prob": 0.312
+      },
+      "market_comparison": {
+        "spread": {
+          "market_line": -8.5,
+          "model_line": -9.5,
+          "difference": -1.0,
+          "edge": "home"
+        },
+        "total": {
+          "market_line": 240.5,
+          "model_line": 230.0,
+          "difference": -10.5,
+          "edge": "under"
+        }
+      }
+    },
+    {
+      "game_id": "NBA-20251230-003",
+      "matchup": "Philadelphia 76ers @ Memphis Grizzlies",
+      "league": "NBA",
+      "home_team": "Memphis Grizzlies",
+      "away_team": "Philadelphia 76ers",
+      "simulation": {
+        "iterations": 10000,
+        "engine": "Monte Carlo",
+        "variance_model": "Poisson"
+      },
+      "team_ratings": {
+        "Memphis Grizzlies": {
+          "offensive_rating": 109.5,
+          "defensive_rating": 110.5,
+          "pace": 101.2,
+          "injury_adjustment": 0.0,
+          "adjusted_rating": 109.5
+        },
+        "Philadelphia 76ers": {
+          "offensive_rating": 110.6,
+          "defensive_rating": 110.5,
+          "pace": 98.8,
+          "injury_adjustment": -2.8,
+          "adjusted_rating": 107.8
+        }
+      },
+      "results": {
+        "away_win_prob": 0.459,
+        "home_win_prob": 0.541,
+        "tie_prob": 0.0,
+        "avg_away_score": 115.2,
+        "avg_home_score": 116.8,
+        "median_away_score": 115,
+        "median_home_score": 117,
+        "std_dev_away": 8.8,
+        "std_dev_home": 8.6,
+        "projected_margin": 2.0,
+        "margin_confidence_90": [-1.5, 5.8],
+        "total_avg": 232.0,
+        "total_median": 232,
+        "over_240_prob": 0.398,
+        "under_220_prob": 0.187
+      },
+      "market_comparison": {
+        "spread": {
+          "market_line": -1.5,
+          "model_line": 2.0,
+          "difference": 3.5,
+          "edge": "home"
+        },
+        "total": {
+          "market_line": 234.0,
+          "model_line": 232.0,
+          "difference": -2.0,
+          "edge": "neutral"
+        }
+      },
+      "conditional_projections": {
+        "if_embiid_out": {
+          "away_win_prob": 0.389,
+          "home_win_prob": 0.611,
+          "projected_margin": 4.8
+        }
+      }
+    }
+  ],
+  "summary": {
+    "total_games": 3,
+    "avg_iterations": 10000,
+    "total_simulations": 30000,
+    "execution_time_seconds": 8.4
+  }
+}

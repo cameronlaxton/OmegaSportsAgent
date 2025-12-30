@@ -1,0 +1,203 @@
+{
+  "predictions": [
+    {
+      "prediction_id": "20251230-001",
+      "date": "2025-12-30",
+      "timestamp": "2025-12-30T14:25:00-05:00",
+      "league": "NBA",
+      "game": "Detroit Pistons @ Los Angeles Lakers",
+      "home_team": "Los Angeles Lakers",
+      "away_team": "Detroit Pistons",
+      "prediction_type": "spread",
+      "pick": "Detroit Pistons -2.5",
+      "market_line": -2.5,
+      "market_odds": -110,
+      "model_prediction": {
+        "away_win_prob": 0.582,
+        "home_win_prob": 0.418,
+        "projected_spread": -5.5,
+        "projected_total": 220.5
+      },
+      "edge_analysis": {
+        "edge_pct": 5.8,
+        "ev_pct": 5.3,
+        "implied_prob": 0.524,
+        "kelly_fraction": 0.025
+      },
+      "confidence": "B",
+      "stake_recommended": 2.5,
+      "reasoning": "Lakers severely depleted (Reaves, Hachimura, Vincent OUT). Pistons 24-8 with superior depth.",
+      "status": "pending",
+      "result": null,
+      "profit_loss": null
+    },
+    {
+      "prediction_id": "20251230-002",
+      "date": "2025-12-30",
+      "timestamp": "2025-12-30T14:25:00-05:00",
+      "league": "NBA",
+      "game": "Boston Celtics @ Utah Jazz",
+      "home_team": "Utah Jazz",
+      "away_team": "Boston Celtics",
+      "prediction_type": "total",
+      "pick": "Under 240.5",
+      "market_line": 240.5,
+      "market_odds": -110,
+      "model_prediction": {
+        "away_win_prob": 0.721,
+        "home_win_prob": 0.279,
+        "projected_spread": 9.5,
+        "projected_total": 230.0
+      },
+      "edge_analysis": {
+        "edge_pct": 4.2,
+        "ev_pct": 3.8,
+        "implied_prob": 0.524,
+        "model_under_prob": 0.566,
+        "kelly_fraction": 0.02
+      },
+      "confidence": "B",
+      "stake_recommended": 2.0,
+      "reasoning": "Boston elite defense (Top 5). Historical Under trend 4-0-1. Jazz missing rotation players.",
+      "status": "pending",
+      "result": null,
+      "profit_loss": null
+    },
+    {
+      "prediction_id": "20251230-003",
+      "date": "2025-12-30",
+      "timestamp": "2025-12-30T14:25:00-05:00",
+      "league": "NBA",
+      "game": "Philadelphia 76ers @ Memphis Grizzlies",
+      "home_team": "Memphis Grizzlies",
+      "away_team": "Philadelphia 76ers",
+      "prediction_type": "spread",
+      "pick": "Memphis Grizzlies +1.5",
+      "market_line": 1.5,
+      "market_odds": -110,
+      "model_prediction": {
+        "away_win_prob": 0.459,
+        "home_win_prob": 0.541,
+        "projected_spread": 2.0,
+        "projected_total": 232.0
+      },
+      "edge_analysis": {
+        "edge_pct": 1.7,
+        "ev_pct": 1.5,
+        "implied_prob": 0.524,
+        "kelly_fraction": 0.01
+      },
+      "confidence": "C",
+      "stake_recommended": 1.0,
+      "reasoning": "76ers lost 3 straight. Embiid questionable. Ja Morant back, home advantage.",
+      "status": "pending",
+      "result": null,
+      "profit_loss": null,
+      "notes": "Monitor Embiid status. Edge increases if ruled OUT."
+    },
+    {
+      "prediction_id": "20251230-P01",
+      "date": "2025-12-30",
+      "timestamp": "2025-12-30T14:25:00-05:00",
+      "league": "NBA",
+      "game": "Philadelphia 76ers @ Memphis Grizzlies",
+      "prediction_type": "player_prop",
+      "player": "Tyrese Maxey",
+      "team": "Philadelphia 76ers",
+      "prop_type": "Points",
+      "pick": "Over 27.5",
+      "market_line": 27.5,
+      "market_odds": -115,
+      "model_prediction": {
+        "projected_value": 31.2,
+        "over_prob": 0.682
+      },
+      "edge_analysis": {
+        "edge_pct": 6.8,
+        "ev_pct": 6.2,
+        "implied_prob": 0.535,
+        "kelly_fraction": 0.025
+      },
+      "confidence": "B",
+      "stake_recommended": 2.5,
+      "reasoning": "Maxey 3rd in NBA at 30.7 PPG. 32.9% usage with Embiid limited. Grizzlies allow most points to guards.",
+      "status": "pending",
+      "result": null,
+      "profit_loss": null
+    },
+    {
+      "prediction_id": "20251230-P02",
+      "date": "2025-12-30",
+      "timestamp": "2025-12-30T14:25:00-05:00",
+      "league": "NBA",
+      "game": "Detroit Pistons @ Los Angeles Lakers",
+      "prediction_type": "player_prop",
+      "player": "LeBron James",
+      "team": "Los Angeles Lakers",
+      "prop_type": "Pts+Reb+Ast",
+      "pick": "Over 35.5",
+      "market_line": 35.5,
+      "market_odds": -115,
+      "model_prediction": {
+        "projected_value": 39.4,
+        "over_prob": 0.713
+      },
+      "edge_analysis": {
+        "edge_pct": 8.1,
+        "ev_pct": 7.3,
+        "implied_prob": 0.535,
+        "kelly_fraction": 0.03
+      },
+      "confidence": "A",
+      "stake_recommended": 3.0,
+      "reasoning": "LeBron's 41st birthday. Historically 32.9/7.1/6.9 on birthdays. Increased usage with Reaves/Hachimura OUT.",
+      "status": "pending",
+      "result": null,
+      "profit_loss": null
+    },
+    {
+      "prediction_id": "20251230-P03",
+      "date": "2025-12-30",
+      "timestamp": "2025-12-30T14:25:00-05:00",
+      "league": "NBA",
+      "game": "Boston Celtics @ Utah Jazz",
+      "prediction_type": "player_prop",
+      "player": "Jaylen Brown",
+      "team": "Boston Celtics",
+      "prop_type": "Points",
+      "pick": "Over 31.5",
+      "market_line": 31.5,
+      "market_odds": -120,
+      "model_prediction": {
+        "projected_value": 34.5,
+        "over_prob": 0.649
+      },
+      "edge_analysis": {
+        "edge_pct": 4.9,
+        "ev_pct": 4.4,
+        "implied_prob": 0.545,
+        "kelly_fraction": 0.02
+      },
+      "confidence": "B",
+      "stake_recommended": 2.0,
+      "reasoning": "Without Tatum, Brown averages 34.2 PPG. Scored 36 vs Utah last meeting. Jazz 27th in defensive rating.",
+      "status": "pending",
+      "result": null,
+      "profit_loss": null
+    }
+  ],
+  "metadata": {
+    "generated_by": "Omega Agent",
+    "workflow": "morning_bets",
+    "date": "2025-12-30",
+    "total_predictions": 6,
+    "leagues": ["NBA"],
+    "simulation_iterations": 10000,
+    "data_sources": [
+      "espn.com/nba/injuries",
+      "covers.com",
+      "teamrankings.com",
+      "basketball-reference.com"
+    ]
+  }
+}
