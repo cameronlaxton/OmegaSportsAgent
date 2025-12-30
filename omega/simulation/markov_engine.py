@@ -4,6 +4,10 @@ Markov Play-by-Play Simulation Engine
 Simulates games play-by-play using Markov chains to model state transitions
 and accumulate player statistics. Particularly useful for player props where
 individual play involvement matters.
+
+AUTONOMOUS CALIBRATION:
+This engine uses the AutoCalibrator system to continuously improve accuracy
+by learning from historical predictions and outcomes.
 """
 
 from __future__ import annotations
@@ -22,6 +26,14 @@ try:
     import numpy as np
 except ImportError:
     np = None
+
+try:
+    from omega.calibration import get_tuned_parameter
+    CALIBRATION_ENABLED = True
+except ImportError:
+    CALIBRATION_ENABLED = False
+    def get_tuned_parameter(name: str, default: Any) -> Any:
+        return default
 
 logger = logging.getLogger(__name__)
 
@@ -246,8 +258,17 @@ class TransitionMatrix:
         self._transitions = self._build_default_transitions()
     
     def _build_default_transitions(self) -> Dict[str, Dict[str, float]]:
-        """Build default transition probabilities by league."""
+        """Build default transition probabilities by league with autonomous calibration."""
         if self.league == "NBA":
+            # Get calibrated shot allocation for star players
+            star_allocation = get_tuned_parameter("markov_shot_allocation_star", 0.30)
+            
+            # Distribute remaining allocation proportionally
+            remaining = 1.0 - star_allocation
+            secondary = remaining * 0.357  # ~25% of 70%
+            tertiary = remaining * 0.286   # ~20% of 70%
+            other = remaining * 0.357      # ~25% of 70%
+            
             return {
                 "possession": {
                     "two_point_make": 0.35,
@@ -258,10 +279,10 @@ class TransitionMatrix:
                     "turnover": 0.07
                 },
                 "shot_allocation": {
-                    "star_player": 0.30,
-                    "secondary": 0.25,
-                    "tertiary": 0.20,
-                    "other": 0.25
+                    "star_player": star_allocation,
+                    "secondary": secondary,
+                    "tertiary": tertiary,
+                    "other": other
                 }
             }
         elif self.league == "NFL":
@@ -385,17 +406,19 @@ class MarkovSimulator:
         return [p for p in self.players if p.get("team") == team]
     
     def _calculate_base_possessions(self) -> int:
-        """Calculate base number of possessions based on team pace."""
+        """Calculate base number of possessions based on team pace with calibration."""
+        possession_adj = get_tuned_parameter("markov_possession_adjustment_factor", 1.0)
+        
         if self.league == "NBA":
             if self.home_context and self.away_context:
                 home_pace = getattr(self.home_context, 'pace', None) or self.home_context.get('pace', 100.0) if isinstance(self.home_context, dict) else getattr(self.home_context, 'pace', 100.0)
                 away_pace = getattr(self.away_context, 'pace', None) or self.away_context.get('pace', 100.0) if isinstance(self.away_context, dict) else getattr(self.away_context, 'pace', 100.0)
                 avg_pace = (home_pace + away_pace) / 2
-                return int(avg_pace * 2)
-            return 200
+                return int(avg_pace * 2 * possession_adj)
+            return int(200 * possession_adj)
         elif self.league == "NFL":
-            return 150
-        return 200
+            return int(150 * possession_adj)
+        return int(200 * possession_adj)
     
     def _get_context_value(self, context: Any, key: str, default: float) -> float:
         """Safely get a value from a context (dict or dataclass)."""
