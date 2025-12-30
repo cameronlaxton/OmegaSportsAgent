@@ -1,0 +1,7 @@
+bet_id,date,time,league,game,pick,bet_type,odds,edge_pct,ev_pct,confidence,stake_pct,status
+20251230-001,2025-12-30,14:19,NBA,Detroit Pistons @ Los Angeles Lakers,Pistons -2.5,spread,-110,5.8,5.3,B,2.5,pending
+20251230-002,2025-12-30,14:19,NBA,Boston Celtics @ Utah Jazz,Under 240.5,total,-110,4.2,3.8,B,2.0,pending
+20251230-003,2025-12-30,14:19,NBA,Philadelphia 76ers @ Memphis Grizzlies,Grizzlies +1.5,spread,-110,1.7,1.5,C,1.0,pending
+20251230-P01,2025-12-30,14:19,NBA,Philadelphia 76ers @ Memphis Grizzlies,Tyrese Maxey Over 27.5 Pts,prop,-115,6.8,6.2,B,2.5,pending
+20251230-P02,2025-12-30,14:19,NBA,Detroit Pistons @ Los Angeles Lakers,LeBron James Over 35.5 PRA,prop,-115,8.1,7.3,A,3.0,pending
+20251230-P03,2025-12-30,14:19,NBA,Boston Celtics @ Utah Jazz,Jaylen Brown Over 31.5 Pts,prop,-120,4.9,4.4,B,2.0,pending

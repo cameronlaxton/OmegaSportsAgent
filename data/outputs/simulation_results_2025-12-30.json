@@ -1,0 +1,167 @@
+{
+  "date": "2025-12-30",
+  "timestamp": "2025-12-30T14:19:00-05:00",
+  "games_simulated": [
+    {
+      "game_id": "NBA-20251230-DET-LAL",
+      "home_team": "Los Angeles Lakers",
+      "away_team": "Detroit Pistons",
+      "league": "NBA",
+      "iterations": 10000,
+      "projections": {
+        "off_rating": {
+          "Los Angeles Lakers": 114.9,
+          "Detroit Pistons": 113.1
+        },
+        "def_rating": {
+          "Los Angeles Lakers": 112.3,
+          "Detroit Pistons": 113.1
+        },
+        "pace": {
+          "Los Angeles Lakers": 100.8,
+          "Detroit Pistons": 98.5
+        }
+      },
+      "injury_adjustments": {
+        "Los Angeles Lakers": -4.2,
+        "Detroit Pistons": 0.0
+      },
+      "simulation_results": {
+        "away_win_prob": 0.582,
+        "home_win_prob": 0.418,
+        "avg_away_score": 112.4,
+        "avg_home_score": 108.1,
+        "median_margin": -5.5,
+        "total_avg": 220.5,
+        "over_prob": 0.473,
+        "under_prob": 0.527
+      },
+      "market_lines": {
+        "spread": {
+          "line": -2.5,
+          "favorite": "Detroit Pistons",
+          "juice": -110
+        },
+        "total": {
+          "line": 232.5,
+          "over_juice": -110,
+          "under_juice": -110
+        },
+        "moneyline": {
+          "away": -145,
+          "home": +125
+        }
+      }
+    },
+    {
+      "game_id": "NBA-20251230-BOS-UTA",
+      "home_team": "Utah Jazz",
+      "away_team": "Boston Celtics",
+      "league": "NBA",
+      "iterations": 10000,
+      "projections": {
+        "off_rating": {
+          "Utah Jazz": 112.1,
+          "Boston Celtics": 116.9
+        },
+        "def_rating": {
+          "Utah Jazz": 118.3,
+          "Boston Celtics": 109.7
+        },
+        "pace": {
+          "Utah Jazz": 99.2,
+          "Boston Celtics": 98.2
+        }
+      },
+      "injury_adjustments": {
+        "Utah Jazz": -1.8,
+        "Boston Celtics": -2.1
+      },
+      "simulation_results": {
+        "away_win_prob": 0.721,
+        "home_win_prob": 0.279,
+        "avg_away_score": 119.2,
+        "avg_home_score": 110.8,
+        "median_margin": 9.5,
+        "total_avg": 230.0,
+        "over_prob": 0.434,
+        "under_prob": 0.566
+      },
+      "market_lines": {
+        "spread": {
+          "line": -8.5,
+          "favorite": "Boston Celtics",
+          "juice": -110
+        },
+        "total": {
+          "line": 240.5,
+          "over_juice": -110,
+          "under_juice": -110
+        },
+        "moneyline": {
+          "away": -315,
+          "home": +265
+        }
+      }
+    },
+    {
+      "game_id": "NBA-20251230-PHI-MEM",
+      "home_team": "Memphis Grizzlies",
+      "away_team": "Philadelphia 76ers",
+      "league": "NBA",
+      "iterations": 10000,
+      "projections": {
+        "off_rating": {
+          "Memphis Grizzlies": 109.5,
+          "Philadelphia 76ers": 110.6
+        },
+        "def_rating": {
+          "Memphis Grizzlies": 110.5,
+          "Philadelphia 76ers": 110.5
+        },
+        "pace": {
+          "Memphis Grizzlies": 101.2,
+          "Philadelphia 76ers": 98.8
+        }
+      },
+      "injury_adjustments": {
+        "Memphis Grizzlies": 0.0,
+        "Philadelphia 76ers": -2.8
+      },
+      "simulation_results": {
+        "away_win_prob": 0.459,
+        "home_win_prob": 0.541,
+        "avg_away_score": 115.2,
+        "avg_home_score": 116.8,
+        "median_margin": 2.0,
+        "total_avg": 232.0,
+        "over_prob": 0.492,
+        "under_prob": 0.508
+      },
+      "market_lines": {
+        "spread": {
+          "line": -1.5,
+          "favorite": "Philadelphia 76ers",
+          "juice": -110
+        },
+        "total": {
+          "line": 234.0,
+          "over_juice": -110,
+          "under_juice": -110
+        },
+        "moneyline": {
+          "away": -125,
+          "home": +105
+        }
+      },
+      "notes": "Embiid status affects projection. If OUT, home_win_prob increases to ~61%"
+    }
+  ],
+  "methodology": {
+    "engine": "Monte Carlo Simulation",
+    "iterations": 10000,
+    "data_sources": ["Basketball-Reference", "TeamRankings", "ESPN"],
+    "injury_adjustments": "Applied based on player impact rating",
+    "variance_modeling": "Poisson-based score distribution"
+  }
+}
