@@ -1,0 +1,82 @@
+{
+  "markov_shot_allocation_star": {
+    "name": "markov_shot_allocation_star",
+    "current_value": 0.3,
+    "min_value": 0.2,
+    "max_value": 0.45,
+    "step_size": 0.02,
+    "priority": 2
+  },
+  "markov_possession_adjustment_factor": {
+    "name": "markov_possession_adjustment_factor",
+    "current_value": 1.0,
+    "min_value": 0.7,
+    "max_value": 1.3,
+    "step_size": 0.05,
+    "priority": 3
+  },
+  "monte_carlo_iterations": {
+    "name": "monte_carlo_iterations",
+    "current_value": 10000,
+    "min_value": 5000,
+    "max_value": 50000,
+    "step_size": 5000,
+    "priority": 1
+  },
+  "monte_carlo_variance_multiplier": {
+    "name": "monte_carlo_variance_multiplier",
+    "current_value": 1.0,
+    "min_value": 0.8,
+    "max_value": 1.5,
+    "step_size": 0.1,
+    "priority": 2
+  },
+  "edge_threshold_spread": {
+    "name": "edge_threshold_spread",
+    "current_value": 3.0,
+    "min_value": 2.0,
+    "max_value": 6.0,
+    "step_size": 0.5,
+    "priority": 3
+  },
+  "edge_threshold_prop": {
+    "name": "edge_threshold_prop",
+    "current_value": 5.0,
+    "min_value": 3.0,
+    "max_value": 8.0,
+    "step_size": 0.5,
+    "priority": 3
+  },
+  "kelly_fraction": {
+    "name": "kelly_fraction",
+    "current_value": 0.25,
+    "min_value": 0.1,
+    "max_value": 0.5,
+    "step_size": 0.05,
+    "priority": 1
+  },
+  "calibration_shrink_factor": {
+    "name": "calibration_shrink_factor",
+    "current_value": 0.625,
+    "min_value": 0.5,
+    "max_value": 0.95,
+    "step_size": 0.05,
+    "priority": 2
+  },
+  "calibration_cap_max": {
+    "name": "calibration_cap_max",
+    "current_value": 0.85,
+    "min_value": 0.75,
+    "max_value": 0.95,
+    "step_size": 0.02,
+    "priority": 2
+  },
+  "calibration_cap_min": {
+    "name": "calibration_cap_min",
+    "current_value": 0.15,
+    "min_value": 0.05,
+    "max_value": 0.25,
+    "step_size": 0.02,
+    "priority": 2
+  }
+}
