@@ -38,6 +38,7 @@ python main.py --scrape "https://www.espn.com/nba/schedule"
 ### Documentation
 
 - **[GUIDE.md](./GUIDE.md)** - Complete setup, scraping, simulation, and analysis guide
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Development workflow and git guidelines
 - **[test_engine.py](./test_engine.py)** - Test suite
 - **[example_complete_workflow.py](./example_complete_workflow.py)** - Working example
 - **[example_markov_simulation.py](./example_markov_simulation.py)** - Markov simulation example
@@ -93,6 +94,15 @@ omega-sports-engine/
 | `PERPLEXITY_API_KEY` | Data enrichment | Optional |
 | `BALLDONTLIE_API_KEY` | NBA statistics | Optional |
 | `THE_ODDS_API_KEY` | Live odds data | Optional |
+
+## Contributing
+
+Interested in contributing? See **[CONTRIBUTING.md](./CONTRIBUTING.md)** for:
+- Development setup instructions
+- Git workflow guidelines (fetching, branching, syncing)
+- Code style standards
+- Testing requirements
+- Pull request process
 
 ## License
 
