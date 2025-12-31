@@ -915,11 +915,48 @@ validate_environment()
 
 ## Environment Variables
 
-| Variable | Purpose | Required |
-|----------|---------|----------|
-| `PERPLEXITY_API_KEY` | Data enrichment | Optional |
-| `BALLDONTLIE_API_KEY` | NBA statistics API | Optional |
-| `THE_ODDS_API_KEY` | Odds API | Optional |
+| Variable | Purpose | Required | Default |
+|----------|---------|----------|---------|
+| `PERPLEXITY_API_KEY` | Data enrichment | Optional | None |
+| `BALLDONTLIE_API_KEY` | NBA statistics API | Optional | Pre-configured |
+| `ODDS_API_KEY` | The Odds API for betting lines | Optional | Pre-configured |
+
+### API Key Configuration
+
+**Pre-Configured Keys**: The OmegaSports engine comes with pre-configured API keys for Ball Don't Lie and The Odds API. These are stored in `omega/foundation/api_config.py` and work out of the box.
+
+**Custom Keys**: You can override the default keys by setting environment variables:
+
+```bash
+# Set custom API keys (optional)
+export BALLDONTLIE_API_KEY="your_custom_key_here"
+export ODDS_API_KEY="your_custom_key_here"
+export PERPLEXITY_API_KEY="your_perplexity_key"  # Optional for enhanced data
+```
+
+**Check API Key Status**:
+
+```python
+from omega.foundation.api_config import check_api_keys
+
+# Check which keys are configured and their sources
+status = check_api_keys()
+for key_name, info in status.items():
+    print(f"{key_name}:")
+    print(f"  Source: {info['source']}")  # 'default' or 'environment'
+    print(f"  Configured: {info['configured']}")
+    print(f"  Value: {info['value']}")  # Masked for security
+```
+
+**API Details**:
+- **Ball Don't Lie API**: Free NBA player statistics and season averages
+  - Used by: `omega/data/stats_ingestion.py`
+  - Endpoint: `https://api.balldontlie.io/v1`
+  
+- **The Odds API**: Sports betting odds and lines
+  - Used by: `omega/data/odds_scraper.py`
+  - Endpoint: `https://api.the-odds-api.com/v4`
+  - Free tier: 500 requests/month
 
 ---
 

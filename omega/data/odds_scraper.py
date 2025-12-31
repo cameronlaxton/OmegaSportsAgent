@@ -13,10 +13,12 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 
+from omega.foundation.api_config import get_odds_api_key
+
 logger = logging.getLogger(__name__)
 
 ODDS_API_BASE_URL = "https://api.the-odds-api.com/v4"
-ODDS_API_KEY = os.environ.get("ODDS_API_KEY", "")
+ODDS_API_KEY = get_odds_api_key()
 
 LEAGUE_SPORT_MAPPING = {
     "NBA": "basketball_nba",

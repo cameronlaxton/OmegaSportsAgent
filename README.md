@@ -89,11 +89,24 @@ omega-sports-engine/
 
 ## Environment Variables
 
-| Variable | Purpose | Required |
-|----------|---------|----------|
-| `PERPLEXITY_API_KEY` | Data enrichment | Optional |
-| `BALLDONTLIE_API_KEY` | NBA statistics | Optional |
-| `THE_ODDS_API_KEY` | Live odds data | Optional |
+| Variable | Purpose | Required | Default |
+|----------|---------|----------|---------|
+| `PERPLEXITY_API_KEY` | Data enrichment | Optional | None |
+| `BALLDONTLIE_API_KEY` | NBA statistics | Optional | Configured |
+| `ODDS_API_KEY` | Live odds data | Optional | Configured |
+
+**Note**: API keys for Ball Don't Lie and The Odds API are pre-configured in `omega/foundation/api_config.py`. You can override them by setting environment variables:
+
+```bash
+export BALLDONTLIE_API_KEY="your_custom_key"
+export ODDS_API_KEY="your_custom_key"
+```
+
+To check current API key status:
+```python
+from omega.foundation.api_config import check_api_keys
+print(check_api_keys())
+```
 
 ## Contributing
 

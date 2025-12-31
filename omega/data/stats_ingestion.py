@@ -18,6 +18,7 @@ from urllib.parse import quote
 
 import requests
 
+from omega.foundation.api_config import get_balldontlie_key
 from omega.data import stats_scraper
 from omega.data import nba_stats_api
 from omega.data import last_known_good
@@ -34,7 +35,7 @@ PERPLEXITY_CACHE_HOURS = 24
 PERPLEXITY_RATE_LIMIT_DELAY = 2.0
 _last_perplexity_call: float = 0
 
-BALLDONTLIE_API_KEY = os.environ.get("BALLDONTLIE_API_KEY")
+BALLDONTLIE_API_KEY = get_balldontlie_key()
 BALLDONTLIE_API_URL = "https://api.balldontlie.io/v1"
 
 HEADERS = {
