@@ -1,7 +1,21 @@
 Date,League,Game_ID,Pick,Odds_American,Implied_Prob,Model_Prob,Edge_%,Confidence_Tier,Predicted_Outcome,Factors,Final_Box_Score,Result
 2025-12-22,NBA,Lakers vs Warriors,LAL -3.5,-110,0.524,0.58,5.6,High,"Lakers 115, Warriors 108","Lakers home court advantage, Warriors missing key players","Lakers 118, Warriors 105",Win
-2025-12-25,NBA,Lakers vs Warriors,Lakers -3.5,-110,0.524,,5.6,High,,,,
-2025-12-25,NBA,DAL,Luka Doncic Over 33.5 Points,-115,0.535,,6.2,Medium,,Player prop: Luka Doncic,,
-2025-12-25,NBA,Denver Nuggets,Nikola Jokic Assists O 9.5,-110,0.524,,5.5,Medium,,Player prop: Nikola Jokic,,
-2025-12-25,NBA,DEN,Nikola Jokic Over 9.5 Assists,-110,0.524,,5.5,Medium,,Player prop: Nikola Jokic,,
-2025-12-25,NBA,ATL,Trae Young Under 11.5 Assists,-110,0.524,,4.8,Low,,Player prop: Trae Young,,
+2025-12-25,NBA,Lakers vs Warriors,Lakers -3.5,-110,0.524,0.556,5.6,High,"Lakers win by 5-7","Home advantage, Warriors missing players",,
+2025-12-25,NBA,DAL @ opponent,Luka Doncic Over 33.5 Points,-115,0.535,0.597,6.2,Medium,"Luka scores 35+","Player prop: Luka Doncic high usage",,
+2025-12-25,NBA,Denver Nuggets,Nikola Jokic Assists O 9.5,-110,0.524,0.579,5.5,Medium,"Jokic 10+ assists","Player prop: Jokic elite playmaker",,
+2025-12-25,NBA,DEN @ opponent,Nikola Jokic Over 9.5 Assists,-110,0.524,0.579,5.5,Medium,"Jokic 10+ assists","Player prop: Nikola Jokic playmaking",,
+2025-12-25,NBA,ATL @ opponent,Trae Young Under 11.5 Assists,-110,0.524,0.572,4.8,Low,"Trae 10-11 assists","Player prop: Trae Young assists",,
+2025-12-30,NBA,Detroit Pistons @ Los Angeles Lakers,Pistons -2.5,-110,0.524,0.582,5.8,B,"Pistons 115, Lakers 108","Lakers severely depleted (Reaves, Hachimura, Vincent OUT). Pistons 24-8 with superior depth.","Pistons 128, Lakers 106",Win
+2025-12-30,NBA,Boston Celtics @ Utah Jazz,Under 240.5,-110,0.524,0.566,4.2,B,"Total 235","Boston elite defense (Top 5). Historical Under trend 4-0-1 last 5 meetings.","Total 248 (129-119)",Loss
+2025-12-30,NBA,Philadelphia 76ers @ Memphis Grizzlies,Grizzlies +1.5,-110,0.524,0.541,1.7,C,"Grizzlies competitive","76ers lost 3 straight. Embiid questionable. Ja Morant back.","OT: PHI won by 3",Push
+2025-12-30,NBA,PHI @ MEM,Tyrese Maxey Over 27.5 Points,-115,0.535,0.603,6.8,B,"Maxey 30+ points","Maxey 3rd in NBA at 30.7 PPG. 32.9% usage with Embiid limited.","28 points",Win
+2025-12-30,NBA,DET @ LAL,LeBron James Over 35.5 PRA,-115,0.535,0.616,8.1,A,"LeBron 38+ PRA","LeBron's 41st birthday. Reaves/Hachimura OUT increases usage.","23 PRA (blowout, limited minutes)",Loss
+2025-12-30,NBA,BOS @ UTA,Jaylen Brown Over 31.5 Points,-120,0.545,0.594,4.9,B,"Brown 34+ points","Without Tatum, Brown is #1 option. Averages 34.2 PPG without Tatum.","35 points",Win
+2026-01-01,NBA,Houston Rockets @ Brooklyn Nets,Rockets -11,-110,0.524,0.641,11.7,A,"Rockets 119, Nets 108","Houston's elite offense (120.2 rating) dominates Brooklyn's depleted roster. Nets missing key players.",,
+2026-01-01,NBA,Philadelphia 76ers @ Dallas Mavericks,Mavericks +2.5,-110,0.524,0.587,6.3,A,"Mavericks 117, 76ers 115","Dallas superior depth with healthier roster. PHI injury concerns: Embiid maintenance, Oubre OUT.",,
+2026-01-01,NBA,Boston Celtics @ Sacramento Kings,Celtics -9.5,-110,0.524,0.624,10.0,A,"Celtics 118, Kings 109","Boston's elite offense (119.8 rating) vs Sacramento's weak defense. Despite Tatum OUT, Celtics' depth dominates.",,
+2026-01-01,NBA,Miami Heat @ Detroit Pistons,Over 238.5,-110,0.524,0.568,4.4,B,"Total 241","Miami leads NBA in pace, ranks 4th in scoring. Detroit elite at home. Both excel in paint points and fast breaks.",,
+2026-01-01,NBA,PHI @ DAL,Joel Embiid Over 26.5 Points,-110,0.524,0.612,8.8,A,"Embiid 28+ points","Embiid dominates when healthy. Model projects 28.4 PPG vs Dallas's league-average interior defense.",,
+2026-01-01,NBA,HOU @ BKN,Fred VanVleet Over 7.5 Assists,-115,0.535,0.598,6.2,B,"VanVleet 9+ assists","VanVleet orchestrates Houston's fast pace. Against depleted Brooklyn backcourt, assist opportunities expand.",,
+2026-01-01,NBA,BOS @ SAC,Jaylen Brown Over 28.5 Points,-120,0.545,0.621,7.1,A,"Brown 32+ points","Without Tatum, Brown averages 34.2 PPG. Sacramento 27th in defensive rating, cannot contain elite wings.",,
+2026-01-01,NBA,PHI @ DAL,Cooper Flagg Over 6.5 Rebounds,+110,0.476,0.580,5.6,B,"Flagg 8 rebounds","Flagg averages 6.4 RPG. PHI ranked 22nd in opponent rebounds. With Embiid hobbled, lots of rebounding opportunities.",,
