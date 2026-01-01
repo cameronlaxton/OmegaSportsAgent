@@ -18,6 +18,7 @@ from urllib.parse import quote
 
 import requests
 
+from omega.foundation.api_config import get_balldontlie_key, get_balldontlie_url
 from omega.data import stats_scraper
 from omega.data import nba_stats_api
 from omega.data import last_known_good
@@ -34,8 +35,8 @@ PERPLEXITY_CACHE_HOURS = 24
 PERPLEXITY_RATE_LIMIT_DELAY = 2.0
 _last_perplexity_call: float = 0
 
-BALLDONTLIE_API_KEY = os.environ.get("BALLDONTLIE_API_KEY")
-BALLDONTLIE_API_URL = "https://api.balldontlie.io/v1"
+BALLDONTLIE_API_KEY = get_balldontlie_key()
+# Ball Don't Lie API URLs are now fetched dynamically per league via get_balldontlie_url()
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -480,29 +481,36 @@ def _validate_player_stat(value: Optional[float], stat: str, league: str) -> Opt
     return value
 
 
-def get_player_stats_from_balldontlie(player_name: str) -> Optional[Dict[str, Any]]:
+def get_player_stats_from_balldontlie(player_name: str, league: str = "NBA") -> Optional[Dict[str, Any]]:
     """
-    Fetch NBA player stats from Ball Don't Lie API.
+    Fetch player stats from Ball Don't Lie API (supports NBA and NFL).
     
-    Free API for NBA player statistics - added to fallback chain before Perplexity
-    to save Perplexity credits.
+    All-Star tier features: Fetches comprehensive stats including season averages
+    and player details from Ball Don't Lie API.
     
     Args:
         player_name: Player's full name
+        league: League code (NBA or NFL, default: NBA)
     
     Returns:
-        Dict with {pts_mean, reb_mean, ast_mean, source} or None if failed
+        Dict with {pts_mean, reb_mean, ast_mean, source} for NBA
+        Dict with {pass_yds, rush_yds, rec_yds, touchdowns, source} for NFL
+        None if failed
     """
     if not BALLDONTLIE_API_KEY:
         logger.debug("BALLDONTLIE_API_KEY not configured")
         return None
+    
+    league = league.upper()
+    api_url = get_balldontlie_url(league)
     
     try:
         headers = {
             "Authorization": f"Bearer {BALLDONTLIE_API_KEY}"
         }
         
-        search_url = f"{BALLDONTLIE_API_URL}/players"
+        # Search for player
+        search_url = f"{api_url}/players"
         params = {"search": player_name}
         
         response = requests.get(
@@ -513,14 +521,14 @@ def get_player_stats_from_balldontlie(player_name: str) -> Optional[Dict[str, An
         )
         
         if response.status_code != 200:
-            logger.warning(f"Ball Don't Lie API returned {response.status_code}")
+            logger.warning(f"Ball Don't Lie {league} API returned {response.status_code}")
             return None
         
         data = response.json()
         players = data.get("data", [])
         
         if not players:
-            logger.debug(f"No player found on Ball Don't Lie for: {player_name}")
+            logger.debug(f"No player found on Ball Don't Lie {league} for: {player_name}")
             return None
         
         player = players[0]
@@ -529,8 +537,10 @@ def get_player_stats_from_balldontlie(player_name: str) -> Optional[Dict[str, An
         if not player_id:
             return None
         
-        stats_url = f"{BALLDONTLIE_API_URL}/season_averages"
-        stats_params = {"season": 2024, "player_ids[]": player_id}
+        # Fetch season averages
+        stats_url = f"{api_url}/season_averages"
+        current_season = 2024 if league == "NBA" else 2024
+        stats_params = {"season": current_season, "player_ids[]": player_id}
         
         stats_response = requests.get(
             stats_url, 
@@ -540,42 +550,248 @@ def get_player_stats_from_balldontlie(player_name: str) -> Optional[Dict[str, An
         )
         
         if stats_response.status_code != 200:
-            logger.warning(f"Ball Don't Lie stats API returned {stats_response.status_code}")
+            logger.warning(f"Ball Don't Lie {league} stats API returned {stats_response.status_code}")
             return None
         
         stats_data = stats_response.json()
         averages = stats_data.get("data", [])
         
         if not averages:
-            logger.debug(f"No season averages found on Ball Don't Lie for: {player_name}")
+            logger.debug(f"No season averages found on Ball Don't Lie {league} for: {player_name}")
             return None
         
         season_avg = averages[0]
         
-        pts_mean = season_avg.get("pts", 0.0)
-        reb_mean = season_avg.get("reb", 0.0)
-        ast_mean = season_avg.get("ast", 0.0)
+        # Parse stats based on league
+        if league == "NBA" or league == "NCAAB":
+            pts_mean = season_avg.get("pts", 0.0)
+            reb_mean = season_avg.get("reb", 0.0)
+            ast_mean = season_avg.get("ast", 0.0)
+            
+            if pts_mean <= 0:
+                logger.debug(f"Invalid stats from Ball Don't Lie {league} for: {player_name}")
+                return None
+            
+            logger.info(f"Got player stats from Ball Don't Lie {league} for {player_name}: {pts_mean} PPG, {reb_mean} RPG, {ast_mean} APG")
+            
+            return {
+                "pts_mean": float(pts_mean),
+                "reb_mean": float(reb_mean),
+                "ast_mean": float(ast_mean),
+                "team": player.get("team", {}).get("full_name", ""),
+                "position": player.get("position", ""),
+                "source": f"balldontlie_{league.lower()}"
+            }
         
-        if pts_mean <= 0:
-            logger.debug(f"Invalid stats from Ball Don't Lie for: {player_name}")
+        elif league == "NFL":
+            # NFL stats - passing, rushing, receiving
+            pass_yds = season_avg.get("passing_yards", 0.0) or season_avg.get("pass_yds", 0.0)
+            rush_yds = season_avg.get("rushing_yards", 0.0) or season_avg.get("rush_yds", 0.0)
+            rec_yds = season_avg.get("receiving_yards", 0.0) or season_avg.get("rec_yds", 0.0)
+            touchdowns = (
+                season_avg.get("passing_touchdowns", 0.0) +
+                season_avg.get("rushing_touchdowns", 0.0) +
+                season_avg.get("receiving_touchdowns", 0.0)
+            )
+            
+            # For NFL, at least one stat should be > 0
+            if pass_yds <= 0 and rush_yds <= 0 and rec_yds <= 0:
+                logger.debug(f"Invalid stats from Ball Don't Lie NFL for: {player_name}")
+                return None
+            
+            logger.info(f"Got player stats from Ball Don't Lie NFL for {player_name}: Pass {pass_yds} yds, Rush {rush_yds} yds, Rec {rec_yds} yds, {touchdowns} TD")
+            
+            return {
+                "pass_yds": float(pass_yds),
+                "rush_yds": float(rush_yds),
+                "rec_yds": float(rec_yds),
+                "touchdowns": float(touchdowns),
+                "team": player.get("team", {}).get("full_name", ""),
+                "position": player.get("position", ""),
+                "source": "balldontlie_nfl"
+            }
+        
+        else:
+            logger.warning(f"Unsupported league for Ball Don't Lie: {league}")
             return None
         
-        logger.info(f"Got player stats from Ball Don't Lie for {player_name}: {pts_mean} PPG, {reb_mean} RPG, {ast_mean} APG")
-        
-        return {
-            "pts_mean": float(pts_mean),
-            "reb_mean": float(reb_mean),
-            "ast_mean": float(ast_mean),
-            "team": player.get("team", {}).get("full_name", ""),
-            "position": player.get("position", ""),
-            "source": "balldontlie"
-        }
-        
     except requests.exceptions.Timeout:
-        logger.warning(f"Ball Don't Lie API timeout for {player_name}")
+        logger.warning(f"Ball Don't Lie {league} API timeout for {player_name}")
         return None
     except Exception as e:
-        logger.error(f"Ball Don't Lie API error for {player_name}: {e}")
+        logger.error(f"Ball Don't Lie {league} API error for {player_name}: {e}")
+        return None
+
+
+def get_teams_from_balldontlie(league: str = "NBA") -> Optional[List[Dict[str, Any]]]:
+    """
+    Fetch all teams from Ball Don't Lie API (All-Star tier feature).
+    
+    Args:
+        league: League code (NBA or NFL, default: NBA)
+    
+    Returns:
+        List of team dictionaries or None if failed
+    """
+    if not BALLDONTLIE_API_KEY:
+        logger.debug("BALLDONTLIE_API_KEY not configured")
+        return None
+    
+    league = league.upper()
+    api_url = get_balldontlie_url(league)
+    
+    try:
+        headers = {
+            "Authorization": f"Bearer {BALLDONTLIE_API_KEY}"
+        }
+        
+        teams_url = f"{api_url}/teams"
+        
+        response = requests.get(
+            teams_url, 
+            headers=headers, 
+            timeout=REQUEST_TIMEOUT
+        )
+        
+        if response.status_code != 200:
+            logger.warning(f"Ball Don't Lie {league} teams API returned {response.status_code}")
+            return None
+        
+        data = response.json()
+        teams = data.get("data", [])
+        
+        logger.info(f"Fetched {len(teams)} teams from Ball Don't Lie {league} API")
+        return teams
+        
+    except requests.exceptions.Timeout:
+        logger.warning(f"Ball Don't Lie {league} teams API timeout")
+        return None
+    except Exception as e:
+        logger.error(f"Ball Don't Lie {league} teams API error: {e}")
+        return None
+
+
+def get_games_from_balldontlie(
+    league: str = "NBA", 
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    season: Optional[int] = None
+) -> Optional[List[Dict[str, Any]]]:
+    """
+    Fetch games from Ball Don't Lie API (All-Star tier feature).
+    
+    Args:
+        league: League code (NBA or NFL, default: NBA)
+        start_date: Start date in YYYY-MM-DD format (optional)
+        end_date: End date in YYYY-MM-DD format (optional)
+        season: Season year (optional, e.g., 2024)
+    
+    Returns:
+        List of game dictionaries or None if failed
+    """
+    if not BALLDONTLIE_API_KEY:
+        logger.debug("BALLDONTLIE_API_KEY not configured")
+        return None
+    
+    league = league.upper()
+    api_url = get_balldontlie_url(league)
+    
+    try:
+        headers = {
+            "Authorization": f"Bearer {BALLDONTLIE_API_KEY}"
+        }
+        
+        games_url = f"{api_url}/games"
+        params = {}
+        
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+        if season:
+            params["season"] = season
+        
+        response = requests.get(
+            games_url, 
+            headers=headers, 
+            params=params,
+            timeout=REQUEST_TIMEOUT
+        )
+        
+        if response.status_code != 200:
+            logger.warning(f"Ball Don't Lie {league} games API returned {response.status_code}")
+            return None
+        
+        data = response.json()
+        games = data.get("data", [])
+        
+        logger.info(f"Fetched {len(games)} games from Ball Don't Lie {league} API")
+        return games
+        
+    except requests.exceptions.Timeout:
+        logger.warning(f"Ball Don't Lie {league} games API timeout")
+        return None
+    except Exception as e:
+        logger.error(f"Ball Don't Lie {league} games API error: {e}")
+        return None
+
+
+def get_player_game_stats_from_balldontlie(
+    player_id: int,
+    league: str = "NBA",
+    season: Optional[int] = None
+) -> Optional[List[Dict[str, Any]]]:
+    """
+    Fetch detailed game-by-game stats for a player (All-Star tier feature).
+    
+    Args:
+        player_id: Player ID from Ball Don't Lie API
+        league: League code (NBA or NFL, default: NBA)
+        season: Season year (optional, e.g., 2024)
+    
+    Returns:
+        List of game stat dictionaries or None if failed
+    """
+    if not BALLDONTLIE_API_KEY:
+        logger.debug("BALLDONTLIE_API_KEY not configured")
+        return None
+    
+    league = league.upper()
+    api_url = get_balldontlie_url(league)
+    
+    try:
+        headers = {
+            "Authorization": f"Bearer {BALLDONTLIE_API_KEY}"
+        }
+        
+        stats_url = f"{api_url}/stats"
+        params = {"player_ids[]": player_id}
+        
+        if season:
+            params["season"] = season
+        
+        response = requests.get(
+            stats_url, 
+            headers=headers, 
+            params=params,
+            timeout=REQUEST_TIMEOUT
+        )
+        
+        if response.status_code != 200:
+            logger.warning(f"Ball Don't Lie {league} player stats API returned {response.status_code}")
+            return None
+        
+        data = response.json()
+        stats = data.get("data", [])
+        
+        logger.info(f"Fetched {len(stats)} game stats from Ball Don't Lie {league} API for player {player_id}")
+        return stats
+        
+    except requests.exceptions.Timeout:
+        logger.warning(f"Ball Don't Lie {league} stats API timeout")
+        return None
+    except Exception as e:
+        logger.error(f"Ball Don't Lie {league} stats API error: {e}")
         return None
 
 
@@ -1088,34 +1304,64 @@ def get_player_context(player_name: str, league: str) -> Optional[PlayerContext]
         if context:
             source = "bbref"
     
-    if context is None and league == "NBA":
+    if context is None and league in ["NBA", "NFL", "NCAAB"]:
         sources_tried.append("balldontlie")
-        bdl_data = get_player_stats_from_balldontlie(player_name)
+        bdl_data = get_player_stats_from_balldontlie(player_name, league)
         
-        if bdl_data and bdl_data.get("pts_mean"):
-            pts_mean = bdl_data["pts_mean"]
-            reb_mean = bdl_data.get("reb_mean", 0.0) or 0.0
-            ast_mean = bdl_data.get("ast_mean", 0.0) or 0.0
+        if bdl_data:
+            # Handle NBA/NCAAB stats
+            if league in ["NBA", "NCAAB"] and bdl_data.get("pts_mean"):
+                pts_mean = bdl_data["pts_mean"]
+                reb_mean = bdl_data.get("reb_mean", 0.0) or 0.0
+                ast_mean = bdl_data.get("ast_mean", 0.0) or 0.0
+                
+                usage_rate = min(0.35, pts_mean / 50.0) if pts_mean > 0 else 0.15
+                pts_std = pts_mean * 0.25 if pts_mean > 0 else 2.5
+                reb_std = reb_mean * 0.25 if reb_mean > 0 else 1.0
+                ast_std = ast_mean * 0.25 if ast_mean > 0 else 0.75
+                
+                context = PlayerContext(
+                    name=player_name,
+                    team=bdl_data.get("team", ""),
+                    position=bdl_data.get("position", ""),
+                    usage_rate=usage_rate,
+                    pts_mean=pts_mean,
+                    pts_std=pts_std,
+                    reb_mean=reb_mean,
+                    reb_std=reb_std,
+                    ast_mean=ast_mean,
+                    ast_std=ast_std
+                )
+                source = "balldontlie"
+                logger.info(f"Got player stats from Ball Don't Lie for {player_name}")
             
-            usage_rate = min(0.35, pts_mean / 50.0) if pts_mean > 0 else 0.15
-            pts_std = pts_mean * 0.25 if pts_mean > 0 else 2.5
-            reb_std = reb_mean * 0.25 if reb_mean > 0 else 1.0
-            ast_std = ast_mean * 0.25 if ast_mean > 0 else 0.75
-            
-            context = PlayerContext(
-                name=player_name,
-                team=bdl_data.get("team", ""),
-                position=bdl_data.get("position", ""),
-                usage_rate=usage_rate,
-                pts_mean=pts_mean,
-                pts_std=pts_std,
-                reb_mean=reb_mean,
-                reb_std=reb_std,
-                ast_mean=ast_mean,
-                ast_std=ast_std
-            )
-            source = "balldontlie"
-            logger.info(f"Got player stats from Ball Don't Lie for {player_name}")
+            # Handle NFL stats
+            elif league == "NFL" and (bdl_data.get("pass_yds") or bdl_data.get("rush_yds") or bdl_data.get("rec_yds")):
+                # For NFL, use passing/rushing/receiving yards as "pts_mean" equivalent
+                total_yds = (bdl_data.get("pass_yds", 0.0) + 
+                            bdl_data.get("rush_yds", 0.0) + 
+                            bdl_data.get("rec_yds", 0.0))
+                touchdowns = bdl_data.get("touchdowns", 0.0)
+                
+                # Estimate usage rate based on total production
+                usage_rate = min(0.35, total_yds / 500.0) if total_yds > 0 else 0.15
+                pts_mean = touchdowns * 6  # Rough approximation
+                pts_std = pts_mean * 0.30 if pts_mean > 0 else 5.0
+                
+                context = PlayerContext(
+                    name=player_name,
+                    team=bdl_data.get("team", ""),
+                    position=bdl_data.get("position", ""),
+                    usage_rate=usage_rate,
+                    pts_mean=pts_mean,
+                    pts_std=pts_std,
+                    reb_mean=bdl_data.get("rush_yds", 0.0),  # Store rush yds in reb
+                    reb_std=bdl_data.get("rush_yds", 0.0) * 0.25,
+                    ast_mean=bdl_data.get("rec_yds", 0.0),  # Store rec yds in ast
+                    ast_std=bdl_data.get("rec_yds", 0.0) * 0.25
+                )
+                source = "balldontlie_nfl"
+                logger.info(f"Got NFL player stats from Ball Don't Lie for {player_name}")
     
     if context is None:
         sources_tried.append("perplexity")
