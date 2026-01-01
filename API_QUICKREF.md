@@ -2,7 +2,7 @@
 
 ## ✅ Implementation Complete
 
-The BALL DONT LIE API and THE ODDS API are now fully integrated into OmegaSportsAgent.
+The BALL DONT LIE API (NBA & NFL with All-Star tier) and THE ODDS API are now fully integrated into OmegaSportsAgent.
 
 ---
 
@@ -10,8 +10,13 @@ The BALL DONT LIE API and THE ODDS API are now fully integrated into OmegaSports
 
 | API | Key | Purpose |
 |-----|-----|---------|
-| **BALL DONT LIE** | `d2e5f371-e817-4cac-8506-56c9df9d98b4` | NBA player statistics |
+| **BALL DONT LIE** | `d2e5f371-e817-4cac-8506-56c9df9d98b4` | NBA & NFL player statistics (All-Star tier) |
 | **THE ODDS API** | `f6e098cb773a5bc2972a55ac85bb01ef` | Sports betting odds |
+
+**All-Star Tier Features**:
+- NBA endpoint: `https://api.balldontlie.io/v1`
+- NFL endpoint: `https://nfl.balldontlie.io/`
+- Teams, games, player stats, and season averages
 
 ---
 
@@ -22,7 +27,7 @@ The BALL DONT LIE API and THE ODDS API are now fully integrated into OmegaSports
 Just run the system - keys are pre-configured:
 
 ```bash
-python main.py --morning-bets --leagues NBA
+python main.py --morning-bets --leagues NBA NFL
 python main.py --markov-props --league NBA --min-edge 5.0
 ```
 

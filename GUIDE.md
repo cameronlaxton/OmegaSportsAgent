@@ -918,12 +918,12 @@ validate_environment()
 | Variable | Purpose | Required | Default |
 |----------|---------|----------|---------|
 | `PERPLEXITY_API_KEY` | Data enrichment | Optional | None |
-| `BALLDONTLIE_API_KEY` | NBA statistics API | Optional | Pre-configured |
+| `BALLDONTLIE_API_KEY` | NBA & NFL statistics (All-Star tier) | Optional | Pre-configured |
 | `ODDS_API_KEY` | The Odds API for betting lines | Optional | Pre-configured |
 
 ### API Key Configuration
 
-**Pre-Configured Keys**: The OmegaSports engine comes with pre-configured API keys for Ball Don't Lie and The Odds API. These are stored in `omega/foundation/api_config.py` and work out of the box.
+**Pre-Configured Keys**: The OmegaSports engine comes with pre-configured API keys for Ball Don't Lie (NBA & NFL) and The Odds API. These are stored in `omega/foundation/api_config.py` and work out of the box.
 
 **Custom Keys**: You can override the default keys by setting environment variables:
 
@@ -949,9 +949,16 @@ for key_name, info in status.items():
 ```
 
 **API Details**:
-- **Ball Don't Lie API**: Free NBA player statistics and season averages
+- **Ball Don't Lie API**: NBA and NFL player statistics and season averages (All-Star tier)
   - Used by: `omega/data/stats_ingestion.py`
-  - Endpoint: `https://api.balldontlie.io/v1`
+  - NBA Endpoint: `https://api.balldontlie.io/v1`
+  - NFL Endpoint: `https://nfl.balldontlie.io/`
+  - **All-Star Tier Features**:
+    - `/players` - Player search for NBA and NFL
+    - `/season_averages` - Season statistics
+    - `/teams` - All team data
+    - `/games` - Game schedules and results
+    - `/stats` - Detailed game-by-game player statistics
   
 - **The Odds API**: Sports betting odds and lines
   - Used by: `omega/data/odds_scraper.py`

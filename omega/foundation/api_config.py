@@ -5,15 +5,21 @@ Centralized API key management for OmegaSports Engine.
 Provides default API keys with environment variable override capability.
 
 API Keys:
-- BALL DONT LIE API: NBA player statistics and data
+- BALL DONT LIE API: NBA and NFL player statistics and data
+  - NBA: https://api.balldontlie.io/v1
+  - NFL: https://nfl.balldontlie.io/
 - THE ODDS API: Sports betting odds and lines
 
 Usage:
-    from omega.foundation.api_config import get_api_keys
+    from omega.foundation.api_config import get_api_keys, get_balldontlie_url
     
     keys = get_api_keys()
     balldontlie_key = keys["BALLDONTLIE_API_KEY"]
     odds_key = keys["ODDS_API_KEY"]
+    
+    # Get league-specific URL
+    nba_url = get_balldontlie_url("NBA")
+    nfl_url = get_balldontlie_url("NFL")
 """
 
 from __future__ import annotations
@@ -26,6 +32,13 @@ from typing import Dict
 DEFAULT_API_KEYS = {
     "BALLDONTLIE_API_KEY": "d2e5f371-e817-4cac-8506-56c9df9d98b4",
     "ODDS_API_KEY": "f6e098cb773a5bc2972a55ac85bb01ef"
+}
+
+# Ball Don't Lie API URLs by league
+BALLDONTLIE_API_URLS = {
+    "NBA": "https://api.balldontlie.io/v1",
+    "NFL": "https://nfl.balldontlie.io",
+    "NCAAB": "https://api.balldontlie.io/v1",  # Uses NBA endpoint
 }
 
 
@@ -41,7 +54,7 @@ def get_api_keys() -> Dict[str, str]:
     
     Returns:
         Dict with API keys:
-            - BALLDONTLIE_API_KEY: Ball Don't Lie API key for NBA stats
+            - BALLDONTLIE_API_KEY: Ball Don't Lie API key for NBA/NFL stats
             - ODDS_API_KEY: The Odds API key for betting lines
     """
     return {
@@ -67,6 +80,20 @@ def get_balldontlie_key() -> str:
         "BALLDONTLIE_API_KEY",
         DEFAULT_API_KEYS["BALLDONTLIE_API_KEY"]
     )
+
+
+def get_balldontlie_url(league: str) -> str:
+    """
+    Get Ball Don't Lie API base URL for a specific league.
+    
+    Args:
+        league: League code (NBA, NFL, NCAAB, etc.)
+    
+    Returns:
+        Base URL for the Ball Don't Lie API for that league
+    """
+    league_upper = league.upper()
+    return BALLDONTLIE_API_URLS.get(league_upper, BALLDONTLIE_API_URLS["NBA"])
 
 
 def get_odds_api_key() -> str:

@@ -92,15 +92,20 @@ omega-sports-engine/
 | Variable | Purpose | Required | Default |
 |----------|---------|----------|---------|
 | `PERPLEXITY_API_KEY` | Data enrichment | Optional | None |
-| `BALLDONTLIE_API_KEY` | NBA statistics | Optional | Configured |
+| `BALLDONTLIE_API_KEY` | NBA & NFL statistics (All-Star tier) | Optional | Configured |
 | `ODDS_API_KEY` | Live odds data | Optional | Configured |
 
-**Note**: API keys for Ball Don't Lie and The Odds API are pre-configured in `omega/foundation/api_config.py`. You can override them by setting environment variables:
+**Note**: API keys for Ball Don't Lie (NBA & NFL) and The Odds API are pre-configured in `omega/foundation/api_config.py`. You can override them by setting environment variables:
 
 ```bash
 export BALLDONTLIE_API_KEY="your_custom_key"
 export ODDS_API_KEY="your_custom_key"
 ```
+
+**Ball Don't Lie All-Star Tier Features**:
+- NBA endpoint: `https://api.balldontlie.io/v1`
+- NFL endpoint: `https://nfl.balldontlie.io/`
+- Teams, games, player stats, and season averages for both leagues
 
 To check current API key status:
 ```python

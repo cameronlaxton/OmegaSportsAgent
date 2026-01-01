@@ -32,10 +32,18 @@ status = check_api_keys()
 ### 2. Configured API Keys
 
 #### BALL DONT LIE API
-- **Purpose**: NBA player statistics and season averages
+- **Purpose**: NBA and NFL player statistics and season averages (All-Star tier)
 - **Key**: `d2e5f371-e817-4cac-8506-56c9df9d98b4`
-- **Endpoint**: `https://api.balldontlie.io/v1`
+- **Endpoints**: 
+  - NBA: `https://api.balldontlie.io/v1`
+  - NFL: `https://nfl.balldontlie.io/`
 - **Used By**: `omega/data/stats_ingestion.py`
+- **All-Star Tier Features**:
+  - `/players` - Player search for NBA and NFL
+  - `/season_averages` - Season statistics for NBA and NFL
+  - `/teams` - All team data for NBA and NFL
+  - `/games` - Game schedules and results for NBA and NFL
+  - `/stats` - Detailed game-by-game player statistics
 
 #### THE ODDS API
 - **Purpose**: Sports betting odds and lines
@@ -44,6 +52,18 @@ status = check_api_keys()
 - **Used By**: `omega/data/odds_scraper.py`
 
 ### 3. Updated Modules
+
+**`omega/foundation/api_config.py`**
+- Added: `get_balldontlie_url(league)` - Returns league-specific Ball Don't Lie URL
+- Added: `BALLDONTLIE_API_URLS` dict with NBA and NFL endpoints
+- Updated: Documentation to reflect NBA and NFL support
+
+**`omega/data/stats_ingestion.py`**
+- Updated: `get_player_stats_from_balldontlie(player_name, league="NBA")` - Now supports NBA and NFL
+- Added: `get_teams_from_balldontlie(league="NBA")` - All-Star tier team data
+- Added: `get_games_from_balldontlie(league="NBA", ...)` - All-Star tier game data
+- Added: `get_player_game_stats_from_balldontlie(player_id, league="NBA", ...)` - All-Star tier detailed stats
+- Updated: `get_player_context()` to use Ball Don't Lie for NBA, NFL, and NCAAB
 
 **`omega/data/odds_scraper.py`**
 - Changed from: `os.environ.get("ODDS_API_KEY", "")`
