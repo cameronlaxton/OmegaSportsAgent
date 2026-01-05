@@ -95,13 +95,14 @@ def _create_platt_transform(platt_params: Dict[str, float]) -> Callable[[float],
     Platt scaling: adjusted_prob = 1 / (1 + exp(A * logit(prob) + B))
     
     Args:
-        platt_params: Dict with 'A' and 'B' coefficients
+        platt_params: Dict with 'a'/'A' and 'b'/'B' coefficients
     
     Returns:
         Transform function
     """
-    A = platt_params.get("A", 1.0)
-    B = platt_params.get("B", 0.0)
+    # Support both uppercase and lowercase parameter names
+    A = platt_params.get("a", platt_params.get("A", 1.0))
+    B = platt_params.get("b", platt_params.get("B", 0.0))
     
     def transform(prob: float) -> float:
         import math
@@ -321,6 +322,57 @@ class CalibrationLoader:
         if self.pack:
             return self.pack.get("probability_transforms", {})
         return {}
+    
+    def get_kelly_staking(self) -> Dict[str, Any]:
+        """
+        Get Kelly staking configuration.
+        
+        Returns:
+            Dict with kelly_staking parameters (method, fraction, max_stake, min_stake, tier_multipliers)
+        """
+        if self.pack and "kelly_staking" in self.pack:
+            return self.pack["kelly_staking"]
+        
+        # Fallback to basic kelly configuration
+        return {
+            "method": "fractional",
+            "fraction": self.get_kelly_fraction(),
+            "max_stake": 0.05,
+            "min_stake": 0.01,
+            "tier_multipliers": {
+                "high_confidence": 1.0,
+                "medium_confidence": 0.5,
+                "low_confidence": 0.25
+            }
+        }
+    
+    def get_variance_scalars(self) -> Dict[str, float]:
+        """
+        Get variance scalars for leagues.
+        
+        Returns:
+            Dict mapping league names to variance scalar multipliers
+        """
+        if self.pack and "variance_scalars" in self.pack:
+            return self.pack["variance_scalars"]
+        
+        # Fallback defaults
+        return {
+            "NBA": 1.0,
+            "NFL": 1.0,
+            "global": 1.0
+        }
+    
+    def get_test_performance(self) -> Optional[Dict[str, Any]]:
+        """
+        Get test performance metrics from calibration.
+        
+        Returns:
+            Dict with test performance metrics or None if not available
+        """
+        if self.pack and "test_performance" in self.pack:
+            return self.pack["test_performance"]
+        return None
     
     def get_raw_pack(self) -> Optional[Dict[str, Any]]:
         """

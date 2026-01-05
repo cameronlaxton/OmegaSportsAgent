@@ -1,63 +1,159 @@
 {
-  "version": "v1.0",
+  "version": "v2.0",
   "league": "NBA",
-  "description": "Initial NBA calibration pack with baseline parameters",
+  "description": "Calibrated NBA parameters from ValidationLab backtest (2019-2024)",
   "updated_at": "2026-01-05",
+  "calibration_date": "2026-01-05T12:06:47",
+  "training_period": "2019-10-22 to 2023-06-10",
+  "test_period": "2023-06-10 to 2024-12-31",
+  "test_performance": {
+    "total_bets": 70,
+    "hit_rate": 0.60,
+    "roi": 0.281,
+    "sharpe_ratio": 0.25,
+    "max_drawdown_units": 7.26,
+    "brier_score": 0.2549
+  },
   "edge_thresholds": {
-    "moneyline": 0.04,
-    "spread": 0.04,
-    "total": 0.04,
-    "player_prop_points": 0.05,
-    "player_prop_rebounds": 0.05,
-    "player_prop_assists": 0.05,
-    "default": 0.04
+    "moneyline": 0.03,
+    "spread": 0.095,
+    "total": 0.01,
+    "player_prop_points": 0.03,
+    "player_prop_rebounds": 0.03,
+    "player_prop_assists": 0.03,
+    "default": 0.03
   },
   "kelly_fraction": 0.25,
-  "kelly_policy": "quarter_kelly",
+  "kelly_policy": "fractional",
+  "kelly_staking": {
+    "method": "fractional",
+    "fraction": 0.25,
+    "max_stake": 0.05,
+    "min_stake": 0.01,
+    "tier_multipliers": {
+      "high_confidence": 1.0,
+      "medium_confidence": 0.5,
+      "low_confidence": 0.25
+    }
+  },
+  "variance_scalars": {
+    "NBA": 1.0,
+    "NFL": 1.0,
+    "global": 1.0
+  },
   "probability_transforms": {
     "default": [
       {
+        "type": "platt",
+        "params": {
+          "a": 0.47147183749459864,
+          "b": 0.011427550415523187
+        }
+      },
+      {
         "type": "shrink",
         "params": {
-          "factor": 0.625
+          "factor": 0.25
         }
       }
     ],
     "moneyline": [
       {
+        "type": "platt",
+        "params": {
+          "a": 0.47147183749459864,
+          "b": 0.011427550415523187
+        }
+      },
+      {
         "type": "shrink",
         "params": {
-          "factor": 0.625
+          "factor": 0.25
         }
       }
     ],
     "spread": [
       {
+        "type": "platt",
+        "params": {
+          "a": -0.04183747817960846,
+          "b": 0.20826603472690028
+        }
+      },
+      {
         "type": "shrink",
         "params": {
-          "factor": 0.625
+          "factor": 0.1
         }
       }
     ],
     "total": [
       {
+        "type": "platt",
+        "params": {
+          "a": 0.6712940825330339,
+          "b": -0.08330411236872515
+        }
+      },
+      {
         "type": "shrink",
         "params": {
-          "factor": 0.625
+          "factor": 0.05
         }
       }
     ],
     "player_prop_points": [
       {
+        "type": "platt",
+        "params": {
+          "a": 0.47147183749459864,
+          "b": 0.011427550415523187
+        }
+      },
+      {
         "type": "shrink",
         "params": {
-          "factor": 0.7
+          "factor": 0.25
+        }
+      }
+    ],
+    "player_prop_rebounds": [
+      {
+        "type": "platt",
+        "params": {
+          "a": 0.47147183749459864,
+          "b": 0.011427550415523187
+        }
+      },
+      {
+        "type": "shrink",
+        "params": {
+          "factor": 0.25
+        }
+      }
+    ],
+    "player_prop_assists": [
+      {
+        "type": "platt",
+        "params": {
+          "a": 0.47147183749459864,
+          "b": 0.011427550415523187
+        }
+      },
+      {
+        "type": "shrink",
+        "params": {
+          "factor": 0.25
         }
       }
     ]
   },
   "metadata": {
-    "source": "OmegaSportsAgent baseline",
-    "notes": "Conservative baseline calibration for NBA markets. Shrinkage applied to prevent overconfidence."
+    "source": "ValidationLab calibration",
+    "calibration_pack": "calibration_pack_nba_20260105_120647.json",
+    "training_games": 6008,
+    "training_props": 281799,
+    "test_games": 2552,
+    "notes": "Fine-tuned edge thresholds that maximize ROI. Platt scaling + shrinkage applied for probability calibration. Player props calibrated on training data but not validated on test set (0 props with lines in test period)."
   }
 }
