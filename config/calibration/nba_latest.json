@@ -1,0 +1,63 @@
+{
+  "version": "v1.0",
+  "league": "NBA",
+  "description": "Initial NBA calibration pack with baseline parameters",
+  "updated_at": "2026-01-05",
+  "edge_thresholds": {
+    "moneyline": 0.04,
+    "spread": 0.04,
+    "total": 0.04,
+    "player_prop_points": 0.05,
+    "player_prop_rebounds": 0.05,
+    "player_prop_assists": 0.05,
+    "default": 0.04
+  },
+  "kelly_fraction": 0.25,
+  "kelly_policy": "quarter_kelly",
+  "probability_transforms": {
+    "default": [
+      {
+        "type": "shrink",
+        "params": {
+          "factor": 0.625
+        }
+      }
+    ],
+    "moneyline": [
+      {
+        "type": "shrink",
+        "params": {
+          "factor": 0.625
+        }
+      }
+    ],
+    "spread": [
+      {
+        "type": "shrink",
+        "params": {
+          "factor": 0.625
+        }
+      }
+    ],
+    "total": [
+      {
+        "type": "shrink",
+        "params": {
+          "factor": 0.625
+        }
+      }
+    ],
+    "player_prop_points": [
+      {
+        "type": "shrink",
+        "params": {
+          "factor": 0.7
+        }
+      }
+    ]
+  },
+  "metadata": {
+    "source": "OmegaSportsAgent baseline",
+    "notes": "Conservative baseline calibration for NBA markets. Shrinkage applied to prevent overconfidence."
+  }
+}
