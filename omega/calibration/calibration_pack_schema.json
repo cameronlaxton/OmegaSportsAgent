@@ -199,13 +199,48 @@
       "properties": {
         "method": {
           "type": "string",
-          "enum": ["none", "isotonic", "platt", "beta"],
+          "enum": ["none", "isotonic", "platt", "beta", "platt+shrink"],
+          "description": "Calibration method. platt+shrink combines Platt scaling with shrinkage toward 0.5",
           "example": "none"
         },
         "parameters": {
           "type": "object",
           "description": "Transform-specific parameters",
           "additionalProperties": true
+        },
+        "markets": {
+          "type": "object",
+          "description": "Per-market calibration parameters (for platt+shrink method)",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": ["none", "isotonic", "platt", "beta", "platt+shrink"]
+              },
+              "platt_coefficients": {
+                "type": "object",
+                "description": "Platt scaling coefficients: p_calibrated = 1 / (1 + exp(a * p + b))",
+                "properties": {
+                  "a": {
+                    "type": "number",
+                    "description": "Slope coefficient for Platt scaling"
+                  },
+                  "b": {
+                    "type": "number",
+                    "description": "Intercept coefficient for Platt scaling"
+                  }
+                },
+                "required": ["a", "b"]
+              },
+              "shrinkage_alpha": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "Shrinkage factor toward 0.5 (0 = no shrinkage, 1 = full shrinkage to 0.5)"
+              }
+            }
+          }
         },
         "notes": {
           "type": "string",
