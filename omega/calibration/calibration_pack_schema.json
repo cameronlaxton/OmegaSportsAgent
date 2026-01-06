@@ -200,7 +200,7 @@
         "method": {
           "type": "string",
           "enum": ["none", "isotonic", "platt", "beta", "platt+shrink"],
-          "description": "Calibration method. platt+shrink combines Platt scaling with shrinkage toward 0.5",
+          "description": "Calibration method. 'platt+shrink' combines Platt scaling (logistic transformation) with shrinkage toward 0.5 to reduce overconfidence while preserving calibrated probabilities.",
           "example": "none"
         },
         "parameters": {
@@ -210,7 +210,7 @@
         },
         "markets": {
           "type": "object",
-          "description": "Optional per-market calibration parameters. Used when different markets need different calibration methods (e.g., platt, platt+shrink, isotonic). If omitted, the top-level method applies to all markets.",
+          "description": "Optional per-market calibration parameters. A 'market' refers to a bet type (e.g., 'moneyline', 'spread', 'total'). Used when different markets need different calibration methods (e.g., platt, platt+shrink, isotonic). If omitted, the top-level method applies to all markets.",
           "additionalProperties": {
             "type": "object",
             "properties": {
@@ -220,7 +220,7 @@
               },
               "platt_coefficients": {
                 "type": "object",
-                "description": "Platt scaling coefficients: p_calibrated = 1 / (1 + exp(a * p + b)). Required when method is 'platt' or 'platt+shrink'.",
+                "description": "Platt scaling coefficients for logistic transformation: p_calibrated = 1 / (1 + exp(a * p_raw + b)), where p_raw is the original model probability. Required when method is 'platt' or 'platt+shrink'.",
                 "properties": {
                   "a": {
                     "type": "number",
