@@ -201,7 +201,7 @@
           "type": "string",
           "enum": ["none", "isotonic", "platt", "beta", "platt+shrink"],
           "description": "Calibration method. 'platt+shrink' combines Platt scaling (logistic transformation) with shrinkage toward 0.5 to reduce overconfidence while preserving calibrated probabilities.",
-          "example": "none"
+          "example": "platt+shrink"
         },
         "parameters": {
           "type": "object",
@@ -239,12 +239,40 @@
                 "maximum": 1.0,
                 "description": "Shrinkage factor toward 0.5 (0 = no shrinkage, 1 = full shrinkage to 0.5). Only applicable when method is 'platt+shrink'."
               }
-            }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "method": {
+                      "const": "platt"
+                    }
+                  },
+                  "required": ["method"]
+                },
+                "then": {
+                  "required": ["method", "platt_coefficients"]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "method": {
+                      "const": "platt+shrink"
+                    }
+                  },
+                  "required": ["method"]
+                },
+                "then": {
+                  "required": ["method", "platt_coefficients", "shrinkage_alpha"]
+                }
+              }
+            ]
           }
         },
         "notes": {
           "type": "string",
-          "example": "Future: Implement isotonic regression or Platt scaling"
+          "example": "Probability calibration configured for NBA with platt+shrink method"
         }
       }
     },
