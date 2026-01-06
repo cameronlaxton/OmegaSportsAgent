@@ -1,0 +1,156 @@
+{
+  "date": "2026-01-03",
+  "timestamp": "08:33:00 EST",
+  "simulation_type": "Monte Carlo",
+  "iterations": 10000,
+  "games_analyzed": 7,
+  "nba_games": [
+    {
+      "matchup": "Minnesota Timberwolves @ Miami Heat",
+      "time": "5:00 PM ET",
+      "network": "ESPN",
+      "home_team": "Miami Heat",
+      "away_team": "Minnesota Timberwolves",
+      "home_win_prob": 0.545,
+      "away_win_prob": 0.455,
+      "over_222_5_prob": 0.51,
+      "under_222_5_prob": 0.49,
+      "projected_home_points": 108.5,
+      "projected_away_points": 110.2,
+      "projected_total": 218.7,
+      "home_offensive_rating": 116.2,
+      "away_offensive_rating": 117.8,
+      "home_defensive_rating": 111.5,
+      "away_defensive_rating": 112.0,
+      "home_pace": 98.5,
+      "away_pace": 100.2
+    },
+    {
+      "matchup": "Philadelphia 76ers @ New York Knicks",
+      "time": "7:30 PM ET",
+      "network": "ESPN",
+      "home_team": "New York Knicks",
+      "away_team": "Philadelphia 76ers",
+      "home_win_prob": 0.552,
+      "away_win_prob": 0.448,
+      "over_228_0_prob": 0.485,
+      "under_228_0_prob": 0.515,
+      "projected_home_points": 111.8,
+      "projected_away_points": 110.5,
+      "projected_total": 222.3,
+      "home_offensive_rating": 119.5,
+      "away_offensive_rating": 118.2,
+      "home_defensive_rating": 109.8,
+      "away_defensive_rating": 110.5,
+      "home_pace": 99.2,
+      "away_pace": 98.8
+    },
+    {
+      "matchup": "Atlanta Hawks @ Toronto Raptors",
+      "time": "7:30 PM ET",
+      "network": "ESPN",
+      "home_team": "Toronto Raptors",
+      "away_team": "Atlanta Hawks",
+      "home_win_prob": 0.518,
+      "away_win_prob": 0.482,
+      "over_222_5_prob": 0.543,
+      "under_222_5_prob": 0.457,
+      "projected_home_points": 106.2,
+      "projected_away_points": 107.5,
+      "projected_total": 213.7,
+      "home_offensive_rating": 113.5,
+      "away_offensive_rating": 115.8,
+      "home_defensive_rating": 113.2,
+      "away_defensive_rating": 114.5,
+      "home_pace": 99.8,
+      "away_pace": 101.5,
+      "edge_alert": "OVER has 4.3% edge"
+    },
+    {
+      "matchup": "Utah Jazz @ Golden State Warriors",
+      "time": "10:00 PM ET",
+      "network": "ESPN",
+      "home_team": "Golden State Warriors",
+      "away_team": "Utah Jazz",
+      "home_win_prob": 0.548,
+      "away_win_prob": 0.452
+    },
+    {
+      "matchup": "Boston Celtics @ LA Clippers",
+      "time": "10:30 PM ET",
+      "network": "ESPN",
+      "home_team": "LA Clippers",
+      "away_team": "Boston Celtics",
+      "home_win_prob": 0.465,
+      "away_win_prob": 0.535
+    }
+  ],
+  "nfl_games": [
+    {
+      "matchup": "Carolina Panthers @ Tampa Bay Buccaneers",
+      "time": "4:30 PM ET",
+      "network": "ABC/ESPN",
+      "week": 18,
+      "home_team": "Tampa Bay Buccaneers",
+      "away_team": "Carolina Panthers",
+      "home_win_prob": 0.625,
+      "away_win_prob": 0.375,
+      "over_47_prob": 0.48,
+      "under_47_prob": 0.52
+    },
+    {
+      "matchup": "Seattle Seahawks @ San Francisco 49ers",
+      "time": "8:00 PM ET",
+      "network": "ABC/ESPN",
+      "week": 18,
+      "home_team": "San Francisco 49ers",
+      "away_team": "Seattle Seahawks",
+      "home_win_prob": 0.58,
+      "away_win_prob": 0.42,
+      "over_47_5_prob": 0.427,
+      "under_47_5_prob": 0.573,
+      "projected_home_points": 27.5,
+      "projected_away_points": 19.2,
+      "projected_total": 46.7,
+      "home_passing_epa_per_play": 0.22,
+      "away_passing_epa_per_play": 0.08,
+      "edge_alert": "UNDER has 7.3% edge - VERY STRONG"
+    }
+  ],
+  "kelly_staking_recommendations": {
+    "bankroll": 1000,
+    "bets": [
+      {
+        "pick": "UNDER 47.5 (SEA @ SF)",
+        "edge_pct": 7.3,
+        "kelly_fraction": 0.25,
+        "recommended_stake": 22.50,
+        "pct_bankroll": 2.25
+      },
+      {
+        "pick": "OVER 222.5 (ATL @ TOR)",
+        "edge_pct": 4.3,
+        "kelly_fraction": 0.25,
+        "recommended_stake": 13.50,
+        "pct_bankroll": 1.35
+      },
+      {
+        "pick": "Knicks -2.0 (PHI @ NYK)",
+        "edge_pct": 2.8,
+        "kelly_fraction": 0.25,
+        "recommended_stake": 9.00,
+        "pct_bankroll": 0.90
+      }
+    ]
+  },
+  "summary": {
+    "total_games_analyzed": 7,
+    "qualified_bets": 3,
+    "total_edge_value": 11.4,
+    "avg_edge": 4.77,
+    "highest_edge": "UNDER 47.5 (SEA @ SF) at 7.3%",
+    "confidence_tier_a_bets": 1,
+    "confidence_tier_b_bets": 2,
+    "next_update": "2026-01-04 08:00:00 EST"
+  }
+}
