@@ -210,7 +210,7 @@
         },
         "markets": {
           "type": "object",
-          "description": "Per-market calibration parameters (for platt+shrink method)",
+          "description": "Optional per-market calibration parameters. Used when different markets need different calibration methods (e.g., platt, platt+shrink, isotonic). If omitted, the top-level method applies to all markets.",
           "additionalProperties": {
             "type": "object",
             "properties": {
@@ -220,7 +220,7 @@
               },
               "platt_coefficients": {
                 "type": "object",
-                "description": "Platt scaling coefficients: p_calibrated = 1 / (1 + exp(a * p + b))",
+                "description": "Platt scaling coefficients: p_calibrated = 1 / (1 + exp(a * p + b)). Required when method is 'platt' or 'platt+shrink'.",
                 "properties": {
                   "a": {
                     "type": "number",
@@ -237,7 +237,7 @@
                 "type": "number",
                 "minimum": 0.0,
                 "maximum": 1.0,
-                "description": "Shrinkage factor toward 0.5 (0 = no shrinkage, 1 = full shrinkage to 0.5)"
+                "description": "Shrinkage factor toward 0.5 (0 = no shrinkage, 1 = full shrinkage to 0.5). Only applicable when method is 'platt+shrink'."
               }
             }
           }
