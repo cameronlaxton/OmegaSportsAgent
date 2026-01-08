@@ -199,17 +199,80 @@
       "properties": {
         "method": {
           "type": "string",
-          "enum": ["none", "isotonic", "platt", "beta"],
-          "example": "none"
+          "enum": ["none", "isotonic", "platt", "beta", "platt+shrink"],
+          "description": "Calibration method. 'platt+shrink' combines Platt scaling (logistic transformation) with shrinkage toward 0.5 to reduce overconfidence while preserving calibrated probabilities.",
+          "example": "platt+shrink"
         },
         "parameters": {
           "type": "object",
           "description": "Transform-specific parameters",
           "additionalProperties": true
         },
+        "markets": {
+          "type": "object",
+          "description": "Optional per-market calibration parameters. A 'market' refers to a bet type (e.g., 'moneyline', 'spread', 'total'). Used when different markets need different calibration methods (e.g., platt, platt+shrink, isotonic). If omitted, the top-level method applies to all markets.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": ["none", "isotonic", "platt", "beta", "platt+shrink"]
+              },
+              "platt_coefficients": {
+                "type": "object",
+                "description": "Platt scaling coefficients for logistic transformation: p_calibrated = 1 / (1 + exp(a * p_raw + b)), where p_raw is the original model probability. Required when method is 'platt' or 'platt+shrink'.",
+                "properties": {
+                  "a": {
+                    "type": "number",
+                    "description": "Slope coefficient for Platt scaling"
+                  },
+                  "b": {
+                    "type": "number",
+                    "description": "Intercept coefficient for Platt scaling"
+                  }
+                },
+                "required": ["a", "b"]
+              },
+              "shrinkage_alpha": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "Shrinkage factor toward 0.5 (0 = no shrinkage, 1 = full shrinkage to 0.5). Only applicable when method is 'platt+shrink'."
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "method": {
+                      "const": "platt"
+                    }
+                  },
+                  "required": ["method"]
+                },
+                "then": {
+                  "required": ["method", "platt_coefficients"]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "method": {
+                      "const": "platt+shrink"
+                    }
+                  },
+                  "required": ["method"]
+                },
+                "then": {
+                  "required": ["method", "platt_coefficients", "shrinkage_alpha"]
+                }
+              }
+            ]
+          }
+        },
         "notes": {
           "type": "string",
-          "example": "Future: Implement isotonic regression or Platt scaling"
+          "example": "Probability calibration configured for NBA with platt+shrink method"
         }
       }
     },
