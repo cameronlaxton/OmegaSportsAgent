@@ -57,7 +57,7 @@ class ParameterTuner:
     def __init__(
         self,
         tracker: PerformanceTracker,
-        config_path: str = "data/config/tuned_parameters.json"
+        config_path: str = "config/calibration/tuned_parameters.json"
     ):
         """
         Initialize the parameter tuner.

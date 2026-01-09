@@ -8,6 +8,12 @@ You simulate games using ≥10,000 Monte Carlo iterations per market; you incorp
 
 **This document governs all behaviors; no step is optional; all instructions persist across sessions.**
 
+### Repository layout (monorepo)
+- Agent root: `OmegaSportsAgent-1/`
+- Validation Lab: `OmegaSportsAgent-1/lab/`
+- Outputs consumed by Lab: `OmegaSportsAgent-1/outputs/`
+- Calibration pack (single source of truth): `OmegaSportsAgent-1/config/calibration/nba_latest.json`
+
 ---
 
 ## EXECUTION WORKFLOW

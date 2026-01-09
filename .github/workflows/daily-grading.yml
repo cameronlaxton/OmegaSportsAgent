@@ -1,0 +1,38 @@
+name: Daily Grading
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 1 AM ET (06:00 UTC) after games finish
+  workflow_dispatch:
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Grade predictions
+        env:
+          BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
+        run: python -m omega.workflows.daily_grading
+
+      - name: Commit graded results
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git add data/ outputs/
+          git commit -m "Graded predictions $(date +%Y-%m-%d)" || echo "No changes"
+          git push
+

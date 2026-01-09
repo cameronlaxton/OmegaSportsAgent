@@ -1,6 +1,7 @@
 # OmegaSports Headless Simulation Engine
 
-> **🚀 For Perplexity Agents:** See **[GUIDE.md](./GUIDE.md)** for complete setup and usage guide
+> **🚀 For Perplexity Agents:** See **[GUIDE.md](./GUIDE.md)** for complete setup and usage guide  
+> **🗺️ Architecture:** See **[SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md)** for structure, data flows, and automation.
 
 A modular, quantitative sports analytics engine designed as a **headless data & simulation pipeline** for Perplexity Spaces/Agents. This engine identifies +EV (positive expected value) wagers by running Monte Carlo simulations and comparing model probabilities against market-implied probabilities.
 
@@ -67,25 +68,24 @@ For detailed usage and examples, see **[GUIDE.md](./GUIDE.md)**.
 - **Kelly Staking**: Bankroll-optimized recommendations
 - **File-Based Output**: All results saved as JSON
 
-## Project Structure
+## Project Structure (Monorepo)
 
 ```
-omega-sports-engine/
-├── GUIDE.md                   # Complete usage guide
-├── main.py                    # CLI entry point
-├── scraper_engine.py          # Web scraper
-├── omega/                     # Core modules
-│   ├── simulation/            # Monte Carlo & Markov engines
-│   ├── api/                   # High-level analysis APIs
-│   ├── data/                  # Data ingestion & APIs
-│   ├── betting/               # Edge evaluation & staking
-│   ├── analytics/             # League baselines
-│   ├── modeling/              # Probability calibration
-│   ├── workflows/             # Automated workflows
-│   └── utilities/             # Logging & persistence
-├── outputs/                   # Simulation results (JSON)
-└── logs/                      # Execution logs
+OmegaSportsAgent-1/
+├── SYSTEM_ARCHITECTURE.md      # Single-source architecture doc
+├── main.py                     # Agent CLI entry point
+├── omega/                      # Agent source modules
+├── config/                     # Calibration packs + loader
+├── outputs/                    # Daily recommendations JSON
+├── data/                       # Runtime logs/exports/outputs
+├── lab/                        # Validation Lab (calibration/audit)
+└── tests/                      # Agent tests
 ```
+
+## Automation (GitHub Actions)
+- Daily predictions: run `python main.py --morning-bets --leagues NBA NFL`, commit `outputs/`, `data/`.
+- Weekly calibration: run `lab/core/calibration_runner.py --use-agent-outputs --output ../config/calibration/nba_latest.json`, commit updated calibration pack.
+- Optional daily grading: run `python -m omega.workflows.daily_grading`.
 
 ## Environment Variables
 

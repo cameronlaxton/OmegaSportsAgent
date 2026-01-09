@@ -77,7 +77,7 @@ class AutoCalibrator:
         self,
         config: Optional[CalibrationConfig] = None,
         storage_path: str = "data/logs/predictions.json",
-        param_config_path: str = "data/config/tuned_parameters.json"
+        param_config_path: str = "config/calibration/tuned_parameters.json"
     ):
         """
         Initialize the auto-calibrator.

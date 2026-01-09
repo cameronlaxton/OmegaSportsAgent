@@ -1,0 +1,39 @@
+name: Daily Predictions
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: "0 12 * * *" # 7 AM ET (12:00 UTC)
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run morning bets
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
+        run: python main.py --morning-bets --leagues NBA NFL
+
+      - name: Commit daily outputs
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git add outputs/ data/
+          git commit -m "Daily predictions $(date +%Y-%m-%d)" || echo "No changes"
+          git push
+

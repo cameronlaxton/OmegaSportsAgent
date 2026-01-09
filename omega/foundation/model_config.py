@@ -8,8 +8,13 @@ and other model parameters.
 from __future__ import annotations
 from typing import Dict
 
+try:
+    from config.calibration_loader import CalibrationLoader  # type: ignore
+except Exception:
+    CalibrationLoader = None  # Fallback if import fails
 
-def get_edge_thresholds() -> Dict:
+
+def get_edge_thresholds(league: str = "NBA") -> Dict:
     """
     Returns edge and EV thresholds for bet acceptance.
     
@@ -20,7 +25,8 @@ def get_edge_thresholds() -> Dict:
             - "min_prop_hit_rate": float (default 0.56) - minimum model hit rate for props
             - "max_ci_width_pct": float (default 30.0) - maximum confidence interval width
     """
-    return {
+    # Default baseline values (percent points)
+    defaults = {
         "min_edge_pct": 3.0,
         "min_ev_pct": 2.5,
         "min_prop_hit_rate": 0.56,
@@ -28,6 +34,19 @@ def get_edge_thresholds() -> Dict:
         "contrarian_edge_override": 5.0,
         "high_confidence_edge_override": 10.0
     }
+    
+    # If calibration loader is available, derive min_edge_pct from calibration pack for the given league
+    if CalibrationLoader:
+        try:
+            cal = CalibrationLoader(league)
+            # Use default edge threshold if present; convert from decimal to percentage points
+            cal_edge = cal.get_edge_threshold("default", defaults["min_edge_pct"] / 100.0) * 100.0
+            defaults["min_edge_pct"] = round(cal_edge, 2)
+        except Exception:
+            # Keep defaults if calibration is unavailable
+            pass
+    
+    return defaults
 
 
 def get_variance_scalars(league: str, stat_key: str = "default") -> float:
