@@ -1,0 +1,143 @@
+[
+  {
+    "game_id": "401584708",
+    "date": "2024-01-15",
+    "sport": "NBA",
+    "league": "NBA",
+    "home_team": "Los Angeles Lakers",
+    "away_team": "Boston Celtics",
+    "home_score": 114,
+    "away_score": 105,
+    "status": "final",
+    "moneyline": {
+      "home": -150,
+      "away": 130
+    },
+    "spread": {
+      "line": -3.5,
+      "home_odds": -110,
+      "away_odds": -110
+    },
+    "total": {
+      "line": 225.5,
+      "over_odds": -110,
+      "under_odds": -110
+    },
+    "home_team_stats": {
+      "field_goal_pct": "48.9",
+      "three_point_pct": "38.5",
+      "free_throw_pct": "82.4",
+      "rebounds": "45",
+      "assists": "28",
+      "turnovers": "12",
+      "steals": "8",
+      "blocks": "5"
+    },
+    "away_team_stats": {
+      "field_goal_pct": "45.2",
+      "three_point_pct": "35.7",
+      "free_throw_pct": "78.9",
+      "rebounds": "42",
+      "assists": "24",
+      "turnovers": "15",
+      "steals": "6",
+      "blocks": "4"
+    },
+    "venue": "Crypto.com Arena",
+    "attendance": 18997
+  },
+  {
+    "game_id": "401584709",
+    "date": "2024-01-15",
+    "sport": "NBA",
+    "league": "NBA",
+    "home_team": "Golden State Warriors",
+    "away_team": "Phoenix Suns",
+    "home_score": 108,
+    "away_score": 122,
+    "status": "final",
+    "moneyline": {
+      "home": 120,
+      "away": -140
+    },
+    "spread": {
+      "line": 2.5,
+      "home_odds": -110,
+      "away_odds": -110
+    },
+    "total": {
+      "line": 231.5,
+      "over_odds": -110,
+      "under_odds": -110
+    },
+    "home_team_stats": {
+      "field_goal_pct": "44.1",
+      "three_point_pct": "32.4",
+      "free_throw_pct": "85.7",
+      "rebounds": "40",
+      "assists": "25",
+      "turnovers": "14",
+      "steals": "7",
+      "blocks": "3"
+    },
+    "away_team_stats": {
+      "field_goal_pct": "51.2",
+      "three_point_pct": "42.9",
+      "free_throw_pct": "88.2",
+      "rebounds": "44",
+      "assists": "30",
+      "turnovers": "10",
+      "steals": "9",
+      "blocks": "6"
+    },
+    "venue": "Chase Center",
+    "attendance": 18064
+  },
+  {
+    "game_id": "401584710",
+    "date": "2024-01-16",
+    "sport": "NBA",
+    "league": "NBA",
+    "home_team": "Milwaukee Bucks",
+    "away_team": "Brooklyn Nets",
+    "home_score": 125,
+    "away_score": 118,
+    "status": "final",
+    "moneyline": {
+      "home": -200,
+      "away": 170
+    },
+    "spread": {
+      "line": -5.5,
+      "home_odds": -110,
+      "away_odds": -110
+    },
+    "total": {
+      "line": 240.5,
+      "over_odds": -110,
+      "under_odds": -110
+    },
+    "home_team_stats": {
+      "field_goal_pct": "52.3",
+      "three_point_pct": "40.0",
+      "free_throw_pct": "83.3",
+      "rebounds": "48",
+      "assists": "32",
+      "turnovers": "11",
+      "steals": "10",
+      "blocks": "7"
+    },
+    "away_team_stats": {
+      "field_goal_pct": "47.8",
+      "three_point_pct": "36.4",
+      "free_throw_pct": "79.4",
+      "rebounds": "43",
+      "assists": "27",
+      "turnovers": "13",
+      "steals": "8",
+      "blocks": "5"
+    },
+    "venue": "Fiserv Forum",
+    "attendance": 17500
+  }
+]

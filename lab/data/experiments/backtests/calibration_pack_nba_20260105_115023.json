@@ -1,0 +1,124 @@
+{
+  "version": "1.0.0",
+  "league": "NBA",
+  "generated_at": "2026-01-05T11:50:23.749960",
+  "backtest_period": {
+    "start": "2019-10-22",
+    "end": "2024-12-31"
+  },
+  "train_period": {
+    "start": "2019-10-22",
+    "end": "2023-06-10"
+  },
+  "test_period": {
+    "start": "2023-06-10",
+    "end": "2024-12-31"
+  },
+  "edge_thresholds": {
+    "moneyline": 0.03,
+    "spread": 0.09499999999999999,
+    "total": 0.01,
+    "player_prop_points": 0.04,
+    "player_prop_rebounds": 0.04,
+    "player_prop_assists": 0.04
+  },
+  "variance_scalars": {
+    "NBA": 1.0,
+    "NFL": 1.0,
+    "global": 1.0
+  },
+  "kelly_policy": {
+    "method": "fractional",
+    "fraction": 0.25,
+    "max_stake": 0.05,
+    "min_stake": 0.01,
+    "tier_multipliers": {
+      "high_confidence": 1.0,
+      "medium_confidence": 0.5,
+      "low_confidence": 0.25
+    }
+  },
+  "probability_transforms": {
+    "method": "platt+shrink",
+    "markets": {
+      "moneyline": {
+        "method": "platt+shrink",
+        "platt_coefficients": {
+          "a": 0.47147183749459864,
+          "b": 0.011427550415523187
+        },
+        "shrinkage_alpha": 0.25
+      },
+      "spread": {
+        "method": "platt+shrink",
+        "platt_coefficients": {
+          "a": -0.04183747817960846,
+          "b": 0.20826603472690028
+        },
+        "shrinkage_alpha": 0.1
+      },
+      "total": {
+        "method": "platt+shrink",
+        "platt_coefficients": {
+          "a": 0.6712940825330339,
+          "b": -0.08330411236872515
+        },
+        "shrinkage_alpha": 0.05
+      }
+    }
+  },
+  "metrics": {
+    "roi": 0.28096404415653325,
+    "sharpe": 0.25207593830318004,
+    "max_drawdown": 7.264236713777997,
+    "hit_rate": 0.6,
+    "total_bets": 70,
+    "winning_bets": 42,
+    "losing_bets": 28,
+    "push_bets": 0,
+    "total_staked": 70.0,
+    "total_profit": 19.66748309095733,
+    "brier_score": 0.2549139665932092,
+    "log_loss": 4.348867975183161
+  },
+  "reliability_bins": [
+    {
+      "prob_range": "0.50-0.60",
+      "predicted_prob": 0.5,
+      "empirical_rate": 0.36363636363636365,
+      "count": 22,
+      "calibration_error": 0.13636363636363635
+    },
+    {
+      "prob_range": "0.60-0.70",
+      "predicted_prob": 0.6471430025845155,
+      "empirical_rate": 0.6,
+      "count": 10,
+      "calibration_error": 0.047143002584515536
+    },
+    {
+      "prob_range": "0.70-0.80",
+      "predicted_prob": 0.7316180509543496,
+      "empirical_rate": 0.8333333333333334,
+      "count": 12,
+      "calibration_error": 0.10171528237898375
+    }
+  ],
+  "diagnostics": {
+    "bet_count": 70,
+    "spearman_correlation": 0.18313705873687572,
+    "mean_implied_prob": 0.746440666247105,
+    "mean_outcome": 0.6,
+    "bias": 0.14644066624710506,
+    "bias_label": "overconfidence"
+  },
+  "notes": [
+    "Calibrated on NBA historical data",
+    "Training period: 2019-10-22 to 2023-06-10",
+    "Test period: 2023-06-10 to 2024-12-31",
+    "Total test bets: 70",
+    "Test ROI: 28.1%",
+    "Test Sharpe: 0.25",
+    "Ready for integration into OmegaSportsAgent"
+  ]
+}

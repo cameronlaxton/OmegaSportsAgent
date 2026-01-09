@@ -1,0 +1,3 @@
+# This directory stores historical game data
+# Files are named: {sport}_{year}_games.json
+# Example: nba_2024_games.json

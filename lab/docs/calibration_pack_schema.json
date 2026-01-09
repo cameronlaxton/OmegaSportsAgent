@@ -1,0 +1,407 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OmegaSports Calibration Pack Schema",
+  "description": "Stable schema for calibration parameters that can be transplanted from Validation Lab to OmegaSportsAgent",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "version",
+    "league",
+    "generated_at",
+    "backtest_period",
+    "train_period",
+    "test_period",
+    "edge_thresholds",
+    "variance_scalars",
+    "kelly_policy",
+    "metrics"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version (semantic versioning)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "example": "1.0.0"
+    },
+    "league": {
+      "type": "string",
+      "description": "League this calibration applies to",
+      "enum": ["NBA", "NFL", "NCAAB", "NCAAF", "MLB", "NHL"],
+      "example": "NBA"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when pack was generated (ISO 8601)",
+      "example": "2026-01-05T12:34:56.789Z"
+    },
+    "backtest_period": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date",
+          "description": "Backtest window start date",
+          "example": "2020-01-01"
+        },
+        "end": {
+          "type": "string",
+          "format": "date",
+          "description": "Backtest window end date",
+          "example": "2024-12-31"
+        }
+      }
+    },
+    "train_period": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date"
+        },
+        "end": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "test_period": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date"
+        },
+        "end": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "edge_thresholds": {
+      "type": "object",
+      "description": "Minimum edge required to place a bet, by market type",
+      "required": ["moneyline", "spread", "total"],
+      "properties": {
+        "moneyline": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Edge threshold for moneyline bets (0.0-1.0)",
+          "example": 0.02
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Edge threshold for spread bets",
+          "example": 0.03
+        },
+        "total": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Edge threshold for total (over/under) bets",
+          "example": 0.03
+        },
+        "props": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Edge threshold for player prop bets",
+          "example": 0.04
+        }
+      }
+    },
+    "variance_scalars": {
+      "type": "object",
+      "description": "Variance adjustment factors for simulation accuracy",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0.1,
+        "maximum": 10.0
+      },
+      "properties": {
+        "global": {
+          "type": "number",
+          "description": "Global variance scalar (applies to all)",
+          "example": 1.0
+        },
+        "NBA": {
+          "type": "number",
+          "description": "League-specific variance scalar",
+          "example": 1.0
+        },
+        "NFL": {
+          "type": "number",
+          "example": 1.0
+        }
+      }
+    },
+    "kelly_policy": {
+      "type": "object",
+      "description": "Kelly criterion staking policy parameters",
+      "required": ["method", "fraction", "max_stake", "min_stake"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["full", "fractional", "fixed"],
+          "description": "Staking method",
+          "example": "fractional"
+        },
+        "fraction": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Fraction of Kelly to use (0.25 = Quarter Kelly)",
+          "example": 0.25
+        },
+        "max_stake": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Maximum stake as fraction of bankroll",
+          "example": 0.05
+        },
+        "min_stake": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Minimum stake as fraction of bankroll",
+          "example": 0.01
+        },
+        "tier_multipliers": {
+          "type": "object",
+          "description": "Stake multipliers by confidence tier",
+          "properties": {
+            "high_confidence": {
+              "type": "number",
+              "example": 1.0
+            },
+            "medium_confidence": {
+              "type": "number",
+              "example": 0.5
+            },
+            "low_confidence": {
+              "type": "number",
+              "example": 0.25
+            }
+          }
+        }
+      }
+    },
+    "probability_transforms": {
+      "type": "object",
+      "description": "Probability calibration transforms (isotonic regression, Platt scaling, etc.)",
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["none", "isotonic", "platt", "beta"],
+          "example": "none"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Transform-specific parameters",
+          "additionalProperties": true
+        },
+        "notes": {
+          "type": "string",
+          "example": "Future: Implement isotonic regression or Platt scaling"
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Performance metrics from test period",
+      "required": ["roi", "sharpe", "max_drawdown", "hit_rate", "total_bets"],
+      "properties": {
+        "roi": {
+          "type": "number",
+          "description": "Return on investment",
+          "example": 0.053
+        },
+        "sharpe": {
+          "type": "number",
+          "description": "Sharpe ratio (risk-adjusted return)",
+          "example": 1.25
+        },
+        "max_drawdown": {
+          "type": "number",
+          "description": "Maximum drawdown in units",
+          "example": 15.3
+        },
+        "hit_rate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Win rate (proportion of winning bets)",
+          "example": 0.523
+        },
+        "total_bets": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of bets placed",
+          "example": 1234
+        },
+        "winning_bets": {
+          "type": "integer",
+          "minimum": 0,
+          "example": 645
+        },
+        "losing_bets": {
+          "type": "integer",
+          "minimum": 0,
+          "example": 589
+        },
+        "total_staked": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Total amount staked",
+          "example": 1234.0
+        },
+        "total_profit": {
+          "type": "number",
+          "description": "Total profit/loss",
+          "example": 65.4
+        },
+        "brier_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Brier score (lower is better, 0 = perfect)",
+          "example": 0.245
+        },
+        "log_loss": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Log loss (lower is better)",
+          "example": 0.693
+        }
+      }
+    },
+    "reliability_bins": {
+      "type": "array",
+      "description": "Reliability calibration data (predicted prob vs empirical rate)",
+      "items": {
+        "type": "object",
+        "required": ["prob_range", "predicted_prob", "empirical_rate", "count"],
+        "properties": {
+          "prob_range": {
+            "type": "string",
+            "example": "0.50-0.60"
+          },
+          "predicted_prob": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "example": 0.55
+          },
+          "empirical_rate": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "example": 0.53
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 234
+          },
+          "calibration_error": {
+            "type": "number",
+            "minimum": 0.0,
+            "example": 0.02
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "description": "Human-readable notes about this calibration",
+      "items": {
+        "type": "string"
+      },
+      "example": [
+        "Calibrated on NBA historical data",
+        "Training period: 2020-01-01 to 2022-12-31",
+        "Test period: 2023-01-01 to 2024-12-31"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "version": "1.0.0",
+      "league": "NBA",
+      "generated_at": "2026-01-05T12:34:56.789Z",
+      "backtest_period": {
+        "start": "2020-01-01",
+        "end": "2024-12-31"
+      },
+      "train_period": {
+        "start": "2020-01-01",
+        "end": "2022-12-31"
+      },
+      "test_period": {
+        "start": "2023-01-01",
+        "end": "2024-12-31"
+      },
+      "edge_thresholds": {
+        "moneyline": 0.02,
+        "spread": 0.03,
+        "total": 0.03,
+        "props": 0.04
+      },
+      "variance_scalars": {
+        "global": 1.0,
+        "NBA": 1.0,
+        "NFL": 1.0
+      },
+      "kelly_policy": {
+        "method": "fractional",
+        "fraction": 0.25,
+        "max_stake": 0.05,
+        "min_stake": 0.01,
+        "tier_multipliers": {
+          "high_confidence": 1.0,
+          "medium_confidence": 0.5,
+          "low_confidence": 0.25
+        }
+      },
+      "probability_transforms": {
+        "method": "none",
+        "notes": "Future: Implement isotonic regression"
+      },
+      "metrics": {
+        "roi": 0.053,
+        "sharpe": 1.25,
+        "max_drawdown": 15.3,
+        "hit_rate": 0.523,
+        "total_bets": 1234,
+        "winning_bets": 645,
+        "losing_bets": 589,
+        "total_staked": 1234.0,
+        "total_profit": 65.4,
+        "brier_score": 0.245,
+        "log_loss": 0.693
+      },
+      "reliability_bins": [
+        {
+          "prob_range": "0.50-0.60",
+          "predicted_prob": 0.55,
+          "empirical_rate": 0.53,
+          "count": 234,
+          "calibration_error": 0.02
+        }
+      ],
+      "notes": [
+        "Calibrated on NBA historical data",
+        "Test ROI: 5.3%",
+        "Test Sharpe: 1.25",
+        "Ready for integration into OmegaSportsAgent"
+      ]
+    }
+  ]
+}
