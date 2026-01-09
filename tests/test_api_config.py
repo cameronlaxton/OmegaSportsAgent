@@ -10,7 +10,7 @@ def test_api_config_module():
     """Test API configuration module"""
     print("\n=== Testing API Configuration Module ===")
     
-    from omega.foundation.api_config import (
+    from src.foundation.api_config import (
         get_api_keys,
         get_balldontlie_key,
         get_odds_api_key,
@@ -44,7 +44,7 @@ def test_odds_scraper_integration():
     """Test odds scraper uses new config"""
     print("\n=== Testing Odds Scraper Integration ===")
     
-    from omega.data.odds_scraper import ODDS_API_KEY, check_api_status
+    from src.data.odds_scraper import ODDS_API_KEY, check_api_status
     
     assert ODDS_API_KEY, "ODDS_API_KEY not loaded in odds_scraper"
     print(f"✓ Odds scraper has API key: {ODDS_API_KEY[:8]}...{ODDS_API_KEY[-4:]}")
@@ -60,7 +60,7 @@ def test_stats_ingestion_integration():
     """Test stats ingestion uses new config"""
     print("\n=== Testing Stats Ingestion Integration ===")
     
-    from omega.data.stats_ingestion import BALLDONTLIE_API_KEY
+    from src.data.stats_ingestion import BALLDONTLIE_API_KEY
     
     assert BALLDONTLIE_API_KEY, "BALLDONTLIE_API_KEY not loaded in stats_ingestion"
     print(f"✓ Stats ingestion has API key: {BALLDONTLIE_API_KEY[:8]}...{BALLDONTLIE_API_KEY[-4:]}")
@@ -78,7 +78,7 @@ def test_environment_override():
     
     # Reimport to get new value
     import importlib
-    from omega.foundation import api_config
+    from src.foundation import api_config
     importlib.reload(api_config)
     
     key = api_config.get_balldontlie_key()

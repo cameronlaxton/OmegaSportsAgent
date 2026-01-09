@@ -22,7 +22,7 @@ from datetime import datetime, timezone, timedelta
 # Add repo to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from omega.workflows.daily_grading import DailyGradingWorkflow, BetResult
+from src.workflows.daily_grading import DailyGradingWorkflow, BetResult
 
 
 def print_header(title: str):

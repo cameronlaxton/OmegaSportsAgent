@@ -37,10 +37,10 @@ def main():
     print("\nSTEP 2: Import Modules")
     print("-"*70)
     
-    from omega.schema import GameData, BettingLine
-    from omega.simulation.simulation_engine import run_game_simulation
-    from omega.betting.odds_eval import implied_probability, edge_percentage, expected_value_percent
-    from omega.foundation.model_config import get_edge_thresholds
+    from src.schema import GameData, BettingLine
+    from src.simulation.simulation_engine import run_game_simulation
+    from src.betting.odds_eval import implied_probability, edge_percentage, expected_value_percent
+    from src.foundation.model_config import get_edge_thresholds
     from scraper_engine import validate_game_data
     
     print("✓ All modules imported")

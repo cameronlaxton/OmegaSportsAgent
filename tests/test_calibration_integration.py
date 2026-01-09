@@ -161,13 +161,13 @@ def test_module_imports():
     print("✓ New modules import successfully")
     
     # Test existing utilities still work
-    from omega.utilities.data_logging import log_bet_recommendation, get_log_directory
-    from omega.utilities.sandbox_persistence import OmegaCacheLogger
+    from src.utilities.data_logging import log_bet_recommendation, get_log_directory
+    from src.utilities.sandbox_persistence import OmegaCacheLogger
     print("✓ Existing utilities still import")
     
     # Test betting modules
-    from omega.betting.odds_eval import edge_percentage, implied_probability
-    from omega.betting.kelly_staking import recommend_stake
+    from src.betting.odds_eval import edge_percentage, implied_probability
+    from src.betting.kelly_staking import recommend_stake
     print("✓ Betting modules still import")
     
     print("✅ Module Imports passed")
@@ -180,7 +180,7 @@ def test_integration_example():
     
     from outputs.bet_recorder import BetRecorder
     from config.calibration_loader import CalibrationLoader
-    from omega.betting.odds_eval import implied_probability, edge_percentage
+    from src.betting.odds_eval import implied_probability, edge_percentage
     
     # Load calibration for NBA
     cal = CalibrationLoader("NBA")

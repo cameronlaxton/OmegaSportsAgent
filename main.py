@@ -23,7 +23,7 @@ import sys
 from datetime import datetime
 from typing import Optional, List
 
-from omega.schema import GameData, BettingLine, PropBet, DailySlate, SimulationInput, BetRecommendation
+from src.schema import GameData, BettingLine, PropBet, DailySlate, SimulationInput, BetRecommendation
 
 # Create required directories first
 os.makedirs("logs", exist_ok=True)
@@ -78,7 +78,7 @@ def run_morning_bets(leagues: Optional[List[str]] = None, iterations: int = 1000
     logger.info("Starting morning bet generation...")
     
     try:
-        from omega.workflows.morning_bets import run_morning_workflow
+        from src.workflows.morning_bets import run_morning_workflow
         
         result = run_morning_workflow(
             leagues=leagues,
@@ -115,8 +115,8 @@ def run_analyze(team_a: str, team_b: str, league: str = "NBA") -> dict:
     logger.info(f"Analyzing matchup: {team_a} vs {team_b} ({league})")
     
     try:
-        from omega.simulation.simulation_engine import run_game_simulation
-        from omega.data.stats_scraper import get_team_stats
+        from src.simulation.simulation_engine import run_game_simulation
+        from src.data.stats_scraper import get_team_stats
         
         stats_a = get_team_stats(team_a, league) or {}
         stats_b = get_team_stats(team_b, league) or {}
@@ -165,9 +165,9 @@ def run_simulate(league: str, iterations: int = 10000) -> dict:
     logger.info(f"Running simulations for {league}...")
     
     try:
-        from omega.data.schedule_api import get_todays_games
-        from omega.simulation.simulation_engine import run_game_simulation
-        from omega.data.stats_scraper import get_team_stats
+        from src.data.schedule_api import get_todays_games
+        from src.simulation.simulation_engine import run_game_simulation
+        from src.data.stats_scraper import get_team_stats
         
         games = get_todays_games(league)
         
@@ -238,7 +238,7 @@ def run_audit(start_date: Optional[str] = None, end_date: Optional[str] = None) 
     logger.info("Running backtest audit...")
     
     try:
-        from omega.utilities.sandbox_persistence import OmegaCacheLogger
+        from src.utilities.sandbox_persistence import OmegaCacheLogger
         
         cache_logger = OmegaCacheLogger()
         
@@ -307,7 +307,7 @@ def run_markov_props(league: str = "NBA", iterations: int = 10000, min_edge: flo
     logger.info(f"Analyzing player props with Markov simulation ({league})...")
     
     try:
-        from omega.api.markov_analysis import get_markov_prop_recommendations
+        from src.api.markov_analysis import get_markov_prop_recommendations
         
         result = get_markov_prop_recommendations(
             league=league,
@@ -342,8 +342,8 @@ def run_markov_game(home_team: str, away_team: str, league: str = "NBA", iterati
     logger.info(f"Running Markov game simulation: {away_team} @ {home_team}...")
     
     try:
-        from omega.api.markov_analysis import simulate_game_with_markov
-        from omega.data.stats_scraper import get_team_stats
+        from src.api.markov_analysis import simulate_game_with_markov
+        from src.data.stats_scraper import get_team_stats
         
         # This is a simplified version - in production would fetch real player data
         result = {

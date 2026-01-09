@@ -227,7 +227,7 @@ def parse_to_game_data(
         >>> # Perplexity agent should now fill in the betting lines
     """
     try:
-        from omega.schema import GameData, BettingLine, PropBet
+        from src.schema import GameData, BettingLine, PropBet
         
         game_template = GameData(
             sport=sport,
@@ -279,7 +279,7 @@ def validate_game_data(data: dict) -> tuple:
         ... })
     """
     try:
-        from omega.schema import GameData
+        from src.schema import GameData
         validated = GameData(**data)
         return True, validated.model_dump()
     except ImportError:

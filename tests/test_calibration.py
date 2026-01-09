@@ -18,7 +18,7 @@ def test_performance_tracker():
     with tempfile.TemporaryDirectory() as tmpdir:
         storage_path = os.path.join(tmpdir, "predictions.json")
         
-        from omega.calibration.performance_tracker import PerformanceTracker
+        from src.calibration.performance_tracker import PerformanceTracker
         
         tracker = PerformanceTracker(storage_path=storage_path)
         print("✓ PerformanceTracker initialized")
@@ -71,8 +71,8 @@ def test_parameter_tuner():
         storage_path = os.path.join(tmpdir, "predictions.json")
         config_path = os.path.join(tmpdir, "tuned_parameters.json")
         
-        from omega.calibration.performance_tracker import PerformanceTracker
-        from omega.calibration.parameter_tuner import ParameterTuner, TuningStrategy
+        from src.calibration.performance_tracker import PerformanceTracker
+        from src.calibration.parameter_tuner import ParameterTuner, TuningStrategy
         
         tracker = PerformanceTracker(storage_path=storage_path)
         tuner = ParameterTuner(tracker, config_path=config_path)
@@ -136,7 +136,7 @@ def test_auto_calibrator():
         storage_path = os.path.join(tmpdir, "predictions.json")
         config_path = os.path.join(tmpdir, "tuned_parameters.json")
         
-        from omega.calibration import AutoCalibrator, CalibrationConfig, TuningStrategy
+        from src.calibration import AutoCalibrator, CalibrationConfig, TuningStrategy
         
         config = CalibrationConfig(
             auto_tune_enabled=False,  # Manual for testing
@@ -197,8 +197,8 @@ def test_markov_integration():
     print("="*70)
     
     try:
-        from omega.simulation.markov_engine import TransitionMatrix
-        from omega.calibration import get_tuned_parameter
+        from src.simulation.markov_engine import TransitionMatrix
+        from src.calibration import get_tuned_parameter
         
         # Create transition matrix
         matrix = TransitionMatrix("NBA")

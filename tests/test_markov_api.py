@@ -13,7 +13,7 @@ def test_markov_api_imports():
     print("\n=== Test: Markov API Imports ===")
     
     try:
-        from omega.api.markov_analysis import (
+        from src.api.markov_analysis import (
             analyze_player_prop_markov,
             analyze_multiple_props,
             simulate_game_with_markov,
@@ -31,7 +31,7 @@ def test_markov_engine_imports():
     print("\n=== Test: Markov Engine Imports ===")
     
     try:
-        from omega.simulation.markov_engine import (
+        from src.simulation.markov_engine import (
             MarkovSimulator,
             MarkovState,
             TransitionMatrix,
@@ -51,7 +51,7 @@ def test_player_context_validation():
     """Test player context validation."""
     print("\n=== Test: Player Context Validation ===")
     
-    from omega.simulation.markov_engine import validate_player_context
+    from src.simulation.markov_engine import validate_player_context
     
     # Valid player
     valid_player = {
@@ -78,7 +78,7 @@ def test_team_context_validation():
     """Test team context validation."""
     print("\n=== Test: Team Context Validation ===")
     
-    from omega.simulation.markov_engine import validate_team_context
+    from src.simulation.markov_engine import validate_team_context
     
     # Valid team
     valid_team = {
@@ -109,7 +109,7 @@ def test_transition_matrix():
     """Test transition matrix creation."""
     print("\n=== Test: Transition Matrix ===")
     
-    from omega.simulation.markov_engine import TransitionMatrix
+    from src.simulation.markov_engine import TransitionMatrix
     
     # Test NBA transitions
     nba_matrix = TransitionMatrix("NBA")
@@ -132,7 +132,7 @@ def test_markov_simulator_basic():
     """Test basic Markov simulator functionality."""
     print("\n=== Test: Markov Simulator Basic ===")
     
-    from omega.simulation.markov_engine import MarkovSimulator
+    from src.simulation.markov_engine import MarkovSimulator
     
     # Create simple test players
     players = [
@@ -173,7 +173,7 @@ def test_analyze_player_prop_basic():
     """Test basic player prop analysis."""
     print("\n=== Test: Analyze Player Prop ===")
     
-    from omega.api.markov_analysis import analyze_player_prop_markov
+    from src.api.markov_analysis import analyze_player_prop_markov
     
     # Simple test data
     player = {

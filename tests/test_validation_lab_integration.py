@@ -182,7 +182,7 @@ def test_validation_lab_compatibility():
     
     from outputs.bet_recorder import BetRecorder
     from config.calibration_loader import CalibrationLoader
-    from omega.betting.odds_eval import implied_probability
+    from src.betting.odds_eval import implied_probability
     
     # Load NBA calibration
     cal = CalibrationLoader("NBA")

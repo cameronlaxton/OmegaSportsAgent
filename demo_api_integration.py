@@ -16,7 +16,7 @@ def demo_api_config():
     print("API CONFIGURATION DEMO")
     print("="*60)
     
-    from omega.foundation.api_config import check_api_keys, get_api_keys
+    from src.foundation.api_config import check_api_keys, get_api_keys
     
     print("\n✓ Checking API key configuration...")
     status = check_api_keys()
@@ -34,7 +34,7 @@ def demo_odds_api():
     print("ODDS API DEMO - Live Betting Lines")
     print("="*60)
     
-    from omega.data.odds_scraper import get_upcoming_games, check_api_status
+    from src.data.odds_scraper import get_upcoming_games, check_api_status
     
     # Check API status
     print("\n✓ Checking Odds API status...")
@@ -81,7 +81,7 @@ def demo_balldontlie_api():
     print("BALL DONT LIE API DEMO - NBA Player Stats")
     print("="*60)
     
-    from omega.data.stats_ingestion import get_player_stats_from_balldontlie
+    from src.data.stats_ingestion import get_player_stats_from_balldontlie
     
     # Test with a popular NBA player
     test_players = ["LeBron James", "Stephen Curry", "Luka Doncic"]

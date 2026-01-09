@@ -39,8 +39,8 @@ def main():
     print("\nSTEP 2: Import Modules")
     print("-"*70)
     
-    from omega.api.markov_analysis import analyze_player_prop_markov
-    from omega.simulation.markov_engine import MarkovSimulator
+    from src.api.markov_analysis import analyze_player_prop_markov
+    from src.simulation.markov_engine import MarkovSimulator
     
     print("✓ Markov simulation modules imported")
     

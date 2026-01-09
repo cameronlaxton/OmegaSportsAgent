@@ -36,37 +36,37 @@ def test_module_imports():
     print("\n=== Test 2: Module Imports ===")
     
     # Foundation
-    from omega.schema import GameData, BettingLine
-    from omega.foundation.model_config import get_edge_thresholds
-    from omega.foundation.league_config import get_league_config
-    from omega.foundation.core_abstractions import Team
+    from src.schema import GameData, BettingLine
+    from src.foundation.model_config import get_edge_thresholds
+    from src.foundation.league_config import get_league_config
+    from src.foundation.core_abstractions import Team
     print("✓ Foundation modules (4/4)")
     
     # Data
-    from omega.data.schedule_api import get_todays_games
-    from omega.data.stats_scraper import get_team_stats
-    from omega.data.odds_scraper import get_upcoming_games
-    from omega.data.injury_api import get_injured_players
+    from src.data.schedule_api import get_todays_games
+    from src.data.stats_scraper import get_team_stats
+    from src.data.odds_scraper import get_upcoming_games
+    from src.data.injury_api import get_injured_players
     print("✓ Data modules (4/4)")
     
     # Simulation
-    from omega.simulation.simulation_engine import run_game_simulation
-    from omega.simulation.correlated_simulation import simulate_correlated_markets
+    from src.simulation.simulation_engine import run_game_simulation
+    from src.simulation.correlated_simulation import simulate_correlated_markets
     print("✓ Simulation modules (2/2)")
     
     # Betting
-    from omega.betting.odds_eval import edge_percentage, implied_probability
-    from omega.betting.kelly_staking import recommend_stake
+    from src.betting.odds_eval import edge_percentage, implied_probability
+    from src.betting.kelly_staking import recommend_stake
     print("✓ Betting modules (2/2)")
     
     # Utilities
-    from omega.utilities.output_formatter import format_full_output
-    from omega.utilities.data_logging import log_bet_recommendation
-    from omega.utilities.sandbox_persistence import OmegaCacheLogger
+    from src.utilities.output_formatter import format_full_output
+    from src.utilities.data_logging import log_bet_recommendation
+    from src.utilities.sandbox_persistence import OmegaCacheLogger
     print("✓ Utility modules (3/3)")
     
     # Workflows
-    from omega.workflows.morning_bets import run_morning_workflow
+    from src.workflows.morning_bets import run_morning_workflow
     print("✓ Workflow modules (1/1)")
     
     # Scraper
@@ -80,7 +80,7 @@ def test_schema_validation():
     """Test 3: Schema Validation"""
     print("\n=== Test 3: Schema Validation ===")
     
-    from omega.schema import GameData, BettingLine
+    from src.schema import GameData, BettingLine
     from scraper_engine import validate_game_data
     
     # Create a game
@@ -129,7 +129,7 @@ def test_simulation():
     """Test 4: Basic Simulation"""
     print("\n=== Test 4: Basic Simulation ===")
     
-    from omega.simulation.simulation_engine import run_game_simulation
+    from src.simulation.simulation_engine import run_game_simulation
     
     # Define projection
     projection = {
@@ -171,8 +171,8 @@ def test_betting_analysis():
     """Test 5: Betting Analysis"""
     print("\n=== Test 5: Betting Analysis ===")
     
-    from omega.betting.odds_eval import implied_probability, edge_percentage, expected_value_percent
-    from omega.foundation.model_config import get_edge_thresholds
+    from src.betting.odds_eval import implied_probability, edge_percentage, expected_value_percent
+    from src.foundation.model_config import get_edge_thresholds
     
     # Test odds conversion
     odds = -150
@@ -201,8 +201,8 @@ def test_configuration():
     """Test 6: Configuration"""
     print("\n=== Test 6: Configuration ===")
     
-    from omega.foundation.model_config import get_edge_thresholds, get_simulation_params
-    from omega.foundation.league_config import get_league_config
+    from src.foundation.model_config import get_edge_thresholds, get_simulation_params
+    from src.foundation.league_config import get_league_config
     
     # Test model config
     edge_thresh = get_edge_thresholds()

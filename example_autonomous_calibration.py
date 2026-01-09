@@ -28,7 +28,7 @@ def main():
     print("STEP 1: Initialize Calibration System")
     print("-"*70)
     
-    from omega.calibration import AutoCalibrator, CalibrationConfig, TuningStrategy
+    from src.calibration import AutoCalibrator, CalibrationConfig, TuningStrategy
     
     config = CalibrationConfig(
         auto_tune_enabled=True,
@@ -195,7 +195,7 @@ def main():
     
     print("\nHow to use calibrated parameters in your code:")
     print("""
-from omega.calibration import get_tuned_parameter
+from src.calibration import get_tuned_parameter
 
 # In your betting analysis code:
 edge_threshold = get_tuned_parameter("edge_threshold_prop", default=5.0)

@@ -288,7 +288,7 @@ def simple_example():
     from datetime import datetime
     from outputs.bet_recorder import BetRecorder
     from config.calibration_loader import CalibrationLoader
-    from omega.betting.odds_eval import implied_probability
+    from src.betting.odds_eval import implied_probability
     
     # 1. Load calibration
     league = "NBA"
@@ -360,7 +360,7 @@ def record_to_both_systems(bet_data: Dict[str, Any], league: str):
     """
     Record bet to both old and new systems during transition.
     """
-    from omega.utilities.data_logging import log_bet_recommendation
+    from src.utilities.data_logging import log_bet_recommendation
     from outputs.bet_recorder import BetRecorder
     
     date = bet_data["date"]
