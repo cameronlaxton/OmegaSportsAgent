@@ -1,0 +1,35 @@
+NFL:
+  description: "National Football League"
+  kelly_multiplier: 0.20
+  confidence_threshold: 0.58
+  market_restrictions: [MONEYLINE, SPREAD, TOTAL]
+  max_stake_per_bet: 500
+
+NBA:
+  description: "National Basketball Association"
+  kelly_multiplier: 0.35
+  confidence_threshold: 0.62
+  market_restrictions: [MONEYLINE, SPREAD, PLAYER_PROP, TOTAL]
+  max_stake_per_bet: 300
+
+NHL:
+  description: "National Hockey League"
+  kelly_multiplier: 0.22
+  confidence_threshold: 0.57
+  market_restrictions: [MONEYLINE, SPREAD, TOTAL]
+  max_stake_per_bet: 400
+
+PingPong:
+  description: "International Ping Pong"
+  kelly_multiplier: 0.18
+  confidence_threshold: 0.55
+  market_restrictions: [MONEYLINE, SPREAD]
+  max_stake_per_bet: 150
+
+eSports:
+  description: "eSports (CS:GO / LoL / Dota)"
+  kelly_multiplier: 0.20
+  confidence_threshold: 0.56
+  market_restrictions: [MONEYLINE, MAP_HANDICAP, TOTAL_ROUNDS]
+  max_stake_per_bet: 250
+
