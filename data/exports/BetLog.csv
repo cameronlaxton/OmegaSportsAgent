@@ -1,4 +1,10 @@
-Date,Game_ID,Pick,League,Bet_Type,Odds,Model_Prob,Implied_Prob,Edge_%,EV_%,Tier,Category,Recommended_Units,Projected_Line,Narrative_Summary,Status,Result,Profit_Loss
-2026-01-03,NFL-SEA@SF,UNDER 47.5,NFL,Total,-110,0.573,0.500,7.3,5.8,A,BestTotalNFL,2.5,46.7,"SF elite passing efficiency (EPA/play +0.22) + SEA weak secondary (245+ yds) = efficient scoring in fewer drives. 49ers 27.5 pts, Seahawks 19.2 pts. Strongest edge.",Pending,,
-2026-01-03,NBA-ATL@TOR,OVER 222.5,NBA,Total,-110,0.543,0.500,4.3,3.2,B,BestTotalNBA,1.5,213.7,"Both teams elevated pace (201.3 combined poss). Combined offensive rating 229.3 PPG. High-tempo environment favors OVER. Trae Young 7+ assists.",Pending,,
-2026-01-03,NBA-PHI@NYK,Knicks -2.0,NBA,Spread,-110,0.552,0.524,2.8,1.9,B,BestSpread,1.0,-2.6,"MSG home court advantage (+2.8 pts). Knicks elite offense (119.5 OR) vs 76ers weak defense (110.5 DR). Perimeter shooting (38.5% 3PT) exploits man-to-man.",Pending,,
+Date,Game_ID,Pick,League,Odds,Model_Prob,Implied_Prob,Edge_%,Tier,Category,Narrative_Summary,Status,Result
+2026-01-10,NBA_20260110_001,Boston Celtics ML,NBA,-130,0.6200,0.5652,5.48,A,GameBet,Model: 62.0% vs implied 56.5%. Celtics on 4-game win streak,Pending,
+2026-01-10,NBA_20260110_001,Jayson Tatum Points O/U 28.5 Over,NBA,-110,0.5800,0.5238,5.62,A,BestPointsProp,Matchup advantage: Elite usage vs favorable defense,Pending,
+2026-01-10,NBA_20260110_002,Denver Nuggets ML,NBA,-175,0.6400,0.6364,0.36,C,GameBet,Model: 64.0% vs implied 63.6%. Nuggets elite defense tested,Pending,
+2026-01-10,NBA_20260110_002,Nikola Jokic Assists O/U 7.5 Over,NBA,-110,0.6200,0.5238,9.62,A,BestAssistsProp,Playmaking advantage in uptempo game,Pending,
+2026-01-10,NBA_20260110_003,Los Angeles Lakers ML,NBA,-110,0.5400,0.5238,1.62,C,GameBet,Model: 54.0% vs implied 52.4%. Balanced matchup,Pending,
+2026-01-10,NBA_20260110_004,Phoenix Suns ML,NBA,-180,0.6500,0.6429,0.71,C,GameBet,Model: 65.0% vs implied 64.3%. Suns elite offense,Pending,
+2026-01-10,NBA_20260110_004,Devin Booker Points O/U 26.5 Over,NBA,-110,0.5900,0.5238,6.62,A,BestPointsProp,High-volume scorer in uptempo game,Pending,
+2026-01-10,NFL_20260110_001,Patrick Mahomes TD Passes O/U 2.5 Over,NFL,-110,0.5800,0.5238,5.62,A,BestTDPassProp,Elite offense in playoff game,Pending,
+2026-01-10,NFL_20260110_002,Josh Allen Rushing Yards O/U 45 Over,NFL,-110,0.5500,0.5238,2.62,B,BestRushingYardsProp,Mobile QB in playoff intensity,Pending,
