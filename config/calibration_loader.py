@@ -268,11 +268,19 @@ class CalibrationLoader:
         Returns:
             Kelly fraction (e.g., 0.25 for quarter-Kelly)
         """
+        # League override takes priority if present and not None
         if self._league_overrides:
-            return self._league_overrides.get("kelly_fraction", self.pack.get("kelly_fraction") if self.pack else DEFAULT_KELLY_FRACTION)
+            override = self._league_overrides.get("kelly_fraction")
+            if override is not None:
+                return override
         
+        # Fallback to pack-level value if present and not None
         if self.pack:
-            return self.pack.get("kelly_fraction", DEFAULT_KELLY_FRACTION)
+            pack_value = self.pack.get("kelly_fraction")
+            if pack_value is not None:
+                return pack_value
+        
+        # Default constant fallback
         return DEFAULT_KELLY_FRACTION
     
     def get_kelly_policy(self) -> str:
@@ -282,11 +290,19 @@ class CalibrationLoader:
         Returns:
             Policy name (e.g., "quarter_kelly", "half_kelly")
         """
+        # League override takes priority if present and not None
         if self._league_overrides:
-            return self._league_overrides.get("kelly_policy", self.pack.get("kelly_policy") if self.pack else DEFAULT_KELLY_POLICY)
+            override = self._league_overrides.get("kelly_policy")
+            if override is not None:
+                return override
         
+        # Fallback to pack-level value if present and not None
         if self.pack:
-            return self.pack.get("kelly_policy", DEFAULT_KELLY_POLICY)
+            pack_value = self.pack.get("kelly_policy")
+            if pack_value is not None:
+                return pack_value
+        
+        # Default constant fallback
         return DEFAULT_KELLY_POLICY
     
     def get_probability_transform(self, market_type: str) -> Optional[Callable[[float], float]]:
