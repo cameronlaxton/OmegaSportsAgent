@@ -1,9 +1,9 @@
 # OmegaSports Headless Simulation Engine
 
-> **🚀 For Perplexity Agents:** See **[GUIDE.md](./GUIDE.md)** for complete setup and usage guide  
-> **🗺️ Architecture:** See **[SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md)** for structure, data flows, and automation.
+> **Usage guide:** See **[GUIDE.md](./GUIDE.md)** for setup and workflows  
+> **Architecture:** See **[SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md)** for structure, data flows, and automation.
 
-A modular, quantitative sports analytics engine designed as a **headless data & simulation pipeline** for Perplexity Spaces/Agents. This engine identifies +EV (positive expected value) wagers by running Monte Carlo simulations and comparing model probabilities against market-implied probabilities.
+A modular, quantitative sports analytics engine designed as a **headless data & simulation pipeline**. It identifies +EV wagers by running Monte Carlo simulations and comparing model probabilities against market-implied probabilities.
 
 ## Operator Notes (no LLM instructions required)
 - This repo is now human-operated; LLM-facing instruction packs have been removed.
@@ -93,9 +93,9 @@ For detailed usage and examples, see **[GUIDE.md](./GUIDE.md)**.
 OmegaSportsAgent-1/
 ├── SYSTEM_ARCHITECTURE.md      # Single-source architecture doc
 ├── main.py                     # Agent CLI entry point
-├── omega/                      # Agent source modules
+├── src/                        # Agent source modules (data, simulation, betting, workflows)
 ├── config/                     # Calibration packs + loader
-├── outputs/                    # Daily recommendations JSON
+├── outputs/                    # Daily recommendations JSON/MD
 ├── data/                       # Runtime logs/exports/outputs
 ├── lab/                        # Validation Lab (calibration/audit)
 └── tests/                      # Agent tests
