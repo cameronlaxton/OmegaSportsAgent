@@ -22,6 +22,19 @@ python test_engine.py
 
 ### Usage
 
+**Canonical Tasks (Recommended):**
+```bash
+# Generate daily bet recommendations
+python main.py --task morning_bets --leagues NBA NFL
+
+# Run weekly calibration
+python main.py --task weekly_calibration --league NBA
+
+# Run nightly audit (grading)
+python main.py --task nightly_audit
+```
+
+**Legacy Commands (Still Supported):**
 ```bash
 # Generate daily bet recommendations
 python main.py --morning-bets --leagues NBA NFL
@@ -82,10 +95,28 @@ OmegaSportsAgent-1/
 └── tests/                      # Agent tests
 ```
 
+## Migration (Post-Refactor)
+
+If you're upgrading from the old structure, run the migration script to consolidate legacy data:
+
+```bash
+# Dry run (see what would be migrated)
+python lab/scripts/migrate_legacy_data.py --dry-run
+
+# Perform migration
+python lab/scripts/migrate_legacy_data.py
+```
+
+This consolidates:
+- Bet logs from multiple locations → `data/exports/BetLog.csv`
+- Predictions from multiple locations → `data/logs/predictions.json`
+- Output files from `data/outputs/` → `outputs/`
+- Tuned parameters → `config/calibration/tuned_parameters_legacy.json` (reference)
+
 ## Automation (GitHub Actions)
-- Daily predictions: run `python main.py --morning-bets --leagues NBA NFL`, commit `outputs/`, `data/`.
-- Weekly calibration: run `lab/core/calibration_runner.py --use-agent-outputs --output ../config/calibration/nba_latest.json`, commit updated calibration pack.
-- Optional daily grading: run `python -m src.workflows.daily_grading`.
+- Daily predictions: run `python main.py --task morning_bets --leagues NBA NFL`, commit `outputs/`, `data/`.
+- Weekly calibration: run `python main.py --task weekly_calibration --league NBA`, commit updated calibration pack.
+- Optional daily grading: run `python main.py --task nightly_audit`.
 
 ## Environment Variables
 
@@ -95,7 +126,7 @@ OmegaSportsAgent-1/
 | `BALLDONTLIE_API_KEY` | NBA & NFL statistics (All-Star tier) | Optional | Configured |
 | `ODDS_API_KEY` | Live odds data | Optional | Configured |
 
-**Note**: API keys for Ball Don't Lie (NBA & NFL) and The Odds API are pre-configured in `omega/foundation/api_config.py`. You can override them by setting environment variables:
+**Note**: API keys for Ball Don't Lie (NBA & NFL) and The Odds API are pre-configured in `src/foundation/api_config.py`. You can override them by setting environment variables:
 
 ```bash
 export BALLDONTLIE_API_KEY="your_custom_key"

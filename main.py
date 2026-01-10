@@ -365,15 +365,110 @@ def run_markov_game(home_team: str, away_team: str, league: str = "NBA", iterati
         return {"error": str(e), "status": "failed"}
 
 
+def run_weekly_calibration(league: str = "NBA") -> dict:
+    """
+    Run weekly calibration using Validation Lab.
+    
+    Args:
+        league: League to calibrate (default: NBA)
+    
+    Returns:
+        Dict with calibration results
+    """
+    logger.info(f"Starting weekly calibration for {league}...")
+    
+    try:
+        import subprocess
+        from pathlib import Path
+        
+        lab_path = Path(__file__).parent / "lab"
+        output_path = Path(__file__).parent / "config" / "calibration" / f"{league.lower()}_latest.json"
+        
+        cmd = [
+            "python", "-m", "core.calibration_runner",
+            "--league", league,
+            "--use-agent-outputs",
+            "--output", str(output_path)
+        ]
+        
+        result = subprocess.run(
+            cmd,
+            cwd=str(lab_path),
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode == 0:
+            logger.info(f"Calibration complete: {output_path}")
+            return {
+                "status": "success",
+                "league": league,
+                "output_file": str(output_path),
+                "message": "Calibration pack updated"
+            }
+        else:
+            logger.error(f"Calibration failed: {result.stderr}")
+            return {
+                "status": "failed",
+                "error": result.stderr,
+                "stdout": result.stdout
+            }
+            
+    except Exception as e:
+        logger.error(f"Calibration failed: {e}")
+        return {"error": str(e), "status": "failed"}
+
+
+def run_nightly_audit(start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:
+    """
+    Run nightly audit (grading) on recent predictions.
+    
+    Args:
+        start_date: Start date for audit (YYYY-MM-DD, optional)
+        end_date: End date for audit (YYYY-MM-DD, optional)
+    
+    Returns:
+        Dict with audit results
+    """
+    logger.info("Starting nightly audit (grading)...")
+    
+    try:
+        from src.workflows.daily_grading import DailyGradingWorkflow
+        
+        workflow = DailyGradingWorkflow()
+        success = workflow.run_full_workflow()
+        
+        if success:
+            return {
+                "status": "success",
+                "graded_bets": len(workflow.graded_bets),
+                "message": "Grading complete"
+            }
+        else:
+            return {
+                "status": "failed",
+                "error": "Grading workflow encountered errors"
+            }
+            
+    except Exception as e:
+        logger.error(f"Nightly audit failed: {e}")
+        return {"error": str(e), "status": "failed"}
+
+
 def main():
     """Main entry point for the OmegaSports simulation engine."""
     parser = argparse.ArgumentParser(
         description="OmegaSports Headless Simulation Engine",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
+Canonical Tasks (recommended):
+  python main.py --task morning_bets
+  python main.py --task morning_bets --leagues NBA NFL
+  python main.py --task weekly_calibration --league NBA
+  python main.py --task nightly_audit
+
+Legacy Commands (still supported):
   python main.py --morning-bets
-  python main.py --morning-bets --leagues NBA NFL
   python main.py --analyze "Boston Celtics" "Indiana Pacers" --league NBA
   python main.py --simulate NBA --iterations 5000
   python main.py --markov-props --league NBA --min-edge 5.0
@@ -383,8 +478,13 @@ Examples:
         """
     )
     
+    # Canonical task-based interface
+    parser.add_argument("--task", choices=["morning_bets", "weekly_calibration", "nightly_audit"],
+                        help="Canonical task to run (recommended)")
+    
+    # Legacy flags (backward compatibility)
     parser.add_argument("--morning-bets", action="store_true",
-                        help="Generate daily bet recommendations")
+                        help="[Legacy] Generate daily bet recommendations")
     parser.add_argument("--analyze", nargs=2, metavar=("TEAM_A", "TEAM_B"),
                         help="Analyze matchup between two teams")
     parser.add_argument("--simulate", metavar="LEAGUE",
@@ -399,7 +499,7 @@ Examples:
                         help="Scrape a URL for sports data")
     
     parser.add_argument("--leagues", nargs="+", default=None,
-                        help="Leagues to analyze (for --morning-bets)")
+                        help="Leagues to analyze (for --morning-bets or --task morning_bets)")
     parser.add_argument("--league", default="NBA",
                         help="League for analysis (default: NBA)")
     parser.add_argument("--iterations", type=int, default=10000,
@@ -423,7 +523,17 @@ Examples:
     
     result = None
     
-    if args.morning_bets:
+    # Canonical task-based routing (priority)
+    if args.task:
+        if args.task == "morning_bets":
+            result = run_morning_bets(leagues=args.leagues, iterations=args.iterations)
+        elif args.task == "weekly_calibration":
+            result = run_weekly_calibration(league=args.league)
+        elif args.task == "nightly_audit":
+            result = run_nightly_audit(start_date=args.start_date, end_date=args.end_date)
+    
+    # Legacy flag-based routing (backward compatibility)
+    elif args.morning_bets:
         result = run_morning_bets(leagues=args.leagues, iterations=args.iterations)
         
     elif args.analyze:
@@ -446,7 +556,7 @@ Examples:
         
     else:
         parser.print_help()
-        print("\n[INFO] No command specified. Use one of the options above.")
+        print("\n[INFO] No command specified. Use --task <task_name> or legacy flags above.")
         return
     
     print("\n" + "-" * 60)
