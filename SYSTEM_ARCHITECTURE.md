@@ -1,64 +1,67 @@
-## OmegaSportsAgent Monorepo Architecture
+OmegaSportsAgent System Architecture
+====================================
 
-### Overview
-- **Agent (live)**: daily scraping → simulation → bet logging.
-- **Lab (audit/calibration)**: ingests Agent outputs → runs calibration → updates calibration pack.
-- **Single source of truth for calibration**: `config/calibration/nba_latest.json`.
+Scope: current repo structure (no LLM instruction packs) with a universal-first calibration strategy. Agent runtime lives in `src/`; Validation Lab in `lab/`.
 
-### Directory Layout
-- `main.py`, `scraper_engine.py` — CLI entry points.
-- `omega/` — Agent source (analysis, data, simulation, betting, workflows).
-- `config/` — Calibration loader, Perplexity instructions, calibration packs.
-- `data/` — Runtime logs/exports/outputs (Agent).
-- `outputs/` — Daily recommendations `recommendations_YYYYMMDD.json`.
-- `lab/` — Validation Lab (moved inside repo).
-- `tests/` — Agent tests.
+## High-Level View
+- Agent runtime: CLI `main.py` orchestrates workflows.
+- Data adapters: `src/data/` (schedule, odds, stats, injury) + `scraper_engine.py` for JS-rendered pages.
+- Simulation: `src/simulation/simulation_engine.py`, Markov utilities in `src/api/`.
+- Betting: `src/betting/odds_eval.py`, `src/betting/kelly_staking.py`.
+- Output: `src/utilities/output_formatter.py` → `outputs/` (timestamped) and `data/outputs/` caches.
+- Calibration/Audit: `lab/core/calibration_runner.py`, `lab/tests/`, calibration packs under `config/calibration/`.
 
-### Data & File Flows
+## Directory Layout (canonical)
 ```
-Daily (Agent)
-  main.py --morning-bets
-    → src.workflows.morning_bets
-    → simulations + edge eval
-    → outputs/recommendations_YYYYMMDD.json
-    → data/logs/, data/exports/
-
-Daily Grading (optional)
-  src.workflows.daily_grading
-    → updates bet results in data/logs/ and data/exports/
-
-Weekly Calibration (Lab)
-  lab/core/calibration_runner.py --use-agent-outputs
-    → reads outputs/ and data/logs/
-    → writes config/calibration/nba_latest.json
+main.py                      # CLI entry
+scraper_engine.py            # Playwright/requests scraper
+src/
+  data/                      # schedule_api, odds_scraper, stats_scraper, injury_api
+  simulation/                # simulation_engine
+  betting/                   # odds_eval, kelly_staking
+  workflows/                 # morning_bets, daily_grading
+  api/                       # markov analysis endpoints
+  utilities/                 # output_formatter, helpers
+lab/
+  core/                      # calibration_runner, calibration_diagnostics
+  tests/                     # lab tests
+config/
+  calibration/               # universal_latest.json (+ optional league packs)
+  settings.yaml              # runtime settings
+data/
+  logs/, exports/, outputs/  # runtime artifacts
+outputs/                     # timestamped CLI outputs
 ```
 
-### Calibration Single Source
-- **Calibration pack**: `config/calibration/nba_latest.json`
-  - edge_thresholds, probability_transforms, kelly_staking, variance_scalars, metadata.
-- **Loader**: `config/calibration_loader.py`
-- **Auto-calibrator**: stores tuned parameters in `config/calibration/tuned_parameters.json`.
+## Data & Workflow Flow
+1) Morning bets (`main.py --task morning_bets`)
+   - Fetch schedule/odds/stats/injuries via `src/data/*` + optional scraping
+   - Simulate (`simulation_engine.py`)
+   - Evaluate edge/EV and stake (`odds_eval.py`, `kelly_staking.py`, thresholds from calibration)
+   - Write results to `outputs/` (timestamped) and `data/outputs/picks_<date>.json`
 
-### GitHub Actions Automation (proposed)
-- `.github/workflows/daily-predictions.yml` — 7 AM ET: run `python main.py --morning-bets --leagues NBA NFL`, commit `outputs/`, `data/`.
-- `.github/workflows/daily-grading.yml` — 1 AM ET: run grading, commit updated logs.
-- `.github/workflows/weekly-calibration.yml` — Sunday 11 PM ET: run `lab/core/calibration_runner.py --use-agent-outputs --output ../config/calibration/nba_latest.json`, commit updated pack.
+2) Daily grading (`main.py --task nightly_audit` or workflow class)
+   - Grade prior bets; update `data/logs/` and `data/exports/`
 
-### API Keys (GitHub Secrets)
-- `ODDS_API_KEY` — The Odds API (live odds).
-- `BALLDONTLIE_API_KEY` — BallDontLie (NBA/NFL stats).
+3) Calibration (Lab)
+   - `lab/core/calibration_runner.py --use-agent-outputs`
+   - Reads `outputs/` + `data/logs/` → writes `config/calibration/universal_latest.json` (and optional league packs)
 
-### Golden Path Workflow
-1) Agent daily:
-   - Scrape odds/stats → simulate → log bets → write `outputs/` + `data/logs/`.
-2) Lab weekly:
-   - Ingest `outputs/` + `data/logs/` → calibrate → update `config/calibration/nba_latest.json`.
-3) Agent uses updated pack next run via `CalibrationLoader`.
+## Calibration Strategy
+- Default: `config/calibration/universal_latest.json` with `leagues.{LEAGUE}` overrides.
+- Legacy/override: `config/calibration/nba_latest.json` retained for compatibility.
+- Loader: `CalibrationLoader` loads universal-first, then league-specific.
 
-### Testing
-- Agent tests live in `tests/`.
-- Lab tests remain under `lab/tests/`.
+## Automation
+- Present: `.github/workflows/daily-grading.yml` (grading).
+- Planned: daily predictions (morning bets) and weekly calibration (lab runner).
 
-### Cleanup Policy
-- Archives and stale status docs removed; only keep current README/guide/system architecture.
+## Scraping & Sources
+- Web scraping: `scraper_engine.py` (Playwright + requests/BS4), targets include sharp/public books and news/injury sites.
+- APIs: BallDontLie (NBA/NFL), The Odds API (live odds).
+
+## Outputs & Logging
+- Primary outputs: `outputs/<task>_<timestamp>.json|md`
+- Cached daily picks: `data/outputs/picks_<date>.json`
+- Logs/exports: `data/logs/`, `data/exports/BetLog.csv`
 

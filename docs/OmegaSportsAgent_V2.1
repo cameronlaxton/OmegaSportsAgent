@@ -1,0 +1,70 @@
+OmegaSports Architecture & Parameter Specification (v2.2)
+=========================================================
+
+This document matches the current codebase (`src/` + `lab/`) and marks backlog items explicitly. Legacy Omega/LLM instructions are removed.
+
+1) Repository & Pipeline Structure
+- CLI entry: `main.py`
+- Workflows: `src/workflows/morning_bets.py` (daily picks), `src/workflows/daily_grading.py` (grading), Markov/analysis APIs under `src/api/`
+- Data adapters: `src/data/schedule_api.py`, `stats_scraper.py`, `odds_scraper.py`, `injury_api.py`
+- Scraping: `scraper_engine.py` (Playwright/requests) plus the adapters above
+- Simulation: `src/simulation/simulation_engine.py`
+- Betting logic: `src/betting/odds_eval.py`, `src/betting/kelly_staking.py`
+- Output formatting: `src/utilities/output_formatter.py` (JSON/MD into `outputs/` + `data/outputs/`)
+- Calibration/Audit: `lab/core/calibration_runner.py`, `lab/tests/`, packs in `config/calibration/`
+
+2) Stage Mapping (current vs planned)
+| Stage | Current modules | Planned/backlog |
+| --- | --- | --- |
+| Ingestion | schedule/odds/stats/injury adapters; `scraper_engine.py` | Wrap as `src/pipeline/stages/ingestion.py` for unified adapters |
+| Context/Physics | Partial in workflows + league_config | New `src/analysis/context_engine.py` (weather, rest, travel, referee) |
+| Simulation | `src/simulation/simulation_engine.py` | Add DistributionMap + variance scalars per stat/league |
+| Market intel | Missing | `src/market/market_analyzer.py` (RLM, steam, sharp vs public) |
+| Correlation/SGP | Missing | `src/betting/correlation.py` (parlay/SGP filters, vig penalties) |
+| CLV tracking | Missing | `src/analysis/clv_tracker.py` (CLV calc + breaker hooks) |
+| Staking | `kelly_staking.py`, edge/EV in `odds_eval.py` | Add tiered limits informed by calibration pack |
+| Validation | `lab/core/calibration_runner.py`, `daily_grading.py` | Add real-time breaker checks when CLV < threshold |
+| Output/logging | `output_formatter.py`, `data/logs/` | Keep JSON/MD/CSV, add CLV/market tables once built |
+
+3) Configuration Strategy
+- Default pack: `config/calibration/universal_latest.json` (base params + `leagues.{LEAGUE}` overrides).
+- Legacy/override pack: `config/calibration/nba_latest.json` retained for compatibility.
+- Loader: `CalibrationLoader` loads universal-first, falls back to `{league}_latest.json` if provided.
+- Model defaults: `src/foundation/model_config.py` pulls edge thresholds and variance scalars via the loader.
+
+4) Data Ingestion & Scraping
+- APIs: BallDontLie (NBA/NFL), The Odds API (live odds).
+- Web targets (expandable): Pinnacle (sharp), Circa/Bookmaker, DraftKings/FanDuel/BetMGM/Caesars (public), Action Network (splits/steam), RotoGrinders/beat writers (injury/news). Frequencies: sharp 5–10m, public 10–15m, news 15–30m.
+- Rendered pages: handled by `scraper_engine.py` with Playwright (JS) fallback to requests/BeautifulSoup.
+- Output: adapters normalize to schema for simulation and edge evaluation.
+
+5) Simulation & Distribution Mapping (to align/extend)
+- Use `simulation_engine.py` with distribution selection by stat type:
+  - Poisson: touchdowns, runs, goals, shots-on-goal
+  - Negative Binomial: high-variance turnover/error counts
+  - Normal: points/yards/rebounds/assists when means are high
+  - Binomial: win/loss, first score
+- Variance scalars: pulled from calibration (per-league overrides in universal pack).
+
+6) Sport-Specific Context (backlog to centralize)
+- Weather (wind/precip) impacts totals/pass rate (NFL/NCAAF).
+- Altitude/fatigue (Denver/Utah), schedule spots (b2b, 3-in-4) for NBA/NHL.
+- Umpire/referee tendencies (MLB strike zone, NBA foul/pace multipliers).
+- Travel/circadian for MLB day-after-night and long trips.
+
+7) Output & File Layout
+- Outputs: `outputs/<task>_<timestamp>.json|md` (from `main.py`), `data/outputs/picks_<date>.json` (morning workflow cache).
+- Logs/exports: `data/logs/`, `data/exports/` (bet logs, grading).
+- Formatter: `src/utilities/output_formatter.py` (add market/CLV tables when those features ship).
+
+8) Automation Status
+- Present: `.github/workflows/daily-grading.yml` (grading).
+- Planned: daily predictions (morning bets), weekly calibration using `lab/core/calibration_runner.py`.
+
+9) Backlog Checklist
+- Market analyzer (RLM/steam/sharp divergence) and no-vig fair odds helper.
+- CLV tracker with circuit-breaker hooks.
+- Correlation/SGP filter + hidden vig penalties.
+- Context engine consolidation (weather, referee, altitude, schedule).
+- Output enrichment: CLV tracking table, market confidence, rejection log with reasons.
+

@@ -175,12 +175,13 @@ def _create_combined_transform(transforms: List[Dict[str, Any]]) -> Callable[[fl
 
 class CalibrationLoader:
     """
-    Loads and provides access to league-specific calibration parameters.
+    Loads and provides access to calibration parameters with a universal-first approach.
     
     Supports:
     - Edge thresholds by market type
     - Kelly fraction and staking policy
     - Probability transforms (Platt, shrinkage)
+    - Variance scalars
     - Version tracking
     
     Falls back to safe defaults if calibration pack is missing.
@@ -192,30 +193,39 @@ class CalibrationLoader:
         
         Args:
             league: League identifier (NBA, NFL, NCAAB, NCAAF, etc.)
-            pack_name: Optional specific pack name (default: {league}_latest.json)
+            pack_name: Optional specific pack name (default: universal_latest.json, then {league}_latest.json)
         """
         self.league = league.upper()
+        self.pack_name = None
+        self.pack_filepath = None
         
-        # Determine pack filename
-        if pack_name is None:
-            pack_name = f"{self.league.lower()}_latest.json"
-        
-        # Load calibration pack
         cal_dir = _get_calibration_dir()
-        filepath = os.path.join(cal_dir, pack_name)
         
-        self.pack = _load_calibration_pack(filepath)
-        self.pack_name = pack_name
-        self.pack_filepath = filepath
+        # Load universal-first, then league-specific if requested/default missing
+        candidates = []
+        if pack_name:
+            candidates.append(pack_name)
+        else:
+            candidates.extend(["universal_latest.json", f"{self.league.lower()}_latest.json"])
+        
+        self.pack = None
+        for candidate in candidates:
+            path = os.path.join(cal_dir, candidate)
+            pack = _load_calibration_pack(path)
+            if pack:
+                self.pack = pack
+                self.pack_name = candidate
+                self.pack_filepath = path
+                break
         
         if self.pack:
-            logger.info(f"Loaded calibration pack: {pack_name} (version: {self.get_version()})")
+            logger.info(f"Loaded calibration pack: {self.pack_name} (version: {self.get_version()})")
         else:
-            logger.warning(f"Calibration pack not found: {pack_name}. Using defaults.")
+            logger.warning(f"No calibration pack found (tried {candidates}). Using defaults.")
         
         # Cache transforms
         self._transforms_cache: Dict[str, Optional[Callable]] = {}
-    
+        self._league_overrides = self.pack.get("leagues", {}).get(self.league, {}) if self.pack else {}
     def get_version(self) -> str:
         """
         Get calibration pack version.
@@ -238,16 +248,17 @@ class CalibrationLoader:
         Returns:
             Edge threshold (e.g., 0.04 for 4%)
         """
-        if self.pack:
-            thresholds = self.pack.get("edge_thresholds", {})
-            # Try exact match first
-            if market_type in thresholds:
-                return thresholds[market_type]
-            # Try default
-            if "default" in thresholds:
-                return thresholds["default"]
+        thresholds = {}
+        if self._league_overrides:
+            thresholds = self._league_overrides.get("edge_thresholds", {}) or thresholds
+        if not thresholds and self.pack:
+            thresholds = self.pack.get("edge_thresholds", {}) or thresholds
         
-        # Fallback to defaults
+        if market_type in thresholds:
+            return thresholds[market_type]
+        if "default" in thresholds:
+            return thresholds["default"]
+        
         return DEFAULT_EDGE_THRESHOLDS.get(market_type, DEFAULT_EDGE_THRESHOLDS.get("default", default))
     
     def get_kelly_fraction(self) -> float:
@@ -257,6 +268,9 @@ class CalibrationLoader:
         Returns:
             Kelly fraction (e.g., 0.25 for quarter-Kelly)
         """
+        if self._league_overrides:
+            return self._league_overrides.get("kelly_fraction", self.pack.get("kelly_fraction") if self.pack else DEFAULT_KELLY_FRACTION)
+        
         if self.pack:
             return self.pack.get("kelly_fraction", DEFAULT_KELLY_FRACTION)
         return DEFAULT_KELLY_FRACTION
@@ -268,6 +282,9 @@ class CalibrationLoader:
         Returns:
             Policy name (e.g., "quarter_kelly", "half_kelly")
         """
+        if self._league_overrides:
+            return self._league_overrides.get("kelly_policy", self.pack.get("kelly_policy") if self.pack else DEFAULT_KELLY_POLICY)
+        
         if self.pack:
             return self.pack.get("kelly_policy", DEFAULT_KELLY_POLICY)
         return DEFAULT_KELLY_POLICY
@@ -292,7 +309,11 @@ class CalibrationLoader:
             self._transforms_cache[market_type] = None
             return None
         
-        transforms_config = self.pack.get("probability_transforms", {})
+        transforms_config = {}
+        if self._league_overrides:
+            transforms_config = self._league_overrides.get("probability_transforms", {}) or transforms_config
+        if not transforms_config:
+            transforms_config = self.pack.get("probability_transforms", {}) or transforms_config
         
         # Try exact match first
         if market_type in transforms_config:
@@ -319,6 +340,8 @@ class CalibrationLoader:
         Returns:
             Dict mapping market types to transform definitions
         """
+        if self._league_overrides:
+            return self._league_overrides.get("probability_transforms", self.pack.get("probability_transforms", {}) if self.pack else {})
         if self.pack:
             return self.pack.get("probability_transforms", {})
         return {}
@@ -330,6 +353,9 @@ class CalibrationLoader:
         Returns:
             Dict with kelly_staking parameters (method, fraction, max_stake, min_stake, tier_multipliers)
         """
+        if self._league_overrides and "kelly_staking" in self._league_overrides:
+            return self._league_overrides["kelly_staking"]
+        
         if self.pack and "kelly_staking" in self.pack:
             return self.pack["kelly_staking"]
         
@@ -353,15 +379,46 @@ class CalibrationLoader:
         Returns:
             Dict mapping league names to variance scalar multipliers
         """
+        if self._league_overrides and "variance_scalars" in self._league_overrides:
+            return self._league_overrides["variance_scalars"]
+        
         if self.pack and "variance_scalars" in self.pack:
             return self.pack["variance_scalars"]
         
-        # Fallback defaults
         return {
             "NBA": 1.0,
             "NFL": 1.0,
+            "NCAAB": 1.0,
+            "NCAAF": 1.0,
+            "MLB": 1.0,
+            "NHL": 1.0,
             "global": 1.0
         }
+
+    def get_variance_scalar(self, stat_key: str = "default") -> float:
+        """
+        Get variance scalar for the configured league and stat key.
+        """
+        def _extract_scalar(config: Any) -> float:
+            if isinstance(config, (int, float)):
+                return float(config)
+            if isinstance(config, dict):
+                return float(config.get(stat_key, config.get("default", 1.0)))
+            return 1.0
+        
+        # League-level override first
+        league_config = self._league_overrides.get("variance_scalars") if self._league_overrides else None
+        if league_config:
+            return _extract_scalar(league_config)
+        
+        # Pack-level variance scalars may be nested by league or flat
+        if self.pack and "variance_scalars" in self.pack:
+            pack_vs = self.pack["variance_scalars"]
+            if isinstance(pack_vs, dict) and self.league in pack_vs and isinstance(pack_vs[self.league], dict):
+                return _extract_scalar(pack_vs[self.league])
+            return _extract_scalar(pack_vs)
+        
+        return 1.0
     
     def get_test_performance(self) -> Optional[Dict[str, Any]]:
         """

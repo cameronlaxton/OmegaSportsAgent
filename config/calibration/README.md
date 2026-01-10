@@ -1,20 +1,20 @@
 # Calibration Packs Directory
 
-This directory contains league-specific calibration packs for OmegaSportsAgent.
+This directory contains calibration packs for OmegaSportsAgent. The default is a universal pack with optional per-league overrides.
 
 ## Directory Structure
 
 ```
 config/calibration/
-├── nba_latest.json       # Latest NBA calibration pack
-├── nfl_latest.json       # Latest NFL calibration pack (to be added)
-├── ncaab_latest.json     # Latest NCAAB calibration pack (to be added)
-└── ncaaf_latest.json     # Latest NCAAF calibration pack (to be added)
+├── universal_latest.json    # Default universal pack with per-league overrides
+├── nba_latest.json          # Legacy/override NBA pack (optional)
+├── tuned_parameters_legacy.json
+└── README.md
 ```
 
 ## Calibration Pack Format
 
-Each calibration pack is a JSON file with the following structure:
+Each calibration pack is a JSON file with the following structure. The universal pack adds a top-level `leagues` object for per-league overrides (e.g., `leagues.NBA.edge_thresholds`).
 
 ```json
 {

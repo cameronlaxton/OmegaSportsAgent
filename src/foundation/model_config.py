@@ -65,6 +65,14 @@ def get_variance_scalars(league: str, stat_key: str = "default") -> float:
     league = league.upper()
     stat_key = stat_key.lower()
     
+    if CalibrationLoader:
+        try:
+            cal = CalibrationLoader(league)
+            return cal.get_variance_scalar(stat_key)
+        except Exception:
+            # Fall back to static defaults if calibration is unavailable
+            pass
+    
     defaults = {
         "NBA": {
             "default": 0.45,
@@ -89,6 +97,14 @@ def get_variance_scalars(league: str, stat_key: str = "default") -> float:
             "default": 0.55,
             "goals": 0.70,
             "score": 0.45,
+        },
+        "NCAAB": {
+            "default": 0.55,
+            "score": 0.45,
+        },
+        "NCAAF": {
+            "default": 0.60,
+            "score": 0.50,
         }
     }
     

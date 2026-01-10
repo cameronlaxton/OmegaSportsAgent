@@ -5,6 +5,12 @@
 
 A modular, quantitative sports analytics engine designed as a **headless data & simulation pipeline** for Perplexity Spaces/Agents. This engine identifies +EV (positive expected value) wagers by running Monte Carlo simulations and comparing model probabilities against market-implied probabilities.
 
+## Operator Notes (no LLM instructions required)
+- This repo is now human-operated; LLM-facing instruction packs have been removed.
+- Run via CLI entrypoint `main.py` (see Canonical Tasks below); outputs are written to `outputs/` and `data/outputs/`.
+- Calibration packs live under `config/calibration/`; a universal pack with inline league overrides is the default.
+- Scraping is handled by `scraper_engine.py` plus data adapters under `src/data/`.
+
 ## Quick Start
 
 ### Installation
@@ -54,8 +60,8 @@ python main.py --scrape "https://www.espn.com/nba/schedule"
 - **[GUIDE.md](./GUIDE.md)** - Complete setup, scraping, simulation, and analysis guide
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Development workflow and git guidelines
 - **[test_engine.py](./test_engine.py)** - Test suite
-- **[example_complete_workflow.py](./example_complete_workflow.py)** - Working example
-- **[example_markov_simulation.py](./example_markov_simulation.py)** - Markov simulation example
+- **[examples/example_complete_workflow.py](./examples/example_complete_workflow.py)** - Working example
+- **[examples/example_markov_simulation.py](./examples/example_markov_simulation.py)** - Markov simulation example
 
 ## Overview
 
