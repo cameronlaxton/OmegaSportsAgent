@@ -1,2 +1,10 @@
-Bet_ID,Date,Game,Player,Pick,Bet_Type,Odds,Stake_Units,Result,Actual_Value,Line,Profit_Loss,Edge_Pct,Confidence,Box_Score,Notes
-20260106-001,2026-01-06,CLE @ IND,Darius Garland,OVER 23.5 Pts,PlayerProp,-118,2.5,WIN,29,23.5,2.12,17.9,A,29 PTS (14-23 FG),Mitchell OUT. Dominated 4Q. Usage thesis validated.
+Date,Game_ID,Pick,League,Odds,Model_Prob,Implied_Prob,Edge_%,Tier,Category,Narrative_Summary,Status,Result
+2026-01-10,NBA_20260110_001,Boston Celtics ML,NBA,-130,0.6200,0.5652,5.48,A,GameBet,Model: 62.0% vs implied 56.5%. Celtics on 4-game win streak,Pending,
+2026-01-10,NBA_20260110_001,Jayson Tatum Points O/U 28.5 Over,NBA,-110,0.5800,0.5238,5.62,A,BestPointsProp,Matchup advantage: Elite usage vs favorable defense,Pending,
+2026-01-10,NBA_20260110_002,Denver Nuggets ML,NBA,-175,0.6400,0.6364,0.36,C,GameBet,Model: 64.0% vs implied 63.6%. Nuggets elite defense tested,Pending,
+2026-01-10,NBA_20260110_002,Nikola Jokic Assists O/U 7.5 Over,NBA,-110,0.6200,0.5238,9.62,A,BestAssistsProp,Playmaking advantage in uptempo game,Pending,
+2026-01-10,NBA_20260110_003,Los Angeles Lakers ML,NBA,-110,0.5400,0.5238,1.62,C,GameBet,Model: 54.0% vs implied 52.4%. Balanced matchup,Pending,
+2026-01-10,NBA_20260110_004,Phoenix Suns ML,NBA,-180,0.6500,0.6429,0.71,C,GameBet,Model: 65.0% vs implied 64.3%. Suns elite offense,Pending,
+2026-01-10,NBA_20260110_004,Devin Booker Points O/U 26.5 Over,NBA,-110,0.5900,0.5238,6.62,A,BestPointsProp,High-volume scorer in uptempo game,Pending,
+2026-01-10,NFL_20260110_001,Patrick Mahomes TD Passes O/U 2.5 Over,NFL,-110,0.5800,0.5238,5.62,A,BestTDPassProp,Elite offense in playoff game,Pending,
+2026-01-10,NFL_20260110_002,Josh Allen Rushing Yards O/U 45 Over,NFL,-110,0.5500,0.5238,2.62,B,BestRushingYardsProp,Mobile QB in playoff intensity,Pending,
