@@ -83,9 +83,9 @@ class AgentOutputsAdapter:
         Args:
             agent_repo_path: Path to OmegaSportsAgent repository (optional)
         """
-        self.agent_repo_path = agent_repo_path
         # Default to repo root two levels up: lab/adapters -> lab -> repo
         repo_root = Path(agent_repo_path) if agent_repo_path else Path(__file__).resolve().parents[2]
+        self.agent_repo_path = repo_root
         self.outputs_dir = repo_root / "outputs"
         logger.info(f"Agent outputs directory: {self.outputs_dir}")
     

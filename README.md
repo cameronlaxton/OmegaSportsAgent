@@ -85,7 +85,7 @@ OmegaSportsAgent-1/
 ## Automation (GitHub Actions)
 - Daily predictions: run `python main.py --morning-bets --leagues NBA NFL`, commit `outputs/`, `data/`.
 - Weekly calibration: run `lab/core/calibration_runner.py --use-agent-outputs --output ../config/calibration/nba_latest.json`, commit updated calibration pack.
-- Optional daily grading: run `python -m omega.workflows.daily_grading`.
+- Optional daily grading: run `python -m src.workflows.daily_grading`.
 
 ## Environment Variables
 
@@ -109,7 +109,7 @@ export ODDS_API_KEY="your_custom_key"
 
 To check current API key status:
 ```python
-from omega.foundation.api_config import check_api_keys
+from src.foundation.api_config import check_api_keys
 print(check_api_keys())
 ```
 

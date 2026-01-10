@@ -38,7 +38,7 @@ You are grading yesterday’s bets for OmegaSportsAgent.
 Repo: https://github.com/cameronlaxton/OmegaSportsAgent-1
 Steps:
 1) Read outputs/recommendations_*.json and data/logs/predictions.json.
-2) Run grading: python -m omega.workflows.daily_grading
+2) Run grading: python -m src.workflows.daily_grading
 3) Update data/logs/predictions.json and data/exports/BetLog.csv.
 If no APIs are available, scrape public scoreboards to resolve outcomes.
 Return the updated predictions.json and BetLog.csv.

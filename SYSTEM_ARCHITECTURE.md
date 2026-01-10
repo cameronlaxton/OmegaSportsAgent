@@ -18,13 +18,13 @@
 ```
 Daily (Agent)
   main.py --morning-bets
-    → omega.workflows.morning_bets
+    → src.workflows.morning_bets
     → simulations + edge eval
     → outputs/recommendations_YYYYMMDD.json
     → data/logs/, data/exports/
 
 Daily Grading (optional)
-  omega.workflows.daily_grading
+  src.workflows.daily_grading
     → updates bet results in data/logs/ and data/exports/
 
 Weekly Calibration (Lab)
