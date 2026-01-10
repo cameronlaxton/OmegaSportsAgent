@@ -43,6 +43,9 @@ data/cache/
 data/logs/
 data/outputs/
 
+# But track the cumulative BetLog.csv (it's a master tracker)
+!data/exports/BetLog.csv
+
 # OS
 .DS_Store
 Thumbs.db
