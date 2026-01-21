@@ -1,9 +1,40 @@
 {
-  "predictions": [],
+  "predictions": [
+    {"prediction_id": "20260121-001", "date": "2026-01-21", "game_id": "20260121_NYK_BKN", "pick": "Julius Randle O19.5 Points", "odds": -110, "model_probability": 0.58, "implied_probability": 0.525, "edge_percentage": 5.2, "tier": "A", "category": "PropBet - Points", "status": "pending", "result": null},
+    {"prediction_id": "20260121-002", "date": "2026-01-21", "game_id": "20260121_NYK_BKN", "pick": "Mikal Bridges O5.5 Rebounds", "odds": -110, "model_probability": 0.57, "implied_probability": 0.525, "edge_percentage": 4.8, "tier": "A", "category": "PropBet - Rebounds", "status": "pending", "result": null},
+    {"prediction_id": "20260121-003", "date": "2026-01-21", "game_id": "20260121_BOS_IND", "pick": "Jaylen Brown O30.5 Points", "odds": -110, "model_probability": 0.56, "implied_probability": 0.525, "edge_percentage": 3.1, "tier": "A", "category": "PropBet - Points", "status": "pending", "result": null},
+    {"prediction_id": "20260121-004", "date": "2026-01-21", "game_id": "20260121_MEM_ATL", "pick": "Desmond Murray O2.5 3PM", "odds": -110, "model_probability": 0.57, "implied_probability": 0.525, "edge_percentage": 4.2, "tier": "A", "category": "PropBet - 3PM", "status": "pending", "result": null},
+    {"prediction_id": "20260121-005", "date": "2026-01-21", "game_id": "20260121_DET_NO", "pick": "Cade Cunningham O20.5 Points", "odds": -110, "model_probability": 0.56, "implied_probability": 0.525, "edge_percentage": 3.8, "tier": "A", "category": "PropBet - Points", "status": "pending", "result": null},
+    {"prediction_id": "20260121-006", "date": "2026-01-21", "game_id": "20260121_OKC_MIL", "pick": "Shai Gilgeous-Alexander O28.5 Points", "odds": -110, "model_probability": 0.56, "implied_probability": 0.525, "edge_percentage": 3.7, "tier": "A", "category": "PropBet - Points", "status": "pending", "result": null},
+    {"prediction_id": "20260121-007", "date": "2026-01-21", "game_id": "20260121_SAC_TOR", "pick": "De'Aaron Fox O25.5 Points", "odds": -110, "model_probability": 0.56, "implied_probability": 0.525, "edge_percentage": 3.2, "tier": "A", "category": "PropBet - Points", "status": "pending", "result": null},
+    {"prediction_id": "20260121-008", "date": "2026-01-21", "game_id": "20260121_CAV_CHA", "pick": "LaMelo Ball O18.5 Points", "odds": -110, "model_probability": 0.56, "implied_probability": 0.525, "edge_percentage": 3.4, "tier": "A", "category": "PropBet - Points", "status": "pending", "result": null},
+    {"prediction_id": "20260121-009", "date": "2026-01-21", "game_id": "20260121_BOS_IND", "pick": "Tyrese Haliburton O8.5 Assists", "odds": -110, "model_probability": 0.551, "implied_probability": 0.525, "edge_percentage": 2.8, "tier": "B", "category": "PropBet - Assists", "status": "pending", "result": null},
+    {"prediction_id": "20260121-010", "date": "2026-01-21", "game_id": "20260121_MEM_ATL", "pick": "Ja Morant O22.5 Points", "odds": -110, "model_probability": 0.551, "implied_probability": 0.525, "edge_percentage": 3.5, "tier": "B", "category": "PropBet - Points", "status": "pending", "result": null},
+    {"prediction_id": "20260121-011", "date": "2026-01-21", "game_id": "20260121_DET_NO", "pick": "Brandon Ingram O19.5 Points", "odds": -110, "model_probability": 0.55, "implied_probability": 0.525, "edge_percentage": 2.9, "tier": "B", "category": "PropBet - Points", "status": "pending", "result": null},
+    {"prediction_id": "20260121-012", "date": "2026-01-21", "game_id": "20260121_OKC_MIL", "pick": "Giannis Antetokounmpo O10.5 Rebounds", "odds": -110, "model_probability": 0.553, "implied_probability": 0.525, "edge_percentage": 2.4, "tier": "B", "category": "PropBet - Rebounds", "status": "pending", "result": null},
+    {"prediction_id": "20260121-013", "date": "2026-01-21", "game_id": "20260121_SAC_TOR", "pick": "Scottie Barnes O5.5 Assists", "odds": -110, "model_probability": 0.558, "implied_probability": 0.525, "edge_percentage": 4.1, "tier": "B", "category": "PropBet - Assists", "status": "pending", "result": null},
+    {"prediction_id": "20260121-014", "date": "2026-01-21", "game_id": "20260121_NYK_BKN", "pick": "Knicks -11.5", "odds": -110, "model_probability": 0.552, "implied_probability": 0.525, "edge_percentage": 2.3, "tier": "B", "category": "GameBet - Spread", "status": "pending", "result": null},
+    {"prediction_id": "20260121-015", "date": "2026-01-21", "game_id": "20260121_BOS_IND", "pick": "Celtics -10.5", "odds": -110, "model_probability": 0.551, "implied_probability": 0.525, "edge_percentage": 2.2, "tier": "B", "category": "GameBet - Spread", "status": "pending", "result": null},
+    {"prediction_id": "20260121-016", "date": "2026-01-21", "game_id": "20260121_CAV_CHA", "pick": "Hornets +2.5", "odds": -110, "model_probability": 0.56, "implied_probability": 0.525, "edge_percentage": 3.1, "tier": "B", "category": "GameBet - Spread", "status": "pending", "result": null},
+    {"prediction_id": "20260121-017", "date": "2026-01-21", "game_id": "20260121_MEM_ATL", "pick": "Grizzlies -2.5", "odds": -110, "model_probability": 0.551, "implied_probability": 0.525, "edge_percentage": 2.2, "tier": "B", "category": "GameBet - Spread", "status": "pending", "result": null},
+    {"prediction_id": "20260121-018", "date": "2026-01-21", "game_id": "20260121_OKC_MIL", "pick": "Thunder -9.5", "odds": -110, "model_probability": 0.55, "implied_probability": 0.525, "edge_percentage": 2.1, "tier": "B", "category": "GameBet - Spread", "status": "pending", "result": null},
+    {"prediction_id": "20260121-019", "date": "2026-01-21", "game_id": "20260121_CAV_CHA", "pick": "Donovan Mitchell O24.5 Points", "odds": -110, "model_probability": 0.535, "implied_probability": 0.525, "edge_percentage": 2.1, "tier": "C", "category": "PropBet - Points", "status": "pending", "result": null},
+    {"prediction_id": "20260121-020", "date": "2026-01-21", "game_id": "20260121_DET_NO", "pick": "Pistons -9.5", "odds": -110, "model_probability": 0.538, "implied_probability": 0.525, "edge_percentage": 1.6, "tier": "C", "category": "GameBet - Spread", "status": "pending", "result": null},
+    {"prediction_id": "20260121-021", "date": "2026-01-21", "game_id": "20260121_SAC_TOR", "pick": "Raptors -4.5", "odds": -110, "model_probability": 0.538, "implied_probability": 0.525, "edge_percentage": 1.7, "tier": "C", "category": "GameBet - Spread", "status": "pending", "result": null}
+  ],
   "metadata": {
     "created": "2026-01-21T13:40:00Z",
     "last_updated": "2026-01-21T13:40:00Z",
-    "total_predictions_all_time": 0,
-    "cumulative_tracking": "All predictions appended cumulatively for auditing"
+    "total_predictions_all_time": 21,
+    "cumulative_tracking": "All predictions appended cumulatively for auditing",
+    "daily_summary": {
+      "date": "2026-01-21",
+      "predictions_today": 21,
+      "tier_a_count": 8,
+      "tier_b_count": 10,
+      "tier_c_count": 3,
+      "avg_edge_a": 4.1,
+      "avg_edge_b": 2.8
+    }
   }
 }
