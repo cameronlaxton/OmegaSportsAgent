@@ -1,7 +1,0 @@
-Bet_ID,Date,Game,Player,Pick,Bet_Type,Odds,Stake_Units,Result,Actual_Value,Line,Profit_Loss,Edge_Pct,Confidence,Box_Score,Notes
-20260106-001,2026-01-06,CLE @ IND,Darius Garland,OVER 23.5 Pts,PlayerProp,-118,2.5,WIN,29,23.5,2.12,17.9,A,29 PTS (14-23 FG),Mitchell OUT. Dominated 4Q. Usage thesis validated.
-20260106-002,2026-01-06,CLE @ IND,Andrew Nembhard,OVER 28.5 PRA,PlayerProp,-120,3.0,LOSS,27,28.5,-3.0,21.5,A,15-1-11 PRA,CRITICAL: Only 1 rebound vs 11 assists. 1.5 short. PRA variance killed highest-edge bet.
-20260106-003,2026-01-06,CLE @ IND,Evan Mobley,OVER 20.5 Pts,PlayerProp,-110,2.0,PUSH,20,20.5,0.0,15.6,A,20 PTS (8-16 FG),Exactly on line. Usage thesis validated (16 FGA proj).
-20260106-004,2026-01-06,CLE @ IND,Pascal Siakam,OVER 24.5 Pts,PlayerProp,-110,1.5,LOSS,22,24.5,-1.5,12.8,B,22 PTS (9-23 FG),Volume hit (23 FGA) but poor shooting (39%). 2.5 short.
-20260106-005,2026-01-06,CLE @ IND,Jaylon Tyson,OVER 14.5 Pts,PlayerProp,-115,1.0,LOSS,3,14.5,-1.0,8.6,B,3 PTS (1-2 FG) 27min,EXECUTION MISS: Got minutes but completely passive. Role variance.
-20260106-006,2026-01-06,CLE @ IND,Johnny Furphy,OVER 8.5 PRA,PlayerProp,-110,0.5,WIN,22,8.5,0.45,5.6,C,22 PRA (9-11-2) 31min,SURPRISE: Career-best 31 min. Competitive game = bench usage spike.
