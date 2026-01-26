@@ -10,7 +10,7 @@ We use a "Box Score" JSON approach instead of 200 separate columns.
 
 import enum
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Index, Boolean
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -39,7 +39,7 @@ class League(Base):
     sport = Column(Enum(Sport), nullable=False)
     current_season = Column(Integer)  # 2026
     # JSONB for rule sets (e.g., quarter length, shot clock)
-    config = Column(JSONB, default={})
+    config = Column(JSONB, default=dict)
 
 
 class Team(Base):
@@ -52,14 +52,14 @@ class Team(Base):
 
     # ENTITY RESOLUTION: List of known aliases from scrapers
     # e.g., ["LA Lakers", "Lakers", "L.A. Lakers"]
-    aliases = Column(JSONB, default=[])
+    aliases = Column(JSONB, default=list)
 
     # Universal record tracking
     wins = Column(Integer, default=0)
     losses = Column(Integer, default=0)
 
     # DYNAMIC STATS: {"off_rating": 112.5, "pace": 98.0}
-    season_stats = Column(JSONB, default={})
+    season_stats = Column(JSONB, default=dict)
 
     # Relationships
     league = relationship("League", backref="teams")
@@ -73,11 +73,11 @@ class Player(Base):
     name = Column(String, index=True)  # "LeBron James"
 
     # ENTITY RESOLUTION: ["L. James", "Lebron Raymone James"]
-    aliases = Column(JSONB, default=[])
+    aliases = Column(JSONB, default=list)
 
     status = Column(String)  # "ACTIVE", "INJURED-IR"
     # Static info: {"position": "SF", "height": "6-9", "draft_year": 2003}
-    details = Column(JSONB, default={})
+    details = Column(JSONB, default=dict)
 
     # Relationships
     team = relationship("Team", backref="players")
@@ -100,7 +100,7 @@ class Game(Base):
     away_score = Column(Integer)
 
     # CONTEXT: {"weather": {"temp": 32, "wind": 15}, "stadium": "Chase Center", "refs": [...]}
-    environment = Column(JSONB, default={})
+    environment = Column(JSONB, default=dict)
 
     # Relationships
     league = relationship("League", backref="games")

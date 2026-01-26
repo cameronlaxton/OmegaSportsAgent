@@ -1,13 +1,15 @@
 """Hybrid Schema Foundation - Box Score Architecture
 
 Revision ID: 001_hybrid_schema
-Revises: None
+Revises: 3bde1e271421
 Create Date: 2026-01-26
 
-This migration creates the foundational Hybrid Schema with:
+This migration replaces the old multi-sport schema with the new Hybrid Schema:
 - Relational columns for universal data (IDs, Names, Dates)
 - JSONB columns for sport-specific stats (Box Scores)
 - Entity resolution support for handling scraper name variations
+
+WARNING: This migration drops all existing tables and recreates them with the new schema.
 """
 from alembic import op
 import sqlalchemy as sa
@@ -15,18 +17,48 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '001_hybrid_schema'
-down_revision = None
+down_revision = '3bde1e271421'
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
+    # --- DROP OLD SCHEMA ---
+    # Drop tables in reverse dependency order from old schema
+    op.drop_index('ix_sim_results_season', table_name='simulation_results', if_exists=True)
+    op.drop_index('ix_sim_results_game', table_name='simulation_results', if_exists=True)
+    op.drop_table('simulation_results', if_exists=True)
+    op.drop_index('ix_odds_timestamp', table_name='betting_odds', if_exists=True)
+    op.drop_index('ix_odds_game', table_name='betting_odds', if_exists=True)
+    op.drop_table('betting_odds', if_exists=True)
+    op.drop_index('ix_player_stats_team', table_name='player_season_stats', if_exists=True)
+    op.drop_index('ix_player_stats_season', table_name='player_season_stats', if_exists=True)
+    op.drop_table('player_season_stats', if_exists=True)
+    op.drop_index('ix_games_season_week', table_name='games', if_exists=True)
+    op.drop_index('ix_games_external', table_name='games', if_exists=True)
+    op.drop_index('ix_games_date', table_name='games', if_exists=True)
+    op.drop_table('games', if_exists=True)
+    op.drop_index('ix_teams_league_season', table_name='teams', if_exists=True)
+    op.drop_index('ix_teams_abbrev', table_name='teams', if_exists=True)
+    op.drop_table('teams', if_exists=True)
+    op.drop_index('ix_simulations_league_season', table_name='simulations', if_exists=True)
+    op.drop_table('simulations', if_exists=True)
+    op.drop_index('ix_players_name', table_name='players', if_exists=True)
+    op.drop_index('ix_players_external', table_name='players', if_exists=True)
+    op.drop_table('players', if_exists=True)
+    op.drop_index('ix_calibration_version', table_name='model_calibration', if_exists=True)
+    op.drop_index('ix_calibration_season', table_name='model_calibration', if_exists=True)
+    op.drop_table('model_calibration', if_exists=True)
+    op.drop_table('leagues', if_exists=True)
+
+    # --- CREATE NEW HYBRID SCHEMA ---
+
     # --- ENUMS ---
     sport_enum = postgresql.ENUM('NBA', 'NFL', 'MLB', 'NHL', name='sport', create_type=False)
     market_status_enum = postgresql.ENUM('OPEN', 'CLOSED', 'SETTLED', name='marketstatus', create_type=False)
 
-    op.execute("CREATE TYPE sport AS ENUM ('NBA', 'NFL', 'MLB', 'NHL')")
-    op.execute("CREATE TYPE marketstatus AS ENUM ('OPEN', 'CLOSED', 'SETTLED')")
+    op.execute("CREATE TYPE IF NOT EXISTS sport AS ENUM ('NBA', 'NFL', 'MLB', 'NHL')")
+    op.execute("CREATE TYPE IF NOT EXISTS marketstatus AS ENUM ('OPEN', 'CLOSED', 'SETTLED')")
 
     # --- CORE ENTITIES ---
 

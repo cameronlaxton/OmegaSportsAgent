@@ -16,9 +16,8 @@ from typing import Optional
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 from sqlalchemy.orm import Session
-from sqlalchemy.dialects.postgresql import JSONB
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ class ResolvedEntity:
     """Result of entity resolution."""
     canonical_id: str
     canonical_name: str
-    match_type: str  # "exact", "alias", "fuzzy"
+    match_type: str  # "exact", "alias", "canonical", "fuzzy", "fuzzy_alias"
     confidence: float  # 0.0 - 1.0
     source_alias: str  # The original scraped name
 
@@ -107,20 +106,19 @@ class EntityResolver:
 
         normalized_name = self._normalize_name(name)
 
-        # Build base query
+        # Build base query with optional team/sport filters
+        # Use single join to avoid duplicate join errors
         query = select(Player)
 
-        # Filter by team if provided
-        if team:
-            query = query.join(Team).where(
-                func.lower(Team.abbrev) == team.lower()
-            )
-
-        # Filter by sport/league if provided
-        if sport:
-            query = query.join(Team).where(
-                func.lower(Team.league_id) == sport.lower()
-            )
+        if team or sport:
+            query = query.join(Team)
+            filters = []
+            if team:
+                filters.append(func.lower(Team.abbrev) == team.lower())
+            if sport:
+                filters.append(func.lower(Team.league_id) == sport.lower())
+            if filters:
+                query = query.where(and_(*filters))
 
         players = self.session.execute(query).scalars().all()
 
@@ -151,11 +149,16 @@ class EntityResolver:
                     )
 
         # --- TIER 3: Check canonical_names table ---
-        canonical_query = select(CanonicalName).where(
-            CanonicalName.entity_type == "player",
-            func.lower(CanonicalName.alias) == normalized_name
+        # Use scalars().first() to avoid MultipleResultsFound, order by confidence desc
+        canonical_query = (
+            select(CanonicalName)
+            .where(
+                CanonicalName.entity_type == "player",
+                func.lower(CanonicalName.alias) == normalized_name
+            )
+            .order_by(CanonicalName.confidence.desc())
         )
-        canonical_match = self.session.execute(canonical_query).scalar_one_or_none()
+        canonical_match = self.session.execute(canonical_query).scalars().first()
         if canonical_match:
             logger.debug(f"Canonical name match: '{name}' -> {canonical_match.canonical_id}")
             return ResolvedEntity(
@@ -307,13 +310,19 @@ class EntityResolver:
         """
         from src.db.schema import CanonicalName
 
-        # Check if alias already exists
+        # Normalize alias for case-insensitive matching
+        normalized_alias = alias.lower().strip()
+
+        # Check if alias already exists (case-insensitive)
+        # Use scalars().first() to avoid MultipleResultsFound
         existing = self.session.execute(
-            select(CanonicalName).where(
+            select(CanonicalName)
+            .where(
                 CanonicalName.entity_type == entity_type,
-                CanonicalName.alias == alias
+                func.lower(CanonicalName.alias) == normalized_alias
             )
-        ).scalar_one_or_none()
+            .order_by(CanonicalName.confidence.desc())
+        ).scalars().first()
 
         if existing:
             # Update confidence if higher

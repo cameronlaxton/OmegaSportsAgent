@@ -5,17 +5,17 @@
 - [ ] **1.1 Database Deploy:** Spin up PostgreSQL 15+ container. Apply `schema.py` via Alembic.
 - [ ] **1.2 Entity Resolver:** Build the "Rosetta Stone" service that maps messy scraper names ("G. Antetokounmpo") to our UUIDs.
 - [ ] **1.3 Box Score Ingestor:**
-    - Create universal ingestion pipeline: `Source -> Normalize -> EntityResolve -> Upsert to PlayerGameLog`.
-    - Supports dynamic keys: `{"pts": 24}` for NBA, `{"receptions": 5}` for NFL.
+  - Create universal ingestion pipeline: `Source -> Normalize -> EntityResolve -> Upsert to PlayerGameLog`.
+  - Supports dynamic keys: `{"pts": 24}` for NBA, `{"receptions": 5}` for NFL.
 - [ ] **1.4 Odds Poller:** Service that runs every 15 mins, scrapes odds, and saves to `OddsSnapshot` (for future CLV analysis).
 
 ## Phase 2: The Logic Engine
 **Goal:** Turn "Stats" into "Projections".
 - [ ] **2.1 Feature Store:** SQL views that flatten the JSONB stats into training columns.
-    - *Example:* `SELECT stats->>'pts' as points_L10 FROM player_game_logs...`
+  - *Example:* `SELECT stats->>'pts' as points_L10 FROM player_game_logs...`
 - [ ] **2.2 "Market Truth" Calibration:**
-    - Build a module that compares our `OddsSnapshot` vs. Final Scores.
-    - Determine which books are "Sharp" (predictive) vs "Soft".
+  - Build a module that compares our `OddsSnapshot` vs. Final Scores.
+  - Determine which books are "Sharp" (predictive) vs "Soft".
 - [ ] **2.3 The Simulator:** Port the Monte Carlo engine to read from `PlayerGameLog` history instead of API calls.
 
 ## Phase 3: The Agent Interface
@@ -54,6 +54,7 @@ The schema and roadmap assume this lives on a server (or in a Docker container),
 ## Schema Reference
 
 ### Core Entities
+
 | Table | Purpose | JSONB Fields |
 |-------|---------|--------------|
 | `leagues` | League configuration | `config` (rules, season info) |
@@ -61,18 +62,21 @@ The schema and roadmap assume this lives on a server (or in a Docker container),
 | `players` | Canonical players | `aliases`, `details` |
 
 ### Data Lake (Box Scores)
+
 | Table | Purpose | JSONB Fields |
 |-------|---------|--------------|
 | `games` | Central game events | `environment` (weather, refs) |
 | `player_game_logs` | **THE BOX SCORE** | `stats` (sport-specific) |
 
 ### Market & Execution
+
 | Table | Purpose | JSONB Fields |
 |-------|---------|--------------|
 | `odds_snapshots` | CLV/Steam tracking | `markets` (all book odds) |
 | `wagers` | Betting ledger | None |
 
 ### Entity Resolution
+
 | Table | Purpose |
 |-------|---------|
 | `canonical_names` | Maps scraper aliases to UUIDs |

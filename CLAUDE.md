@@ -16,7 +16,8 @@ OmegaSportsAgent is a quantitative sports betting engine being rebuilt with a "Q
 - See `src/utils/entity_resolver.py`
 
 ### Key Files
-```
+
+```text
 src/db/schema.py              # Hybrid Schema (SQLAlchemy 2.0)
 src/db/alembic/versions/      # Database migrations
 src/utils/entity_resolver.py  # Name resolution service
@@ -49,7 +50,8 @@ docker-compose up -d
 ```
 
 ## Environment Variables
-```env
+
+```bash
 DATABASE_URL=postgresql://user:pass@host:5432/omega_sports
 ODDS_API_KEY=xxx
 BALLDONTLIE_API_KEY=xxx
