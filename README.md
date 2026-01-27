@@ -1,6 +1,6 @@
 # OmegaSportsAgent
 
-**A Professional Decision Support Engine for Sports Analytics**
+## A Professional Decision Support Engine for Sports Analytics
 
 ---
 
@@ -48,22 +48,26 @@ This hybrid approach allows us to:
 
 We reject naive approaches. Our probability engine uses:
 
-**1. Possession-Level Markov Chains**
+#### 1. Possession-Level Markov Chains
+
 - Games are simulated play-by-play, not as single random variables
 - State transitions model real game flow (possessions, downs, plate appearances)
 - Player involvement is weighted by usage rates and target shares
 
-**2. Monte Carlo Simulation**
+#### 2. Monte Carlo Simulation
+
 - 1,000–10,000 iterations per matchup
 - Full distribution outputs (mean, std, percentiles P10/P25/P50/P75/P90)
 - Captures tail risk and variance, not just point estimates
 
-**3. Sport-Specific Distributions**
+#### 3. Sport-Specific Distributions
+
 - **Poisson**: Discrete counts (goals, touchdowns, receptions)
 - **Normal**: Continuous metrics (yards, points in high-scoring sports)
 - Distribution selection is automatic based on `(metric_key, league)` pairs
 
-**4. Team Context Adjustment**
+#### 4. Team Context Adjustment
+
 - Offensive/Defensive ratings modify transition probabilities
 - Pace factors scale possession counts
 - No simulation runs on "default" data—incomplete games are skipped
@@ -74,7 +78,7 @@ The output is a **True Probability** that we compare against **Market Implied Pr
 
 ## System Architecture (The Pipeline)
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                              DATA INGESTION                                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -145,7 +149,7 @@ When a user asks: *"What are the best NBA bets today?"*
 
 **Do NOT guess.** Execute this workflow:
 
-```
+```text
 1. FETCH SCHEDULE
    └── get_todays_games("NBA") → List of matchups with odds
 
@@ -260,7 +264,7 @@ The engine enforces **NO DEFAULTS** policy:
 
 An AI agent should **report skipped games** to the user, not hide them:
 
-```
+```text
 "3 games were skipped due to incomplete data:
  - Magic vs Hornets (Missing: Magic defensive rating)
  - Jazz vs Spurs (Missing: Both teams pace data)"
@@ -368,11 +372,14 @@ python -m src.db.seed
 ### Running
 
 ```bash
-# CLI interface
-python main.py --task morning_analysis --leagues NBA NFL
+# Run example simulation (default: Lakers vs Warriors)
+python main.py
 
 # Analyze specific matchup
-python main.py --analyze "Lakers" "Warriors" --league NBA
+python main.py --home "Lakers" --away "Warriors" --league NBA
+
+# Output as JSON for programmatic consumption
+python main.py --home "Celtics" --away "Heat" --json
 ```
 
 ---
@@ -396,4 +403,4 @@ Private repository - authorized use only.
 
 ---
 
-*"The goal is not to predict the future. The goal is to have a more accurate probability distribution than the market."*
+> *"The goal is not to predict the future. The goal is to have a more accurate probability distribution than the market."*
