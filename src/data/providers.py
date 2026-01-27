@@ -23,6 +23,16 @@ class TeamContextInput:
     pace: Optional[float] = None
     stats: Dict[str, Any] = None
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "league": self.league,
+            "off_rating": self.off_rating,
+            "def_rating": self.def_rating,
+            "pace": self.pace,
+            "stats": self.stats or {},
+        }
+
 
 @dataclass
 class PlayerContextInput:
