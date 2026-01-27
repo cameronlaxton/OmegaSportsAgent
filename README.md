@@ -1,6 +1,6 @@
 # OmegaSportsAgent
 
-**A Professional Decision Support Engine for Sports Analytics**
+## A Professional Decision Support Engine for Sports Analytics
 
 ---
 
@@ -13,12 +13,14 @@
 OmegaSportsAgent is a quantitative research platform. It exists to answer one question: *"What is the true probability of this outcome, and how does it compare to the market's opinion?"*
 
 The engine outputs:
+
 - **True Probabilities** derived from simulation
 - **Edge Calculations** (True Prob - Implied Prob)
 - **Suggested Unit Sizing** via Kelly Criterion
 - **Confidence Tiers** (A/B/C) based on data quality
 
 It does NOT:
+
 - Execute trades or place wagers
 - Interface with sportsbook APIs
 - Make autonomous financial decisions
@@ -32,12 +34,13 @@ The human is always the final decision-maker.
 Our competitive advantage comes from a deliberate data architecture strategy:
 
 | Layer | Source | Purpose |
-|-------|--------|---------|
+| ------- | -------- | --------- |
 | **Rigid API Data** | ESPN, BallDontLie, Official Stats | Base statistics, schedules, standings—structured and reliable |
 | **Scraping Layer** | Targeted sources | Granular data not available via API (usage rates, advanced metrics, injury context) |
 | **JSONB Storage** | PostgreSQL Hybrid Schema | Sport-agnostic storage: `{"pts": 24}` for NBA, `{"pass_yds": 280}` for NFL |
 
 This hybrid approach allows us to:
+
 1. Maintain data integrity with canonical entity resolution
 2. Adapt to new metrics without schema migrations
 3. Feed a unified simulation engine regardless of sport
@@ -48,22 +51,26 @@ This hybrid approach allows us to:
 
 We reject naive approaches. Our probability engine uses:
 
-**1. Possession-Level Markov Chains**
+## 1. Possession-Level Markov Chains**
+
 - Games are simulated play-by-play, not as single random variables
 - State transitions model real game flow (possessions, downs, plate appearances)
 - Player involvement is weighted by usage rates and target shares
 
-**2. Monte Carlo Simulation**
+## 2. Monte Carlo Simulation**
+
 - 1,000–10,000 iterations per matchup
 - Full distribution outputs (mean, std, percentiles P10/P25/P50/P75/P90)
 - Captures tail risk and variance, not just point estimates
 
-**3. Sport-Specific Distributions**
+## 3. Sport-Specific Distributions**
+
 - **Poisson**: Discrete counts (goals, touchdowns, receptions)
 - **Normal**: Continuous metrics (yards, points in high-scoring sports)
 - Distribution selection is automatic based on `(metric_key, league)` pairs
 
-**4. Team Context Adjustment**
+## 4. Team Context Adjustment**
+
 - Offensive/Defensive ratings modify transition probabilities
 - Pace factors scale possession counts
 - No simulation runs on "default" data—incomplete games are skipped
@@ -308,7 +315,7 @@ Deep integration with LLMs for complex analytical queries:
 ## Key Files Reference
 
 | Path | Purpose |
-|------|---------|
+| ------ | --------- |
 | `src/simulation/simulation_engine.py` | Monte Carlo engine, `OmegaSimulationEngine` class |
 | `src/simulation/markov_engine.py` | Play-by-play Markov simulator |
 | `src/betting/kelly_staking.py` | Quarter-Kelly stake recommendations |
@@ -383,7 +390,7 @@ python main.py --league NBA --home "Celtics" --away "Heat" --json
 ## Supported Leagues
 
 | League | Game Simulation | Player Props | Status |
-|--------|-----------------|--------------|--------|
+| -------- | ----------------- | -------------- | -------- |
 | NBA | ✅ Full | ✅ Full | Production |
 | NFL | ✅ Full | ✅ Full | Production |
 | NCAAB | ✅ Full | ⚠️ Limited | Beta |
@@ -399,4 +406,4 @@ Private repository - authorized use only.
 
 ---
 
-*"The goal is not to predict the future. The goal is to have a more accurate probability distribution than the market."*
+## "The goal is not to predict the future. The goal is to have a more accurate probability distribution than the market."
