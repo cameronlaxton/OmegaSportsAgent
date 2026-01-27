@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-from src.calibration.performance_tracker import PerformanceTracker
-from src.calibration.parameter_tuner import ParameterTuner, TuningStrategy
+from src.validation.performance_tracker import PerformanceTracker
+from src.validation.parameter_tuner import ParameterTuner, TuningStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -419,7 +419,7 @@ def get_tuned_parameter(name: str, default: Any = None) -> Any:
     Convenience function to get a tuned parameter value.
     
     Usage:
-        from src.calibration import get_tuned_parameter
+        from src.validation import get_tuned_parameter
         
         edge_threshold = get_tuned_parameter("edge_threshold_prop", default=5.0)
     """

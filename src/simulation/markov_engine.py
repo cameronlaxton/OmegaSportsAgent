@@ -28,7 +28,7 @@ except ImportError:
     np = None
 
 try:
-    from src.calibration import get_tuned_parameter
+    from src.validation import get_tuned_parameter
     CALIBRATION_ENABLED = True
 except ImportError:
     CALIBRATION_ENABLED = False

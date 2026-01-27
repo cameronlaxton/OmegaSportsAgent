@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any
 from collections import defaultdict
 
-from src.modeling.probability_calibration import (
+from src.validation.probability_calibration import (
     shrinkage_calibration,
     isotonic_calibration
 )

@@ -59,6 +59,14 @@ from src.validation.tuner import (
     TuningRecommendation,
     TuningResult,
 )
+from src.validation.auto_calibrator import (
+    AutoCalibrator,
+    CalibrationConfig,
+    get_global_calibrator,
+    get_tuned_parameter,
+)
+from src.validation.performance_tracker import PerformanceTracker, PredictionRecord
+from src.validation.parameter_tuner import ParameterTuner, TuningStrategy
 
 __all__ = [
     # Models
@@ -73,6 +81,15 @@ __all__ = [
     "compute_single_brier",
     "compute_percentile_rank",
     "grade_prediction",
+    # Legacy/auto-calibration helpers
+    "AutoCalibrator",
+    "CalibrationConfig",
+    "get_global_calibrator",
+    "get_tuned_parameter",
+    "PerformanceTracker",
+    "PredictionRecord",
+    "ParameterTuner",
+    "TuningStrategy",
     # Tuner
     "CalibrationTuner",
     "TuningRecommendation",
