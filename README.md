@@ -15,12 +15,14 @@ OmegaSportsAgent is a quantitative research platform. It exists to answer one qu
 > "What is the true probability of this outcome, and how does it compare to the market's opinion?"
 
 The engine outputs:
+
 - **True Probabilities** derived from simulation
 - **Edge Calculations** (True Prob - Implied Prob)
 - **Suggested Unit Sizing** via Kelly Criterion
 - **Confidence Tiers** (A/B/C) based on data quality
 
 It does NOT:
+
 - Execute trades or place wagers
 - Interface with sportsbook APIs
 - Make autonomous financial decisions
@@ -34,12 +36,13 @@ The human is always the final decision-maker.
 Our competitive advantage comes from a deliberate data architecture strategy:
 
 | Layer | Source | Purpose |
-|-------|--------|---------|
+| ------- | -------- | --------- |
 | **Rigid API Data** | ESPN, BallDontLie, Official Stats | Base statistics, schedules, standings—structured and reliable |
 | **Scraping Layer** | Targeted sources | Granular data not available via API (usage rates, advanced metrics, injury context) |
 | **JSONB Storage** | PostgreSQL Hybrid Schema | Sport-agnostic storage: `{"pts": 24}` for NBA, `{"pass_yds": 280}` for NFL |
 
 This hybrid approach allows us to:
+
 1. Maintain data integrity with canonical entity resolution
 2. Adapt to new metrics without schema migrations
 3. Feed a unified simulation engine regardless of sport
@@ -249,7 +252,7 @@ def find_daily_edges(league: str, bankroll: float, edge_threshold: float = 0.03)
 ### Query Examples for AI Agents
 
 | User Query | Agent Action |
-|------------|--------------|
+| ------------ | -------------- |
 | "What are the best NBA bets today?" | Run `find_daily_edges("NBA", bankroll)` → Return top 3-5 edges |
 | "Analyze Lakers vs Warriors" | Run `run_game_simulation("Lakers", "Warriors", "NBA")` → Full breakdown |
 | "Should I bet LeBron over 25.5 points?" | Run `run_player_prop_simulation("LeBron James", ...)` → Compare to line |
@@ -314,7 +317,7 @@ Deep integration with LLMs for complex analytical queries:
 ## Key Files Reference
 
 | Path | Purpose |
-|------|---------|
+| ------ | --------- |
 | `src/simulation/simulation_engine.py` | Monte Carlo engine, `OmegaSimulationEngine` class |
 | `src/simulation/markov_engine.py` | Play-by-play Markov simulator |
 | `src/betting/kelly_staking.py` | Quarter-Kelly stake recommendations |
@@ -389,7 +392,7 @@ python main.py --league NBA --home "Celtics" --away "Heat" --json
 ## Supported Leagues
 
 | League | Game Simulation | Player Props | Status |
-|--------|-----------------|--------------|--------|
+| -------- | ----------------- | -------------- | -------- |
 | NBA | ✅ Full | ✅ Full | Production |
 | NFL | ✅ Full | ✅ Full | Production |
 | NCAAB | ✅ Full | ⚠️ Limited | Beta |
