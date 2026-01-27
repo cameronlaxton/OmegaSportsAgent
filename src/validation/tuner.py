@@ -44,6 +44,19 @@ class TuningRecommendation:
     sample_size: int
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        Serialize the tuning recommendation into a plain dictionary for storage or transmission.
+        
+        Returns:
+            dict: Mapping with the following keys:
+                - "league" (str): League identifier.
+                - "parameter" (str): Name of the parameter to adjust.
+                - "current" (Any): Current value of the parameter.
+                - "recommended" (Any): Recommended new value for the parameter.
+                - "reason" (str): Short explanation for the recommendation.
+                - "confidence" (float): Recommendation confidence rounded to three decimal places.
+                - "sample_size" (int): Number of samples that informed the recommendation.
+        """
         return {
             "league": self.league,
             "parameter": self.parameter,
@@ -67,6 +80,20 @@ class TuningResult:
     config_diff: Dict[str, Any]
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        Serialize the TuningResult into a JSON-serializable dictionary.
+        
+        Returns:
+            result (Dict[str, Any]): Dictionary with keys:
+                - "timestamp": ISO 8601 string of the result timestamp.
+                - "leagues_analyzed": list of league identifiers analyzed.
+                - "recommendations": list of recommendation dictionaries.
+                - "applied": boolean indicating whether recommendations were applied.
+                - "backup_path": path to the created backup or None.
+                - "config_diff": mapping of config changes proposed/applied.
+                - "metrics_summary": mapping from league to a dict with keys
+                  "brier_score", "ece", "hit_rate", and "n_predictions".
+        """
         return {
             "timestamp": self.timestamp.isoformat(),
             "leagues_analyzed": self.leagues_analyzed,
@@ -150,7 +177,12 @@ class CalibrationTuner:
         self._current_config: Optional[Dict] = None
 
     def _load_config(self) -> Dict[str, Any]:
-        """Load current calibration config from YAML."""
+        """
+        Load and return the current calibration configuration from YAML, caching the result for subsequent calls.
+        
+        Returns:
+            config (Dict[str, Any]): The loaded configuration mapping; returns an empty dict if PyYAML is unavailable, the config file does not exist, or if an error occurs while reading/parsing. The returned value is cached on the instance for future calls.
+        """
         if self._current_config is not None:
             return self._current_config
 
@@ -173,14 +205,14 @@ class CalibrationTuner:
 
     def _save_config(self, config: Dict[str, Any], backup: bool = True) -> Optional[str]:
         """
-        Save config to YAML file.
-
-        Args:
-            config: Config dict to save
-            backup: Whether to create a backup first
-
+        Write the provided configuration dictionary to the YAML file at the tuner's config path, optionally creating a timestamped backup of the existing file first.
+        
+        Parameters:
+            config (Dict[str, Any]): Configuration mapping to persist to disk.
+            backup (bool): If True and an existing config file is present, create a timestamped backup in BACKUP_DIR before overwriting.
+        
         Returns:
-            Path to backup file if created, None otherwise
+            Optional[str]: Path to the created backup file as a string if a backup was made, otherwise `None`. Returns `None` immediately if PyYAML is not available.
         """
         if yaml is None:
             logger.error("PyYAML not installed, cannot save config")
@@ -219,11 +251,11 @@ class CalibrationTuner:
         calibration: CalibrationResult
     ) -> None:
         """
-        Add calibration results for a league.
-
+        Store a league's CalibrationResult for later tuning.
+        
         Args:
-            league: League identifier (NBA, NFL, etc.)
-            calibration: CalibrationResult from CalibrationEngine
+            league (str): League identifier (e.g., "NBA", "NFL"); the key is normalized to uppercase.
+            calibration (CalibrationResult): Computed calibration metrics to store.
         """
         self._calibrations[league.upper()] = calibration
         logger.info(f"Added calibration for {league}: n={calibration.n_predictions}, ECE={calibration.ece:.4f}")
@@ -254,10 +286,15 @@ class CalibrationTuner:
         current_kelly: float
     ) -> Optional[TuningRecommendation]:
         """
-        Generate Kelly multiplier adjustment recommendation.
-
-        If we're overconfident (ECE high, hit rate < predicted),
-        reduce Kelly to bet smaller on potentially overrated edges.
+        Recommend an adjusted kelly multiplier for a league based on recent calibration statistics.
+        
+        Parameters:
+        	league (str): League identifier used in the recommendation record.
+        	calibration (CalibrationResult): Calibration metrics and bins used to assess over/underconfidence.
+        	current_kelly (float): Current kelly multiplier from configuration.
+        
+        Returns:
+        	TuningRecommendation | None: A recommendation to adjust the `kelly_multiplier` (includes `league`, `parameter`, `current_value`, `recommended_value`, `reason`, `confidence`, and `sample_size`), or `None` if there is insufficient data or no adjustment is warranted.
         """
         if calibration.n_predictions < self.min_samples:
             return None
@@ -311,10 +348,17 @@ class CalibrationTuner:
         current_threshold: float
     ) -> Optional[TuningRecommendation]:
         """
-        Generate confidence threshold adjustment recommendation.
-
-        If low-confidence predictions have negative ROI, raise threshold.
-        If high-confidence predictions are being missed, consider lowering.
+        Recommend an adjustment to the league's confidence threshold based on calibration bin performance.
+        
+        Analyzes calibration bins to find the lowest confidence bin that yields profitable outcomes and proposes setting the confidence threshold near that cutoff. If there are insufficient samples to make a recommendation, or the suggested change would be smaller than 0.02, no recommendation is returned. If no profitable bins are found, recommends raising the threshold modestly.
+        
+        Parameters:
+            league (str): League identifier for the recommendation context.
+            calibration (CalibrationResult): Calibration metrics and bins used to evaluate profitability.
+            current_threshold (float): The currently configured confidence threshold.
+        
+        Returns:
+            Optional[TuningRecommendation]: A recommendation to update the "confidence_threshold" parameter, or `None` if no meaningful change is suggested.
         """
         if calibration.n_predictions < self.min_samples:
             return None
@@ -364,10 +408,16 @@ class CalibrationTuner:
         calibration: CalibrationResult
     ) -> Optional[TuningRecommendation]:
         """
-        Generate calibration factor recommendation.
-
-        These factors are applied to raw probabilities to correct
-        systematic biases in each confidence bin.
+        Proposes per-bin calibration factor adjustments when a league's calibration error indicates corrective action is needed.
+        
+        Parameters:
+            league (str): League identifier for which the recommendation is generated.
+            calibration (CalibrationResult): Observed calibration metrics and per-bin factors for the league.
+        
+        Returns:
+            TuningRecommendation: A recommendation setting the `calibration_factors` parameter to a mapping of bins
+            whose factor deviates from 1.0 by more than 5%, including a reason, confidence score, and sample size;
+            `None` if there are too few samples, the ECE is acceptable, or no bins show significant deviation.
         """
         if calibration.n_predictions < self.min_samples:
             return None
@@ -399,10 +449,12 @@ class CalibrationTuner:
 
     def generate_recommendations(self) -> TuningResult:
         """
-        Analyze all loaded calibrations and generate tuning recommendations.
-
+        Generate tuning recommendations for all loaded league calibrations.
+        
+        Produces a TuningResult that aggregates per-league recommended parameter changes, a snapshot of the metrics used to generate those recommendations, and a config_diff describing the proposed configuration updates.
+        
         Returns:
-            TuningResult with all recommendations
+            TuningResult: Contains timestamp, leagues_analyzed, recommendations (list of TuningRecommendation), applied (set to False), backup_path (None), metrics_before (deep copy of current calibrations), and config_diff mapping each league to proposed parameter changes.
         """
         config = self._load_config()
         recommendations: List[TuningRecommendation] = []
@@ -454,15 +506,17 @@ class CalibrationTuner:
         min_confidence: float = 0.5
     ) -> TuningResult:
         """
-        Apply tuning recommendations to the config file.
-
-        Args:
-            result: TuningResult from generate_recommendations()
-            backup: Whether to backup current config
-            min_confidence: Minimum confidence threshold for applying
-
+        Apply eligible tuning recommendations from a TuningResult to the stored calibration configuration.
+        
+        Only recommendations whose `confidence` is greater than or equal to `min_confidence` are applied. For the `calibration_factors` parameter, recommended factors are merged with any existing factors for the league; other parameters are set to the recommended value. The updated configuration is saved to disk and may be backed up.
+        
+        Parameters:
+            result (TuningResult): The recommendations produced by generate_recommendations().
+            backup (bool): If True, create a timestamped backup of the current config before saving changes.
+            min_confidence (float): Minimum recommendation confidence required for applying a change.
+        
         Returns:
-            Updated TuningResult with applied=True
+            TuningResult: The same `result` object; if any recommendations were applied, `result.applied` is set to `True` and `result.backup_path` is set to the created backup file path (or `None` if no backup was made). If no recommendations meet the confidence threshold, the result is returned unchanged.
         """
         if not result.recommendations:
             logger.info("No recommendations to apply")
@@ -503,13 +557,13 @@ class CalibrationTuner:
 
     def rollback(self, backup_path: str) -> bool:
         """
-        Rollback config to a previous backup.
-
-        Args:
-            backup_path: Path to backup file
-
+        Restore the calibration configuration file from a specified backup.
+        
+        Parameters:
+            backup_path (str): Filesystem path to the backup YAML file to restore.
+        
         Returns:
-            True if rollback successful
+            bool: `True` if the configuration file was successfully restored from the backup, `False` otherwise.
         """
         if yaml is None:
             logger.error("PyYAML not installed")
@@ -533,10 +587,19 @@ class CalibrationTuner:
 
     def get_tuning_summary(self) -> Dict[str, Any]:
         """
-        Get a summary of current calibration state across all leagues.
-
+        Produce a summary of current calibration state across all leagues.
+        
         Returns:
-            Dict with per-league metrics and overall health
+            summary (dict): Mapping with keys:
+                - "timestamp": ISO-formatted timestamp of the summary.
+                - "leagues": mapping from league name to metrics, where each value contains:
+                    - "health": one of "good", "acceptable", "needs_attention", or "poor" (based on ECE).
+                    - "ece": Expected Calibration Error (rounded).
+                    - "brier_score": Brier score (rounded).
+                    - "hit_rate": Hit rate (rounded).
+                    - "n_predictions": Number of predictions used.
+                    - "calibration_factors": Per-bin calibration factors from the calibration result.
+                - "overall_health": aggregated health for all leagues, one of "good", "acceptable", or "needs_tuning".
         """
         summary = {
             "timestamp": datetime.now().isoformat(),

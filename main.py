@@ -12,7 +12,6 @@ Example Usage:
     python main.py                          # Run example simulation
     python main.py --home "Lakers" --away "Warriors"
     python main.py --league NFL --home "Chiefs" --away "Bills"
-    python main.py --json                   # Pure JSON output for machines
 """
 
 import argparse
@@ -29,26 +28,28 @@ from datetime import datetime
 logger = logging.getLogger("omega")
 
 
-def run_example_simulation(
-    home_team: str,
-    away_team: str,
-    league: str = "NBA",
-    json_output: bool = False
-) -> dict:
+def run_example_simulation(home_team: str, away_team: str, league: str = "NBA") -> dict:
     """
-    Run a single game simulation and return the analysis.
-
-    This demonstrates the canonical way an LLM or external caller
-    should interact with the OmegaSimulationEngine.
-
-    Args:
-        home_team: Home team name
-        away_team: Away team name
-        league: League identifier (NBA, NFL, etc.)
-        json_output: If True, suppress all print statements for pure JSON output
-
+    Run a single Monte Carlo game simulation and produce a structured decision-support analysis for a matchup.
+    
+    Performs a 1,000-iteration simulation for the given home and away teams in the specified league, computes true win probabilities, compares them to example market odds, estimates edge percentages, and generates example Kelly staking recommendations; prints a human-readable report and returns the assembled analysis.
+    
+    Parameters:
+        home_team (str): Home team name.
+        away_team (str): Away team name.
+        league (str): League identifier (e.g., "NBA", "NFL").
+    
     Returns:
-        Dict with simulation results, probabilities, and edge analysis
+        dict: Analysis dictionary with the following top-level keys:
+            - "matchup": matchup string ("Away @ Home").
+            - "league": league identifier.
+            - "simulation": dict containing "iterations", "home_win_prob", "away_win_prob",
+              "predicted_spread", "predicted_total", "predicted_home_score", "predicted_away_score".
+            - "edge_analysis": dict with "home" and "away" entries; each entry contains
+              "team", "true_prob", "market_implied", "edge_pct", "example_odds",
+              "recommended_units", and "kelly_fraction".
+            - "context": dict with optional "home_context" and "away_context" from the engine.
+            - "metadata": dict with "analyzed_at", "engine_version", and a human note.
     """
     from src.simulation.simulation_engine import OmegaSimulationEngine
     from src.betting.odds_eval import implied_probability, edge_percentage
@@ -56,16 +57,15 @@ def run_example_simulation(
 
     engine = OmegaSimulationEngine()
 
-    if not json_output:
-        print(f"\n{'='*60}")
-        print("OmegaSportsAgent - Decision Support Engine")
-        print(f"{'='*60}")
-        print(f"Matchup: {away_team} @ {home_team}")
-        print(f"League:  {league}")
-        print(f"Time:    {datetime.now().isoformat()}")
-        print(f"{'='*60}\n")
-        print("[1/3] Running Monte Carlo simulation...")
+    print(f"\n{'='*60}")
+    print(f"OmegaSportsAgent - Decision Support Engine")
+    print(f"{'='*60}")
+    print(f"Matchup: {away_team} @ {home_team}")
+    print(f"League:  {league}")
+    print(f"Time:    {datetime.now().isoformat()}")
+    print(f"{'='*60}\n")
 
+    print("[1/3] Running Monte Carlo simulation...")
     sim_result = engine.run_fast_game_simulation(
         home_team=home_team,
         away_team=away_team,
@@ -74,16 +74,12 @@ def run_example_simulation(
     )
 
     if not sim_result.get("success"):
-        if not json_output:
-            print(f"\n[SKIPPED] {sim_result.get('skip_reason', 'Unknown error')}")
-            print("This game was skipped due to incomplete data.")
-            print("The engine does NOT simulate with default values.\n")
-        else:
-            sys.stdout.write(json.dumps(sim_result, default=str) + "\n")
+        print(f"\n[SKIPPED] {sim_result.get('skip_reason', 'Unknown error')}")
+        print("This game was skipped due to incomplete data.")
+        print("The engine does NOT simulate with default values.\n")
         return sim_result
 
-    if not json_output:
-        print("[2/3] Calculating probabilities...")
+    print(f"[2/3] Calculating probabilities...")
 
     true_prob_home = sim_result["home_win_prob"] / 100
     true_prob_away = sim_result["away_win_prob"] / 100
@@ -97,8 +93,7 @@ def run_example_simulation(
     edge_home = edge_percentage(true_prob_home, market_implied_home)
     edge_away = edge_percentage(true_prob_away, market_implied_away)
 
-    if not json_output:
-        print("[3/3] Applying Kelly Criterion...")
+    print(f"[3/3] Applying Kelly Criterion...")
 
     example_bankroll = 1000.0
     stake_home = recommend_stake(
@@ -157,45 +152,42 @@ def run_example_simulation(
         }
     }
 
-    if not json_output:
-        print(f"\n{'-'*60}")
-        print("SIMULATION RESULTS")
-        print(f"{'-'*60}")
-        print(f"Iterations:        {analysis['simulation']['iterations']}")
-        print(f"Home Win Prob:     {analysis['simulation']['home_win_prob']}%")
-        print(f"Away Win Prob:     {analysis['simulation']['away_win_prob']}%")
-        print(f"Predicted Spread:  {analysis['simulation']['predicted_spread']:+.1f}")
-        print(f"Predicted Total:   {analysis['simulation']['predicted_total']:.1f}")
+    print(f"\n{'-'*60}")
+    print("SIMULATION RESULTS")
+    print(f"{'-'*60}")
+    print(f"Iterations:        {analysis['simulation']['iterations']}")
+    print(f"Home Win Prob:     {analysis['simulation']['home_win_prob']}%")
+    print(f"Away Win Prob:     {analysis['simulation']['away_win_prob']}%")
+    print(f"Predicted Spread:  {analysis['simulation']['predicted_spread']:+.1f}")
+    print(f"Predicted Total:   {analysis['simulation']['predicted_total']:.1f}")
 
-        print(f"\n{'-'*60}")
-        print("EDGE ANALYSIS (vs example market odds)")
-        print(f"{'-'*60}")
+    print(f"\n{'-'*60}")
+    print("EDGE ANALYSIS (vs example market odds)")
+    print(f"{'-'*60}")
 
-        for side in ["home", "away"]:
-            edge_data = analysis["edge_analysis"][side]
-            print(f"\n{edge_data['team']} ({side.upper()}):")
-            print(f"  True Probability:   {edge_data['true_prob']*100:.1f}%")
-            print(f"  Market Implied:     {edge_data['market_implied']*100:.1f}%")
-            print(f"  Edge:               {edge_data['edge_pct']:+.1f}%")
-            print(f"  Example Odds:       {edge_data['example_odds']:+d}")
-            print(f"  Recommended Units:  {edge_data['recommended_units']:.2f}")
+    for side in ["home", "away"]:
+        edge_data = analysis["edge_analysis"][side]
+        print(f"\n{edge_data['team']} ({side.upper()}):")
+        print(f"  True Probability:   {edge_data['true_prob']*100:.1f}%")
+        print(f"  Market Implied:     {edge_data['market_implied']*100:.1f}%")
+        print(f"  Edge:               {edge_data['edge_pct']:+.1f}%")
+        print(f"  Example Odds:       {edge_data['example_odds']:+d}")
+        print(f"  Recommended Units:  {edge_data['recommended_units']:.2f}")
 
-        print(f"\n{'-'*60}")
-        print("DECISION SUPPORT SUMMARY")
-        print(f"{'-'*60}")
+    print(f"\n{'-'*60}")
+    print("DECISION SUPPORT SUMMARY")
+    print(f"{'-'*60}")
 
-        if edge_home > 3:
-            print(f"[+EV] {home_team} shows {edge_home:.1f}% edge vs market")
-        elif edge_away > 3:
-            print(f"[+EV] {away_team} shows {edge_away:.1f}% edge vs market")
-        else:
-            print("[NO EDGE] Neither side shows significant edge (>3%)")
-
-        print(f"\nNOTE: Edge calculations use example odds ({example_odds_home}/{example_odds_away}).")
-        print("      Replace with actual market odds for real analysis.")
-        print(f"\n{'='*60}\n")
+    if edge_home > 3:
+        print(f"[+EV] {home_team} shows {edge_home:.1f}% edge vs market")
+    elif edge_away > 3:
+        print(f"[+EV] {away_team} shows {edge_away:.1f}% edge vs market")
     else:
-        sys.stdout.write(json.dumps(analysis, default=str) + "\n")
+        print("[NO EDGE] Neither side shows significant edge (>3%)")
+
+    print(f"\nNOTE: Edge calculations use example odds ({example_odds_home}/{example_odds_away}).")
+    print("      Replace with actual market odds for real analysis.")
+    print(f"\n{'='*60}\n")
 
     return analysis
 
@@ -210,7 +202,6 @@ Examples:
   python main.py                                    # Default: Lakers vs Warriors
   python main.py --home "Celtics" --away "Heat"    # Custom NBA matchup
   python main.py --league NFL --home "Chiefs" --away "Bills"
-  python main.py --json                            # Pure JSON output
 
 This is a demonstration script. For programmatic usage:
 
@@ -227,19 +218,18 @@ This is a demonstration script. For programmatic usage:
     parser.add_argument("--league", default="NBA",
                         help="League: NBA, NFL, NCAAB, NCAAF (default: NBA)")
     parser.add_argument("--json", action="store_true",
-                        help="Output raw JSON only (suppresses formatted report)")
+                        help="Output raw JSON instead of formatted report")
 
     args = parser.parse_args()
 
     result = run_example_simulation(
         home_team=args.home,
         away_team=args.away,
-        league=args.league.upper(),
-        json_output=args.json
+        league=args.league.upper()
     )
 
     if args.json:
-        return
+        print(json.dumps(result, indent=2, default=str))
 
 
 if __name__ == "__main__":

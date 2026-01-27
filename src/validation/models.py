@@ -171,11 +171,24 @@ class PredictionAudit(Base):
     game = relationship("Game", backref="prediction_audits")
 
     def __repr__(self) -> str:
+        """
+        Provide a concise debug representation of the PredictionAudit instance.
+        
+        Returns:
+            A string formatted as "<PredictionAudit {id} {market_type} {status}>" containing the audit's id, market type value, and status value.
+        """
         return f"<PredictionAudit {self.id} {self.market_type.value} {self.status.value}>"
 
     @property
     def predicted_prob(self) -> Optional[float]:
-        """Extract the primary predicted probability from payload."""
+        """
+        Return the primary predicted probability for this audit based on its market type.
+        
+        For MONEYLINE returns the `win_prob` from `prediction_payload`. For SPREAD returns `cover_prob`. For PLAYER_PROP uses `selection` from the payload (defaults to `"over"`) and returns the corresponding `"<selection>_prob"` if present, otherwise falls back to `over_prob`. For TOTAL uses `selection` (defaults to `"over"`) and returns `"<selection>_prob"`. Returns `None` if `prediction_payload` is missing or no applicable probability key exists.
+        
+        Returns:
+            float or None: The predicted probability value, or `None` when unavailable.
+        """
         if not self.prediction_payload:
             return None
 
@@ -194,7 +207,14 @@ class PredictionAudit(Base):
 
     @property
     def outcome_success(self) -> Optional[bool]:
-        """Determine if the prediction was successful."""
+        """
+        Determine whether the prediction outcome should be considered a success.
+        
+        Checks the instance's outcome_payload for the keys "hit", "covered", or "success" (in that order) and returns their boolean value if present; if none are present, falls back to the result field where "WIN" -> True, "LOSS" or "PUSH" -> False.
+        
+        Returns:
+            `True` if the prediction succeeded, `False` if it failed, `None` if the outcome cannot be determined.
+        """
         if not self.outcome_payload:
             return None
 
@@ -215,9 +235,20 @@ class PredictionAudit(Base):
 
     def to_calibration_record(self) -> Dict[str, Any]:
         """
-        Convert to a flat record for calibration analysis.
-
-        Returns dict with standardized fields for grouping and scoring.
+        Export a flat dictionary representing this audit suitable for calibration analysis.
+        
+        Returns:
+            dict: A dictionary with standardized calibration fields:
+                - id (str): Audit UUID as a string.
+                - league (str): League identifier.
+                - market_type (str|None): Market type name, or `None` if unset.
+                - model_version (str|None): Model version identifier.
+                - predicted_prob (float|None): Primary predicted probability derived from the prediction payload.
+                - outcome (float|None): `1.0` if the prediction succeeded, `0.0` if it failed, or `None` if unknown.
+                - edge_pct (float|None): Recorded edge percentage, if present.
+                - predicted_at (str|None): ISO-8601 timestamp of when the prediction was made, or `None`.
+                - brier_score (float|None): Brier score from calibration metrics, if present.
+                - confidence_bin (Any|None): Confidence bin from calibration metrics, if present.
         """
         return {
             "id": str(self.id),
@@ -292,4 +323,10 @@ class CalibrationSnapshot(Base):
     )
 
     def __repr__(self) -> str:
+        """
+        Provide a concise developer-facing string representation of the CalibrationSnapshot.
+        
+        Returns:
+            A string containing the snapshot's league, the `window_end` date, and the number of predictions (`n_predictions`).
+        """
         return f"<CalibrationSnapshot {self.league} {self.window_end.date()} n={self.n_predictions}>"
