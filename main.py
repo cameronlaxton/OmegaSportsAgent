@@ -21,10 +21,10 @@ import logging
 import sys
 from datetime import datetime
 
-logging.basicConfig(
+ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout)]
+    handlers=[logging.StreamHandler(sys.stderr)]
 )
 logger = logging.getLogger("omega")
 
@@ -79,7 +79,7 @@ def run_example_simulation(
             print("This game was skipped due to incomplete data.")
             print("The engine does NOT simulate with default values.\n")
         else:
-            sys.stdout.write(json.dumps(sim_result, default=str))
+            sys.stdout.write(json.dumps(sim_result, default=str) + "\n")
         return sim_result
 
     if not json_output:
@@ -195,7 +195,7 @@ def run_example_simulation(
         print("      Replace with actual market odds for real analysis.")
         print(f"\n{'='*60}\n")
     else:
-        sys.stdout.write(json.dumps(analysis, default=str))
+        sys.stdout.write(json.dumps(analysis, default=str) + "\n")
 
     return analysis
 
