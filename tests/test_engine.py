@@ -32,7 +32,14 @@ def test_environment_setup():
 
 
 def test_module_imports():
-    """Test 2: Module Imports"""
+    """
+    Verify that the project's key modules can be imported without error.
+    
+    Performs import checks for foundation, data, simulation, betting, utility, and scraper components and prints a success line for each group.
+    
+    Returns:
+        True if all import checks complete successfully.
+    """
     print("\n=== Test 2: Module Imports ===")
     
     # Foundation
@@ -219,7 +226,15 @@ def test_configuration():
 
 
 def test_main_cli():
-    """Test 7: Main CLI"""
+    """
+    Check that running `python main.py --help` exits with a zero status and that the help output contains the string "Decision Support Engine".
+    
+    Returns:
+        True if the help command produced the expected output.
+    
+    Raises:
+        AssertionError: If the subprocess exits with a non-zero status or the expected text is not found in stdout.
+    """
     print("\n=== Test 7: Main CLI ===")
     
     import subprocess

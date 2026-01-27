@@ -22,7 +22,23 @@ HAS_EVALUATE = False
 
 
 def generate_quick_edge(home_name, away_name, league):
-    """Generate a simulated edge based on team matchup for display purposes."""
+    """
+    Produce a simulated betting edge and win probabilities for a given matchup.
+    
+    Returns:
+        home_win_prob (float): Home team win probability as a percentage rounded to one decimal place.
+        away_win_prob (float): Away team win probability as a percentage rounded to one decimal place.
+        bet (dict): Simulated bet information with keys:
+            - pick (str): Moneyline pick string.
+            - odds (int): Simulated odds for the pick.
+            - edge_pct (float): Edge percentage rounded to one decimal place.
+            - ev_pct (float): Expected value percentage rounded to one decimal place.
+            - simulation_prob (float): Model-derived win probability as a percentage rounded to one decimal place.
+            - implied_prob (float): Implied win probability as a percentage rounded to one decimal place.
+            - confidence_tier (str): Confidence tier ("A", "B", or "C").
+            - matchup (str): Formatted matchup string "away @ home".
+            - league (str): League identifier passed into the function.
+    """
     random.seed(hash(f"{home_name}{away_name}{datetime.now().strftime('%Y%m%d')}"))
     
     base_edge = random.uniform(3.5, 8.5)

@@ -31,18 +31,26 @@ logger = logging.getLogger("omega")
 
 def run_example_simulation(home_team: str, away_team: str, league: str = "NBA") -> dict:
     """
-    Run a single game simulation and return the analysis.
-
-    This demonstrates the canonical way an LLM or external caller
-    should interact with the OmegaSimulationEngine.
-
-    Args:
-        home_team: Home team name
-        away_team: Away team name
-        league: League identifier (NBA, NFL, etc.)
-
+    Run a single Monte Carlo game simulation and produce a structured decision-support analysis for a matchup.
+    
+    Performs a 1,000-iteration simulation for the given home and away teams in the specified league, computes true win probabilities, compares them to example market odds, estimates edge percentages, and generates example Kelly staking recommendations; prints a human-readable report and returns the assembled analysis.
+    
+    Parameters:
+        home_team (str): Home team name.
+        away_team (str): Away team name.
+        league (str): League identifier (e.g., "NBA", "NFL").
+    
     Returns:
-        Dict with simulation results, probabilities, and edge analysis
+        dict: Analysis dictionary with the following top-level keys:
+            - "matchup": matchup string ("Away @ Home").
+            - "league": league identifier.
+            - "simulation": dict containing "iterations", "home_win_prob", "away_win_prob",
+              "predicted_spread", "predicted_total", "predicted_home_score", "predicted_away_score".
+            - "edge_analysis": dict with "home" and "away" entries; each entry contains
+              "team", "true_prob", "market_implied", "edge_pct", "example_odds",
+              "recommended_units", and "kelly_fraction".
+            - "context": dict with optional "home_context" and "away_context" from the engine.
+            - "metadata": dict with "analyzed_at", "engine_version", and a human note.
     """
     from src.simulation.simulation_engine import OmegaSimulationEngine
     from src.betting.odds_eval import implied_probability, edge_percentage

@@ -33,38 +33,75 @@ class CalibrationBin:
 
     @property
     def count(self) -> int:
+        """
+        Number of predictions assigned to this calibration bin.
+        
+        Returns:
+            int: The count of predictions in the bin.
+        """
         return len(self.predictions)
 
     @property
     def mean_predicted(self) -> float:
+        """
+        Compute the mean predicted probability for this calibration bin.
+        
+        Returns:
+            The average of stored predicted probabilities for the bin, or 0.0 if the bin has no predictions.
+        """
         if not self.predictions:
             return 0.0
         return sum(self.predictions) / len(self.predictions)
 
     @property
     def mean_actual(self) -> float:
+        """
+        Compute the average actual outcome for this bin.
+        
+        Returns:
+            float: Mean of the stored outcomes; 0.0 if the bin contains no outcomes.
+        """
         if not self.outcomes:
             return 0.0
         return sum(self.outcomes) / len(self.outcomes)
 
     @property
     def calibration_error(self) -> float:
-        """Absolute difference between predicted and actual."""
+        """
+        Absolute calibration error for the bin.
+        
+        Returns:
+            error (float): Absolute difference between the bin's mean predicted probability and the bin's mean actual outcome.
+        """
         return abs(self.mean_predicted - self.mean_actual)
 
     @property
     def calibration_factor(self) -> float:
         """
-        Factor to multiply raw probabilities by to achieve calibration.
-
-        If we predict 70% but only hit 60%, factor = 60/70 = 0.857
-        This means our 70% predictions should be treated as 60%.
+        Compute the multiplicative calibration factor for this bin as the ratio of observed frequency to predicted probability.
+        
+        Returns:
+            float: The scaling factor equal to mean_actual / mean_predicted; returns 1.0 if mean_predicted is 0.
         """
         if self.mean_predicted == 0:
             return 1.0
         return self.mean_actual / self.mean_predicted
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        Serialize this CalibrationBin's statistics to a dictionary suitable for reporting or JSON export.
+        
+        Returns:
+            dict: Mapping with keys:
+                - "bin" (str): bin name.
+                - "lower" (float): lower bound of the bin.
+                - "upper" (float): upper bound of the bin.
+                - "count" (int): number of samples in the bin.
+                - "mean_predicted" (float): mean predicted probability rounded to 4 decimals.
+                - "mean_actual" (float): mean actual outcome rounded to 4 decimals.
+                - "calibration_error" (float): absolute difference between means rounded to 4 decimals.
+                - "calibration_factor" (float): ratio of mean_actual to mean_predicted (or 1.0 if mean_predicted is 0) rounded to 4 decimals.
+        """
         return {
             "bin": self.bin_name,
             "lower": self.lower_bound,
@@ -93,6 +130,22 @@ class CalibrationResult:
     reliability_curve: List[Dict[str, Any]]
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        Serialize the calibration result into a dictionary with rounded numeric metrics suitable for JSON output.
+        
+        Returns:
+            A dictionary containing:
+            - n_predictions: total number of predictions analyzed.
+            - n_resolved: number of predictions with observed outcomes.
+            - brier_score: Brier score rounded to 4 decimals.
+            - log_loss: Log loss rounded to 4 decimals.
+            - ece: Expected Calibration Error rounded to 4 decimals.
+            - mce: Maximum Calibration Error rounded to 4 decimals.
+            - hit_rate: Overall hit rate rounded to 4 decimals.
+            - roi: Average profit per prediction rounded to 4 decimals, or `None` if not available.
+            - calibration_factors: mapping of bin name to calibration factor, each rounded to 4 decimals.
+            - reliability_curve: raw reliability curve data (not rounded).
+        """
         return {
             "n_predictions": self.n_predictions,
             "n_resolved": self.n_resolved,
@@ -142,12 +195,12 @@ class CalibrationEngine:
         custom_bins: Optional[List[Tuple[str, float, float]]] = None
     ):
         """
-        Initialize the calibration engine.
-
-        Args:
-            bin_width: Width of confidence bins (default 5%)
-            min_bin_count: Minimum samples per bin for valid calibration
-            custom_bins: Optional custom bin definitions
+        Create a CalibrationEngine configured with binning and minimum-sample thresholds.
+        
+        Parameters:
+        	bin_width (float): Width of bins as a fraction (e.g., 0.05 for 5% bins).
+        	min_bin_count (int): Minimum number of samples required for a bin to be considered valid in calibration metrics.
+        	custom_bins (Optional[List[Tuple[str, float, float]]]): Optional list of custom bins as (name, lower_bound, upper_bound). If provided, these override the engine's default bin definitions.
         """
         self.bin_width = bin_width
         self.min_bin_count = min_bin_count
@@ -169,7 +222,11 @@ class CalibrationEngine:
         self._profits: List[float] = []
 
     def reset(self) -> None:
-        """Clear all stored predictions."""
+        """
+        Reset the engine's stored data and clear all bins.
+        
+        Clears per-bin predictions and outcomes and empties internal raw storage for predictions, outcomes, edge percentages, and profits.
+        """
         for bin_obj in self.bins.values():
             bin_obj.predictions.clear()
             bin_obj.outcomes.clear()
@@ -186,13 +243,13 @@ class CalibrationEngine:
         profit: Optional[float] = None
     ) -> None:
         """
-        Add a single prediction-outcome pair.
-
-        Args:
-            predicted_prob: Model's predicted probability (0.0 to 1.0)
-            outcome: Actual outcome (1.0 = success, 0.0 = failure)
-            edge_pct: Optional edge percentage for ROI calculation
-            profit: Optional profit/loss in units
+        Record a single predicted probability with its actual outcome and optional financial metrics.
+        
+        Parameters:
+            predicted_prob (float): Model's predicted probability; will be clamped to the range [0.0, 1.0] before storage.
+            outcome (float): Actual outcome (1.0 = success, 0.0 = failure).
+            edge_pct (Optional[float]): Optional edge percentage used for ROI/edge analyses.
+            profit (Optional[float]): Optional profit or loss associated with the prediction.
         """
         # Normalize probability to [0, 1]
         predicted_prob = max(0.0, min(1.0, predicted_prob))
@@ -222,17 +279,13 @@ class CalibrationEngine:
         records: List[Dict[str, Any]]
     ) -> int:
         """
-        Add multiple predictions from a list of records.
-
-        Args:
-            records: List of dicts with keys:
-                - predicted_prob (required)
-                - outcome (required)
-                - edge_pct (optional)
-                - profit (optional)
-
+        Add multiple prediction records to the engine by delegating each valid record to add_prediction.
+        
+        Parameters:
+            records (List[Dict[str, Any]]): List of records where each must include 'predicted_prob' and 'outcome'. Optional keys: 'edge_pct', 'profit'.
+        
         Returns:
-            Number of valid records added
+            int: Number of records successfully added.
         """
         added = 0
         for record in records:
@@ -254,13 +307,10 @@ class CalibrationEngine:
 
     def compute_brier_score(self) -> float:
         """
-        Calculate Brier Score (mean squared error of probabilities).
-
-        Brier Score = (1/N) * Σ(predicted - outcome)²
-
-        Lower is better. Range [0, 1].
-        - 0.0 = perfect calibration
-        - 0.25 = random guessing (for binary outcomes)
+        Compute the Brier score for the stored predictions.
+        
+        Returns:
+            float: Mean squared error between predicted probabilities and actual outcomes; returns 0.0 if no predictions are available.
         """
         if not self._predictions:
             return 0.0
@@ -273,11 +323,13 @@ class CalibrationEngine:
 
     def compute_log_loss(self) -> float:
         """
-        Calculate Log Loss (cross-entropy loss).
-
-        Log Loss = -(1/N) * Σ[y*log(p) + (1-y)*log(1-p)]
-
-        Lower is better. Penalizes confident wrong predictions heavily.
+        Compute the average log loss (cross-entropy) over stored predictions.
+        
+        Computes - (1/N) * sum[y*log(p) + (1-y)*log(1-p)] with clamping to avoid log(0).
+        Lower values indicate better probabilistic calibration; confident wrong predictions are penalized heavily.
+        
+        Returns:
+        	Average log loss across all stored predictions; returns 0.0 if no predictions have been added.
         """
         if not self._predictions:
             return 0.0
@@ -296,11 +348,14 @@ class CalibrationEngine:
 
     def compute_ece(self) -> float:
         """
-        Calculate Expected Calibration Error.
-
-        ECE = Σ (n_bin / N) * |accuracy_bin - confidence_bin|
-
-        Weighted average of calibration errors across bins.
+        Compute the Expected Calibration Error (ECE) across bins.
+        
+        ECE is the weighted average of per-bin absolute calibration errors (|mean_actual - mean_predicted|),
+        where each bin's weight is its fraction of total predictions. Only bins with at least
+        min_bin_count samples contribute. Returns 0.0 if no predictions have been recorded.
+        
+        Returns:
+            ece (float): Expected Calibration Error between 0.0 and 1.0.
         """
         if not self._predictions:
             return 0.0
@@ -317,11 +372,12 @@ class CalibrationEngine:
 
     def compute_mce(self) -> float:
         """
-        Calculate Maximum Calibration Error.
-
-        MCE = max(|accuracy_bin - confidence_bin|) across all bins
-
-        Identifies the worst-calibrated confidence region.
+        Compute the maximum calibration error across bins that meet the minimum sample requirement.
+        
+        Only bins with a count greater than or equal to self.min_bin_count are considered.
+        
+        Returns:
+            max_error (float): The largest absolute difference between mean predicted probability and mean actual outcome among eligible bins; 0.0 if no bins qualify.
         """
         max_error = 0.0
 
@@ -333,9 +389,12 @@ class CalibrationEngine:
 
     def compute_reliability_curve(self) -> List[Dict[str, Any]]:
         """
-        Generate the reliability curve (calibration plot data).
-
-        Returns list of points for plotting predicted vs actual accuracy.
+        Builds reliability-curve data points from bins that meet the minimum sample count.
+        
+        Each list item is a dictionary of bin statistics (as returned by CalibrationBin.to_dict) suitable for plotting predicted probability versus observed frequency.
+        
+        Returns:
+            List[Dict[str, Any]]: Bin dictionaries for bins with count >= self.min_bin_count, sorted by lower bound.
         """
         curve = []
 
@@ -347,15 +406,14 @@ class CalibrationEngine:
 
     def compute_calibration_factors(self) -> Dict[str, float]:
         """
-        Generate calibration factors for each confidence bin.
-
-        These factors can be applied to future predictions to correct
-        systematic biases.
-
+        Compute per-bin calibration factors to adjust future predicted probabilities.
+        
+        Bins with fewer than self.min_bin_count samples receive a neutral factor of 1.0.
+        
         Returns:
-            Dict mapping bin names to calibration factors.
-            Factor < 1.0 means we're overconfident in that range.
-            Factor > 1.0 means we're underconfident.
+            factors (Dict[str, float]): Mapping from bin name to calibration factor.
+                Values less than 1.0 indicate overconfidence for that bin,
+                values greater than 1.0 indicate underconfidence.
         """
         factors = {}
 
@@ -369,23 +427,35 @@ class CalibrationEngine:
         return factors
 
     def compute_hit_rate(self) -> float:
-        """Calculate overall hit rate (accuracy)."""
+        """
+        Compute the overall hit rate as the proportion of successful outcomes.
+        
+        Returns:
+            float: Proportion of outcomes equal to 1.0 (range 0.0–1.0); returns 0.0 when there are no recorded outcomes.
+        """
         if not self._outcomes:
             return 0.0
         return sum(self._outcomes) / len(self._outcomes)
 
     def compute_roi(self) -> Optional[float]:
-        """Calculate ROI from profit data if available."""
+        """
+        Calculate the average profit per prediction from recorded profits.
+        
+        Returns:
+            average_profit (Optional[float]): The mean of recorded profits, or `None` if no profit data is available.
+        """
         if not self._profits:
             return None
         return sum(self._profits) / len(self._profits)
 
     def compute_calibration(self) -> CalibrationResult:
         """
-        Run full calibration analysis.
-
+        Produce a complete calibration analysis from the engine's collected predictions and outcomes.
+        
+        The result aggregates overall metrics (Brier score, log loss, Expected/Maximum Calibration Error, hit rate, ROI), per-bin statistics, per-bin calibration factors, and a reliability curve.
+        
         Returns:
-            CalibrationResult with all metrics and recommendations.
+            CalibrationResult: Aggregated calibration metrics and per-bin data.
         """
         n_predictions = len(self._predictions)
         n_resolved = sum(1 for o in self._outcomes if o is not None)
@@ -406,10 +476,12 @@ class CalibrationEngine:
 
     def generate_isotonic_map(self) -> Dict[float, float]:
         """
-        Generate an isotonic calibration map from current data.
-
-        This map can be used with isotonic_calibration() to transform
-        raw probabilities into calibrated ones.
+        Build an isotonic calibration mapping from bin midpoints to observed hit rates.
+        
+        Only bins with at least `min_bin_count` samples contribute; the returned mapping enforces non-decreasing (isotonic) calibrated values across midpoints.
+        
+        Returns:
+            isotonic_map (Dict[float, float]): Mapping from bin midpoint (float) to calibrated observed probability (float), with values non-decreasing by midpoint.
         """
         calibration_map = {}
 
@@ -438,14 +510,14 @@ class CalibrationEngine:
         method: str = "factor"
     ) -> float:
         """
-        Apply learned calibration to a new probability.
-
-        Args:
-            raw_prob: Raw model probability
-            method: "factor" (multiply by bin factor) or "isotonic" (use mapping)
-
+        Apply a chosen calibration method to a single predicted probability.
+        
+        Parameters:
+            raw_prob (float): The uncalibrated probability in [0.0, 1.0].
+            method (str): Calibration method to apply; "factor" to scale by per-bin factors, "isotonic" to use an isotonic mapping.
+        
         Returns:
-            Calibrated probability
+            float: The calibrated probability. For the "factor" method the result is clamped to the range [0.05, 0.95]. For the "isotonic" method the isotonic mapping produced by the engine is used. If no bin matches the input probability when using the factor method, the original `raw_prob` is returned.
         """
         if method == "isotonic":
             isotonic_map = self.generate_isotonic_map()
@@ -466,14 +538,14 @@ class CalibrationEngine:
 
 def compute_single_brier(predicted_prob: float, outcome: float) -> float:
     """
-    Compute Brier score for a single prediction.
-
-    Args:
-        predicted_prob: Predicted probability (0-1)
-        outcome: Actual outcome (0 or 1)
-
+    Compute the Brier score (squared error) for a single probabilistic prediction.
+    
+    Parameters:
+        predicted_prob (float): Predicted probability between 0 and 1.
+        outcome (float): Actual outcome, 0.0 or 1.0.
+    
     Returns:
-        Squared error (0-1)
+        float: Squared error between the prediction and outcome (range 0 to 1).
     """
     return (predicted_prob - outcome) ** 2
 
@@ -484,17 +556,17 @@ def compute_percentile_rank(
     predicted_std: float
 ) -> float:
     """
-    Calculate where the actual value falls in the predicted distribution.
-
-    Uses normal distribution CDF approximation.
-
-    Args:
-        actual_value: The actual outcome value
-        predicted_mean: Predicted mean from simulation
-        predicted_std: Predicted standard deviation
-
+    Compute the percentile rank of an actual value within a predicted normal distribution.
+    
+    Parameters:
+        actual_value (float): Observed value to rank.
+        predicted_mean (float): Mean of the predicted distribution.
+        predicted_std (float): Standard deviation of the predicted distribution.
+    
     Returns:
-        Percentile rank (0-1). 0.5 means actual was at predicted mean.
+        float: Percentile rank in the range [0.0, 1.0]; 0.5 indicates the actual value equals the predicted mean.
+        If `predicted_std` is less than or equal to 0, returns 0.5 when `actual_value == predicted_mean`,
+        `1.0` when `actual_value > predicted_mean`, and `0.0` when `actual_value < predicted_mean`.
     """
     if predicted_std <= 0:
         return 0.5 if actual_value == predicted_mean else (1.0 if actual_value > predicted_mean else 0.0)
@@ -504,6 +576,15 @@ def compute_percentile_rank(
 
     # Standard normal CDF approximation (Abramowitz and Stegun)
     def norm_cdf(x: float) -> float:
+        """
+        Approximate the cumulative distribution function (CDF) of the standard normal distribution at x.
+        
+        Parameters:
+            x (float): The z-score or value at which to evaluate the standard normal CDF.
+        
+        Returns:
+            float: The CDF value in [0.0, 1.0].
+        """
         a1, a2, a3, a4, a5 = 0.254829592, -0.284496736, 1.421413741, -1.453152027, 1.061405429
         p = 0.3275911
         sign = 1 if x >= 0 else -1
@@ -521,17 +602,31 @@ def grade_prediction(
     market_payload: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    Grade a single prediction against its outcome.
-
-    This is the core grading function used by the calibration loop.
-
-    Args:
-        prediction_payload: Full prediction distribution from simulation
-        outcome_payload: Actual outcome data
-        market_payload: Optional market odds at prediction time
-
+    Grade a single probabilistic prediction against its observed outcome and produce calibration metrics.
+    
+    Parameters:
+        prediction_payload (dict): Prediction distribution and metadata. Recognized keys:
+            - "win_prob", "cover_prob", "over_prob"/"under_prob": predicted probabilities for moneyline, spread, or totals/props.
+            - "selection" (optional): chosen side for over/under or moneyline.
+            - "mean", "std" (optional): distribution parameters for percentile rank calculations.
+        outcome_payload (dict): Observed outcome data. Recognized keys include:
+            - "winner", "covered", "hit", "success" for binary outcomes.
+            - "actual_value" (optional) for continuous outcomes used with mean/std.
+        market_payload (dict, optional): Market/odds information. Recognized keys:
+            - "implied_prob" (optional): market implied probability at prediction time.
+            - "closing_prob" (optional): closing market probability.
+    
     Returns:
-        Dict with calibration metrics for this prediction
+        dict: Metrics for the prediction containing:
+            - "brier_score": squared error between predicted probability and outcome.
+            - "log_loss": log loss for the observed outcome.
+            - "confidence_bin": 5%-bucket label for the predicted probability (e.g., "50-55").
+            - "percentile_rank" (optional): percentile of the actual value under the predicted normal distribution.
+            - "edge_pct" (optional): percentage edge versus market implied probability (rounded).
+            - "edge_realized" (optional): boolean indicating whether the edge produced a favorable outcome.
+            - "clv" (optional): closing line value (rounded).
+            - "outcome": binary outcome used for scoring (1.0 or 0.0).
+            - "predicted_prob": the probability used for grading.
     """
     metrics = {}
 
