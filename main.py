@@ -78,6 +78,8 @@ def run_example_simulation(
             print(f"\n[SKIPPED] {sim_result.get('skip_reason', 'Unknown error')}")
             print("This game was skipped due to incomplete data.")
             print("The engine does NOT simulate with default values.\n")
+        else:
+            sys.stdout.write(json.dumps(sim_result, default=str))
         return sim_result
 
     if not json_output:
@@ -192,6 +194,8 @@ def run_example_simulation(
         print(f"\nNOTE: Edge calculations use example odds ({example_odds_home}/{example_odds_away}).")
         print("      Replace with actual market odds for real analysis.")
         print(f"\n{'='*60}\n")
+    else:
+        sys.stdout.write(json.dumps(analysis, default=str))
 
     return analysis
 
@@ -235,7 +239,7 @@ This is a demonstration script. For programmatic usage:
     )
 
     if args.json:
-        print(json.dumps(result, indent=2, default=str))
+        return
 
 
 if __name__ == "__main__":

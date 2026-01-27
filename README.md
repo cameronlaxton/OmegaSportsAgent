@@ -10,7 +10,9 @@
 
 > **This engine does not place bets.** It calculates probabilities, identifies +EV (Positive Expected Value) opportunities, and provides deep analytical context to help the human user make informed decisions.
 
-OmegaSportsAgent is a quantitative research platform. It exists to answer one question: *"What is the true probability of this outcome, and how does it compare to the market's opinion?"*
+OmegaSportsAgent is a quantitative research platform. It exists to answer one question:
+
+> "What is the true probability of this outcome, and how does it compare to the market's opinion?"
 
 The engine outputs:
 - **True Probabilities** derived from simulation
@@ -372,14 +374,14 @@ python -m src.db.seed
 ### Running
 
 ```bash
-# Run example simulation (default: Lakers vs Warriors)
-python main.py
+# Run example simulation with league filtering
+python main.py --league NBA
 
 # Analyze specific matchup
-python main.py --home "Lakers" --away "Warriors" --league NBA
+python main.py --league NBA --home "Lakers" --away "Warriors"
 
 # Output as JSON for programmatic consumption
-python main.py --home "Celtics" --away "Heat" --json
+python main.py --league NBA --home "Celtics" --away "Heat" --json
 ```
 
 ---
@@ -403,4 +405,4 @@ Private repository - authorized use only.
 
 ---
 
-> *"The goal is not to predict the future. The goal is to have a more accurate probability distribution than the market."*
+> "The goal is not to predict the future. The goal is to have a more accurate probability distribution than the market."
