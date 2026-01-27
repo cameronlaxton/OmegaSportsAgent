@@ -9,6 +9,13 @@ from src.simulation.simulation_engine import OmegaSimulationEngine
 from src.betting.odds_eval import implied_probability, edge_percentage, expected_value_percent
 from src.betting.kelly_staking import recommend_stake
 from src.validation.probability_calibration import calibrate_probability, should_apply_calibration
+from src.data.providers import (
+    GamesProvider,
+    TeamContextProvider,
+    PlayerContextProvider,
+    OddsProvider,
+    WeatherNewsProvider,
+)
 
 
 @dataclass
@@ -62,7 +69,11 @@ class AnalystEngine:
         shrink_factor: float = 0.7,
         cap_max: float = 0.9,
         cap_min: float = 0.1,
-        games_provider: Optional[Callable[[str], List[Dict[str, Any]]]] = None,
+        games_provider: Optional[GamesProvider] = None,
+        team_context_provider: Optional[TeamContextProvider] = None,
+        player_context_provider: Optional[PlayerContextProvider] = None,
+        odds_provider: Optional[OddsProvider] = None,
+        weather_news_provider: Optional[WeatherNewsProvider] = None,
     ) -> None:
         self.bankroll = bankroll
         self.edge_threshold = edge_threshold
@@ -74,6 +85,10 @@ class AnalystEngine:
         self.engine = OmegaSimulationEngine()
         # Allow web-derived or external game feeds (scraped, cached, API).
         self.games_provider = games_provider or get_todays_games
+        self.team_context_provider = team_context_provider
+        self.player_context_provider = player_context_provider
+        self.odds_provider = odds_provider
+        self.weather_news_provider = weather_news_provider
 
     def _calibrate_prob(self, raw_prob: float, calibration_map: Optional[Dict[float, float]] = None) -> float:
         """
@@ -161,12 +176,26 @@ class AnalystEngine:
                 continue
 
             market_odds = self._extract_market_odds(game)
+            if self.odds_provider:
+                provided_odds = self.odds_provider(game, league)
+                if provided_odds:
+                    # provider may return OddsQuote or dict
+                    provided = provided_odds.to_dict() if hasattr(provided_odds, "to_dict") else provided_odds
+                    market_odds.update({k: v for k, v in provided.items() if v is not None})
+
+            home_ctx = None
+            away_ctx = None
+            if self.team_context_provider:
+                home_ctx = self.team_context_provider(home, league)
+                away_ctx = self.team_context_provider(away, league)
 
             sim_result = self.engine.run_fast_game_simulation(
                 home_team=home,
                 away_team=away,
                 league=league,
                 n_iterations=self.n_iterations,
+                home_context=home_ctx.to_dict() if hasattr(home_ctx, "to_dict") else home_ctx,
+                away_context=away_ctx.to_dict() if hasattr(away_ctx, "to_dict") else away_ctx,
             )
             if not sim_result.get("success"):
                 continue
@@ -215,7 +244,11 @@ def analyze_edges(
     calibration_method: str = "combined",
     calibration_map: Optional[Dict[float, float]] = None,
     games_by_league: Optional[Dict[str, List[Dict[str, Any]]]] = None,
-    games_provider: Optional[Callable[[str], List[Dict[str, Any]]]] = None,
+    games_provider: Optional[GamesProvider] = None,
+    team_context_provider: Optional[TeamContextProvider] = None,
+    player_context_provider: Optional[PlayerContextProvider] = None,
+    odds_provider: Optional[OddsProvider] = None,
+    weather_news_provider: Optional[WeatherNewsProvider] = None,
 ) -> Dict[str, Any]:
     """
     Convenience function to run the Analyst Engine across multiple leagues.
@@ -229,6 +262,10 @@ def analyze_edges(
         n_iterations=n_iterations,
         calibration_method=calibration_method,
         games_provider=games_provider,
+        team_context_provider=team_context_provider,
+        player_context_provider=player_context_provider,
+        odds_provider=odds_provider,
+        weather_news_provider=weather_news_provider,
     )
 
     results: Dict[str, Any] = {"leagues": {}, "generated_by": "AnalystEngine"}
