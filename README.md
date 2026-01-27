@@ -368,11 +368,14 @@ python -m src.db.seed
 ### Running
 
 ```bash
-# CLI interface
-python main.py --task morning_analysis --leagues NBA NFL
+# Run example simulation with league filtering
+python main.py --league NBA
 
 # Analyze specific matchup
-python main.py --analyze "Lakers" "Warriors" --league NBA
+python main.py --league NBA --home "Lakers" --away "Warriors"
+
+# Output as JSON for programmatic consumption
+python main.py --league NBA --home "Celtics" --away "Heat" --json
 ```
 
 ---
