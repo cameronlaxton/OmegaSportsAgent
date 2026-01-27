@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+from collections.abc import Callable
 
 from src.data.schedule_api import get_todays_games
 from src.simulation.simulation_engine import OmegaSimulationEngine
@@ -61,6 +62,7 @@ class AnalystEngine:
         shrink_factor: float = 0.7,
         cap_max: float = 0.9,
         cap_min: float = 0.1,
+        games_provider: Optional[Callable[[str], List[Dict[str, Any]]]] = None,
     ) -> None:
         self.bankroll = bankroll
         self.edge_threshold = edge_threshold
@@ -70,6 +72,8 @@ class AnalystEngine:
         self.cap_max = cap_max
         self.cap_min = cap_min
         self.engine = OmegaSimulationEngine()
+        # Allow web-derived or external game feeds (scraped, cached, API).
+        self.games_provider = games_provider or get_todays_games
 
     def _calibrate_prob(self, raw_prob: float, calibration_map: Optional[Dict[float, float]] = None) -> float:
         """
@@ -144,11 +148,12 @@ class AnalystEngine:
         self,
         league: str,
         calibration_map: Optional[Dict[float, float]] = None,
+        games: Optional[List[Dict[str, Any]]] = None,
     ) -> List[Dict[str, Any]]:
-        games = get_todays_games(league)
+        games_feed = games if games is not None else self.games_provider(league)
         edges: List[EdgeResult] = []
 
-        for game in games:
+        for game in games_feed:
             home = self._extract_team_name(game, "home_team") or self._extract_team_name(game, "home")
             away = self._extract_team_name(game, "away_team") or self._extract_team_name(game, "away")
             if not home or not away:
@@ -209,18 +214,27 @@ def analyze_edges(
     n_iterations: int = 1000,
     calibration_method: str = "combined",
     calibration_map: Optional[Dict[float, float]] = None,
+    games_by_league: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+    games_provider: Optional[Callable[[str], List[Dict[str, Any]]]] = None,
 ) -> Dict[str, Any]:
     """
     Convenience function to run the Analyst Engine across multiple leagues.
+
+    Supports injected game data (scraped/web-derived) via games_by_league or
+    a custom games_provider callable to keep the pipeline data-source agnostic.
     """
     engine = AnalystEngine(
         bankroll=bankroll,
         edge_threshold=edge_threshold,
         n_iterations=n_iterations,
         calibration_method=calibration_method,
+        games_provider=games_provider,
     )
 
     results: Dict[str, Any] = {"leagues": {}, "generated_by": "AnalystEngine"}
     for league in leagues:
-        results["leagues"][league.upper()] = engine.analyze_league(league, calibration_map)
+        league_games = games_by_league.get(league) if games_by_league else None
+        results["leagues"][league.upper()] = engine.analyze_league(
+            league, calibration_map, games=league_games
+        )
     return results
