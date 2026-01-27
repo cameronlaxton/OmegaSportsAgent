@@ -120,11 +120,19 @@ class AnalystEngine:
         true_prob_home = sim_result["home_win_prob"] / 100
         calibrated_prob_home = self._calibrate_prob(true_prob_home, calibration_map)
 
-        spread_home = market_odds.get("spread_home")
+        # Spread value (points) is separate from pricing (odds/juice).
+        spread_home = market_odds.get("spread_home") or market_odds.get("spread")
+        spread_price = (
+            market_odds.get("spread_home_price")
+            or market_odds.get("spread_price")
+            or market_odds.get("spread_odds")
+            or -110  # default book juice if missing
+        )
+
         if spread_home is None:
             return None
 
-        market_implied = implied_probability(spread_home)
+        market_implied = implied_probability(spread_price)
         edge = edge_percentage(calibrated_prob_home, market_implied)
 
         if abs(edge) <= self.edge_threshold * 100:
@@ -132,10 +140,10 @@ class AnalystEngine:
 
         # Tiering based on iterations & calibration confidence
         tier = "A" if sim_result.get("iterations", 0) >= self.n_iterations else "B"
-        ev_pct = expected_value_percent(calibrated_prob_home, spread_home)
+        ev_pct = expected_value_percent(calibrated_prob_home, spread_price)
         stake = recommend_stake(
             true_prob=calibrated_prob_home,
-            odds=spread_home,
+            odds=spread_price,
             bankroll=self.bankroll,
             confidence_tier=tier,
         )
