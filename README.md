@@ -407,3 +407,7 @@ Private repository - authorized use only.
 ---
 
 ## "The goal is not to predict the future. The goal is to have a more accurate probability distribution than the market."
+
+---
+
+## "The goal is not to predict the future. The goal is to have a more accurate probability distribution than the market."
