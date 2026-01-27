@@ -149,9 +149,13 @@ class AnalystEngine:
         edges: List[EdgeResult] = []
 
         for game in games:
-            home = game["home_team"]["name"]
-            away = game["away_team"]["name"]
-            market_odds = game.get("odds", {})
+            home = self._extract_team_name(game, "home_team") or self._extract_team_name(game, "home")
+            away = self._extract_team_name(game, "away_team") or self._extract_team_name(game, "away")
+            if not home or not away:
+                # Skip malformed records from scraped sources (ESPN, Rotowire, others)
+                continue
+
+            market_odds = self._extract_market_odds(game)
 
             sim_result = self.engine.run_fast_game_simulation(
                 home_team=home,
@@ -167,6 +171,35 @@ class AnalystEngine:
                 edges.append(edge_result)
 
         return [e.to_dict() for e in sorted(edges, key=lambda x: abs(x.edge_pct), reverse=True)]
+
+    @staticmethod
+    def _extract_team_name(game: Dict[str, Any], key: str) -> Optional[str]:
+        """
+        Safely extract a team name from scraped or API data.
+        Supports dict payloads ({'name': ..}) and direct string values.
+        """
+        team = game.get(key)
+        if not team:
+            return None
+        if isinstance(team, dict):
+            return team.get("name") or team.get("team") or team.get("full_name")
+        if isinstance(team, str):
+            return team
+        return None
+
+    @staticmethod
+    def _extract_market_odds(game: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extract odds from flexible scraped structures.
+        Looks for 'odds' first, then common fallbacks like 'markets' or 'book'.
+        """
+        if "odds" in game and isinstance(game["odds"], dict):
+            return game["odds"]
+        if "markets" in game and isinstance(game["markets"], dict):
+            return game["markets"]
+        if "book" in game and isinstance(game["book"], dict):
+            return game["book"]
+        return {}
 
 
 def analyze_edges(
