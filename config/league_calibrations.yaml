@@ -1,9 +1,23 @@
+# League Calibrations Configuration
+#
+# This file is automatically updated by the CalibrationTuner based on
+# historical prediction performance. Manual edits are preserved but may
+# be overwritten during auto-tuning cycles.
+#
+# Key Parameters:
+#   kelly_multiplier: Fraction of Kelly criterion to use (0.0-1.0)
+#   confidence_threshold: Minimum probability required for a bet recommendation
+#   calibration_factors: Per-bin probability adjustments (auto-generated)
+#   shrinkage_factor: Probability shrinkage toward 0.5 (higher = less shrinkage)
+
 NFL:
   description: "National Football League"
   kelly_multiplier: 0.20
   confidence_threshold: 0.58
   market_restrictions: [MONEYLINE, SPREAD, TOTAL]
   max_stake_per_bet: 500
+  shrinkage_factor: 0.75
+  calibration_factors: {}  # Auto-populated by CalibrationTuner
 
 NBA:
   description: "National Basketball Association"
@@ -11,6 +25,8 @@ NBA:
   confidence_threshold: 0.62
   market_restrictions: [MONEYLINE, SPREAD, PLAYER_PROP, TOTAL]
   max_stake_per_bet: 300
+  shrinkage_factor: 0.70
+  calibration_factors: {}  # Auto-populated by CalibrationTuner
 
 NHL:
   description: "National Hockey League"
@@ -18,6 +34,35 @@ NHL:
   confidence_threshold: 0.57
   market_restrictions: [MONEYLINE, SPREAD, TOTAL]
   max_stake_per_bet: 400
+  shrinkage_factor: 0.72
+  calibration_factors: {}  # Auto-populated by CalibrationTuner
+
+MLB:
+  description: "Major League Baseball"
+  kelly_multiplier: 0.25
+  confidence_threshold: 0.56
+  market_restrictions: [MONEYLINE, TOTAL]
+  max_stake_per_bet: 350
+  shrinkage_factor: 0.70
+  calibration_factors: {}  # Auto-populated by CalibrationTuner
+
+NCAAB:
+  description: "NCAA Men's Basketball"
+  kelly_multiplier: 0.18
+  confidence_threshold: 0.60
+  market_restrictions: [MONEYLINE, SPREAD, TOTAL]
+  max_stake_per_bet: 200
+  shrinkage_factor: 0.65
+  calibration_factors: {}  # Auto-populated by CalibrationTuner
+
+NCAAF:
+  description: "NCAA Football"
+  kelly_multiplier: 0.18
+  confidence_threshold: 0.60
+  market_restrictions: [MONEYLINE, SPREAD, TOTAL]
+  max_stake_per_bet: 200
+  shrinkage_factor: 0.65
+  calibration_factors: {}  # Auto-populated by CalibrationTuner
 
 PingPong:
   description: "International Ping Pong"
@@ -25,6 +70,8 @@ PingPong:
   confidence_threshold: 0.55
   market_restrictions: [MONEYLINE, SPREAD]
   max_stake_per_bet: 150
+  shrinkage_factor: 0.68
+  calibration_factors: {}  # Auto-populated by CalibrationTuner
 
 eSports:
   description: "eSports (CS:GO / LoL / Dota)"
@@ -32,4 +79,5 @@ eSports:
   confidence_threshold: 0.56
   market_restrictions: [MONEYLINE, MAP_HANDICAP, TOTAL_ROUNDS]
   max_stake_per_bet: 250
-
+  shrinkage_factor: 0.68
+  calibration_factors: {}  # Auto-populated by CalibrationTuner

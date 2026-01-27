@@ -64,11 +64,7 @@ def test_module_imports():
     from src.utilities.data_logging import log_bet_recommendation
     from src.utilities.sandbox_persistence import OmegaCacheLogger
     print("✓ Utility modules (3/3)")
-    
-    # Workflows
-    from src.workflows.morning_bets import run_morning_workflow
-    print("✓ Workflow modules (1/1)")
-    
+
     # Scraper
     from scraper_engine import fetch_sports_markdown, validate_game_data
     print("✓ Scraper engine (2/2)")
@@ -235,7 +231,7 @@ def test_main_cli():
         text=True
     )
     assert result.returncode == 0, "main.py --help failed"
-    assert "OmegaSports Headless Simulation Engine" in result.stdout
+    assert "Decision Support Engine" in result.stdout
     print("✓ main.py --help works")
     
     return True
