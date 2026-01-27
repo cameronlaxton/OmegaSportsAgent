@@ -17,11 +17,8 @@ except ImportError as e:
     print(json.dumps({"error": f"Import error: {str(e)}", "games": [], "top_bets": []}))
     sys.exit(0)
 
-try:
-    from src.workflows.morning_bets import evaluate_game
-    HAS_EVALUATE = True
-except ImportError:
-    HAS_EVALUATE = False
+# Workflow-based evaluation removed - now using on-demand simulation
+HAS_EVALUATE = False
 
 
 def generate_quick_edge(home_name, away_name, league):
