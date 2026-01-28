@@ -216,11 +216,44 @@ def validate_game_for_simulation(
 
 
 @dataclass
+class GameContext:
+    """
+    Context for dynamic probability adjustments (Clutch Time, Garbage Time, etc.).
+
+    Attributes:
+        time_remaining: Minutes remaining in the game
+        score_differential: Home score minus away score (positive = home leading)
+        period: Current period/quarter
+        is_clutch: Whether we're in clutch time (auto-calculated)
+        is_garbage_time: Whether we're in garbage time (auto-calculated)
+    """
+    time_remaining: float = 48.0  # Full game for NBA
+    score_differential: float = 0.0
+    period: int = 1
+
+    @property
+    def is_clutch(self) -> bool:
+        """
+        Clutch time: Less than 2 minutes remaining AND game within 5 points.
+        This is when star players take over and pace slows down.
+        """
+        return self.time_remaining < 2.0 and abs(self.score_differential) <= 5
+
+    @property
+    def is_garbage_time(self) -> bool:
+        """
+        Garbage time: Game is effectively over (large lead late).
+        Starters rest, bench players get minutes.
+        """
+        return self.time_remaining < 5.0 and abs(self.score_differential) > 20
+
+
+@dataclass
 class MarkovState:
     """Represents a state in the Markov chain simulation."""
     league: str
     period: int = 1
-    time_remaining: float = 0.0
+    time_remaining: float = 48.0  # Total game time in minutes (NBA default)
     home_score: float = 0.0
     away_score: float = 0.0
     possession_team: str = "home"
@@ -228,11 +261,11 @@ class MarkovState:
     distance: float = 10.0
     field_position: float = 25.0
     player_stats: Dict[str, Dict[str, float]] = field(default_factory=dict)
-    
+
     def get_player_stat(self, player_name: str, stat_key: str) -> float:
         """Get accumulated stat for a player."""
         return self.player_stats.get(player_name, {}).get(stat_key, 0.0)
-    
+
     def add_player_stat(self, player_name: str, stat_key: str, value: float) -> None:
         """Add to a player's accumulated stat."""
         if player_name not in self.player_stats:
@@ -240,6 +273,19 @@ class MarkovState:
         if stat_key not in self.player_stats[player_name]:
             self.player_stats[player_name][stat_key] = 0.0
         self.player_stats[player_name][stat_key] += value
+
+    @property
+    def score_differential(self) -> float:
+        """Home score minus away score."""
+        return self.home_score - self.away_score
+
+    def get_context(self) -> GameContext:
+        """Get current game context for dynamic probability adjustments."""
+        return GameContext(
+            time_remaining=self.time_remaining,
+            score_differential=self.score_differential,
+            period=self.period
+        )
 
 
 class TransitionMatrix:
@@ -346,19 +392,36 @@ class TransitionMatrix:
     def get_transition_probs(self, state_type: str) -> Dict[str, float]:
         """Get transition probabilities for a state type."""
         return self._transitions.get(state_type, {"default": 1.0})
-    
-    def sample_transition(self, state_type: str) -> str:
-        """Sample a transition outcome based on probabilities."""
+
+    def sample_transition(
+        self,
+        state_type: str,
+        context: Optional[GameContext] = None
+    ) -> str:
+        """
+        Sample a transition outcome based on probabilities.
+
+        Args:
+            state_type: Type of transition (e.g., "possession", "play_type")
+            context: Optional GameContext for dynamic probability adjustments
+
+        Returns:
+            Sampled outcome string
+        """
         probs = self.get_transition_probs(state_type)
         if not probs:
             return "default"
-        
+
+        # Apply clutch time adjustments if context is provided
+        if context and context.is_clutch and state_type == "possession":
+            probs = self._apply_clutch_adjustments(probs.copy())
+
         outcomes = list(probs.keys())
         weights = list(probs.values())
-        
+
         if np is not None:
             return np.random.choice(outcomes, p=weights)
-        
+
         r = random.random()
         cumulative = 0.0
         for outcome, weight in zip(outcomes, weights):
@@ -366,6 +429,43 @@ class TransitionMatrix:
             if r <= cumulative:
                 return outcome
         return outcomes[-1]
+
+    def _apply_clutch_adjustments(self, probs: Dict[str, float]) -> Dict[str, float]:
+        """
+        Apply clutch time adjustments to transition probabilities.
+
+        In clutch time (< 2 min, within 5 points):
+        - Pace slows down (more deliberate possessions)
+        - Higher variance on shot outcomes (pressure effects)
+        - More free throws (intentional fouling, playing for contact)
+
+        Args:
+            probs: Base transition probabilities
+
+        Returns:
+            Adjusted probabilities for clutch situations
+        """
+        if self.league != "NBA":
+            return probs
+
+        # Clutch time adjustments
+        clutch_adj = {
+            "two_point_make": 0.95,   # Slightly harder to score under pressure
+            "two_point_miss": 1.05,   # More misses due to pressure
+            "three_point_make": 0.90,  # Three-pointers harder in clutch
+            "three_point_miss": 1.10,  # More misses
+            "free_throws": 1.40,       # More intentional fouling, playing for contact
+            "turnover": 1.15,          # More turnovers under pressure
+        }
+
+        adjusted = {}
+        for outcome, base_prob in probs.items():
+            adj_factor = clutch_adj.get(outcome, 1.0)
+            adjusted[outcome] = base_prob * adj_factor
+
+        # Normalize to sum to 1.0
+        total = sum(adjusted.values())
+        return {k: v / total for k, v in adjusted.items()}
 
 
 class MarkovSimulator:
@@ -428,43 +528,56 @@ class MarkovSimulator:
             return context.get(key, default)
         return getattr(context, key, default)
     
-    def _adjust_transition_probs(self, offense_context: Any, defense_context: Any) -> Dict[str, float]:
+    def _adjust_transition_probs(
+        self,
+        offense_context: Any,
+        defense_context: Any,
+        game_context: Optional[GameContext] = None
+    ) -> Dict[str, float]:
         """
-        Adjust transition probabilities based on team offensive/defensive ratings.
-        
+        Adjust transition probabilities based on team offensive/defensive ratings
+        and game context (clutch time, garbage time, etc.).
+
         Higher off_rating -> higher shot make percentages (scale 0.35 base by off_rating/110)
         Higher def_rating -> lower opponent shot percentages
-        
+
+        CLUTCH TIME LOGIC (< 2 min, within 5 points):
+        - Pace decreases (longer possessions, more deliberate)
+        - Star player usage increases 1.5x (they take the last shots)
+        - Shot variance increases (choking vs. clutch performances)
+        - More free throw attempts (intentional fouling, playing for contact)
+
         Args:
             offense_context: Offensive team's TeamContext
             defense_context: Defensive team's TeamContext
-        
+            game_context: Optional GameContext with time/score information
+
         Returns:
             Adjusted possession transition probabilities
         """
         base_probs = self.transition_matrix.get_transition_probs("possession").copy()
-        
+
         if self.league != "NBA":
             return base_probs
-        
+
         off_rating = self._get_context_value(offense_context, 'off_rating', 110.0)
         def_rating = self._get_context_value(defense_context, 'def_rating', 110.0)
         fg_pct = self._get_context_value(offense_context, 'fg_pct', 0.45)
         three_pt_pct = self._get_context_value(offense_context, 'three_pt_pct', 0.35)
-        
+
         off_multiplier = off_rating / 110.0
         def_multiplier = 110.0 / max(def_rating, 90.0)
         combined_multiplier = (off_multiplier + def_multiplier) / 2
-        
+
         base_two_make = base_probs.get("two_point_make", 0.35)
         base_three_make = base_probs.get("three_point_make", 0.12)
-        
+
         adj_two_make = min(0.50, base_two_make * combined_multiplier * (fg_pct / 0.45))
         adj_three_make = min(0.20, base_three_make * combined_multiplier * (three_pt_pct / 0.35))
-        
+
         adj_two_miss = max(0.10, base_probs.get("two_point_miss", 0.20) / combined_multiplier)
         adj_three_miss = max(0.10, base_probs.get("three_point_miss", 0.18) / combined_multiplier)
-        
+
         adjusted = {
             "two_point_make": adj_two_make,
             "two_point_miss": adj_two_miss,
@@ -473,36 +586,164 @@ class MarkovSimulator:
             "free_throws": base_probs.get("free_throws", 0.08),
             "turnover": base_probs.get("turnover", 0.07)
         }
-        
+
+        # Apply CLUTCH TIME adjustments
+        if game_context and game_context.is_clutch:
+            adjusted = self._apply_clutch_time_adjustments(adjusted, game_context)
+            logger.debug(f"Clutch time engaged: time={game_context.time_remaining:.1f}m, diff={game_context.score_differential}")
+
+        # Apply GARBAGE TIME adjustments (optional)
+        if game_context and game_context.is_garbage_time:
+            adjusted = self._apply_garbage_time_adjustments(adjusted)
+
         total = sum(adjusted.values())
         return {k: v / total for k, v in adjusted.items()}
+
+    def _apply_clutch_time_adjustments(
+        self,
+        probs: Dict[str, float],
+        context: GameContext
+    ) -> Dict[str, float]:
+        """
+        Apply clutch time adjustments to transition probabilities.
+
+        In clutch time (< 2 min, within 5 points):
+        - Shot efficiency decreases slightly (pressure)
+        - Three-point attempts decrease (more conservative)
+        - Free throw rate increases (intentional fouling, driving to basket)
+        - Turnover rate increases (tighter defense, pressure)
+        - Variance increases (clutch vs. choke performances)
+
+        Args:
+            probs: Base adjusted probabilities
+            context: Game context with time/score
+
+        Returns:
+            Clutch-adjusted probabilities
+        """
+        # Closer games have more pressure
+        pressure_factor = 1.0 + (1.0 - abs(context.score_differential) / 5.0) * 0.2
+
+        clutch_multipliers = {
+            "two_point_make": 0.92 / pressure_factor,   # Harder under pressure
+            "two_point_miss": 1.08 * pressure_factor,   # More misses
+            "three_point_make": 0.85,                    # Teams go for safer shots
+            "three_point_miss": 1.15,                    # More conservative
+            "free_throws": 1.50,                         # Intentional fouls, driving
+            "turnover": 1.20 * pressure_factor,          # Tighter defense
+        }
+
+        adjusted = {}
+        for outcome, base_prob in probs.items():
+            multiplier = clutch_multipliers.get(outcome, 1.0)
+            adjusted[outcome] = base_prob * multiplier
+
+        return adjusted
+
+    def _apply_garbage_time_adjustments(self, probs: Dict[str, float]) -> Dict[str, float]:
+        """
+        Apply garbage time adjustments (blowout game, starters resting).
+
+        In garbage time:
+        - Less efficient shooting (bench players)
+        - More turnovers (less experience)
+        - More three-point attempts (running down clock)
+        """
+        garbage_multipliers = {
+            "two_point_make": 0.85,
+            "two_point_miss": 1.15,
+            "three_point_make": 0.80,
+            "three_point_miss": 1.20,
+            "free_throws": 0.80,
+            "turnover": 1.30,
+        }
+
+        return {k: v * garbage_multipliers.get(k, 1.0) for k, v in probs.items()}
+
+    def _get_clutch_usage_multiplier(
+        self,
+        player: Dict[str, Any],
+        context: GameContext
+    ) -> float:
+        """
+        Get usage rate multiplier for a player in clutch time.
+
+        Star players (high usage rate) get 1.5x multiplier in clutch.
+        Role players get reduced usage.
+
+        Args:
+            player: Player dict with usage_rate
+            context: Game context
+
+        Returns:
+            Usage rate multiplier (1.0 in normal time, 1.5 for stars in clutch)
+        """
+        if not context.is_clutch:
+            return 1.0
+
+        base_usage = player.get("usage_rate", 0.15)
+
+        # Star threshold: top usage players (>25% usage rate)
+        if base_usage >= 0.25:
+            return 1.5  # Stars take over in clutch
+
+        # Secondary players: slight increase
+        elif base_usage >= 0.18:
+            return 1.15
+
+        # Role players: reduced touches in clutch
+        else:
+            return 0.70
     
-    def _select_involved_player(self, players: List[Dict[str, Any]], stat_key: str) -> Optional[Dict[str, Any]]:
-        """Select which player is involved in a play based on usage rates."""
+    def _select_involved_player(
+        self,
+        players: List[Dict[str, Any]],
+        stat_key: str,
+        game_context: Optional[GameContext] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Select which player is involved in a play based on usage rates.
+
+        In clutch time, star players get 1.5x usage boost.
+
+        Args:
+            players: List of player dicts
+            stat_key: Stat being accumulated (pts, reb, ast, etc.)
+            game_context: Optional game context for clutch adjustments
+
+        Returns:
+            Selected player dict or None
+        """
         if not players:
             return None
-        
+
         weights = []
         for p in players:
             if stat_key in ("pts", "ast"):
-                weight = p.get("usage_rate", 0.15)
+                base_weight = p.get("usage_rate", 0.15)
             elif stat_key in ("reb",):
-                weight = p.get("rebound_rate", 0.10)
+                base_weight = p.get("rebound_rate", 0.10)
             elif stat_key in ("pass_yds", "rec_yds"):
-                weight = p.get("target_share", 0.15)
+                base_weight = p.get("target_share", 0.15)
             elif stat_key in ("rush_yds",):
-                weight = p.get("carry_share", 0.15)
+                base_weight = p.get("carry_share", 0.15)
             else:
-                weight = p.get("usage_rate", 0.15)
-            weights.append(max(0.01, weight))
-        
+                base_weight = p.get("usage_rate", 0.15)
+
+            # Apply clutch usage multiplier
+            if game_context:
+                clutch_mult = self._get_clutch_usage_multiplier(p, game_context)
+                base_weight *= clutch_mult
+
+            weights.append(max(0.01, base_weight))
+
         total = sum(weights)
         probs = [w / total for w in weights]
-        
+
         if np is not None:
             idx = np.random.choice(len(players), p=probs)
             return players[idx]
-        
+
         r = random.random()
         cumulative = 0.0
         for player, prob in zip(players, probs):
@@ -527,53 +768,94 @@ class MarkovSimulator:
                 return outcome
         return outcomes[-1]
     
-    def _simulate_nba_possession(self, state: MarkovState, home_players: List, away_players: List) -> MarkovState:
-        """Simulate a single NBA possession with team-adjusted probabilities."""
+    def _simulate_nba_possession(
+        self,
+        state: MarkovState,
+        home_players: List,
+        away_players: List
+    ) -> MarkovState:
+        """
+        Simulate a single NBA possession with team-adjusted probabilities.
+
+        Includes dynamic clutch time logic when game is close and time is running low.
+        """
         offense = home_players if state.possession_team == "home" else away_players
-        
+
+        # Get game context for clutch/garbage time adjustments
+        game_context = state.get_context()
+
+        # Calculate average possession time based on game state
+        # Normal: ~24 seconds (0.4 min), Clutch: ~35 seconds (0.58 min, running clock)
+        if game_context.is_clutch:
+            avg_possession_time = 0.58  # Slower pace in clutch
+        else:
+            avg_possession_time = 0.40  # Normal pace
+
+        # Decrement time remaining
+        possession_time = avg_possession_time * (0.8 + random.random() * 0.4)  # Variance
+        state.time_remaining = max(0.0, state.time_remaining - possession_time)
+
+        # Get adjusted transition probabilities with game context
         if self.home_context and self.away_context:
             if state.possession_team == "home":
-                adj_probs = self._adjust_transition_probs(self.home_context, self.away_context)
+                adj_probs = self._adjust_transition_probs(
+                    self.home_context, self.away_context, game_context
+                )
             else:
-                adj_probs = self._adjust_transition_probs(self.away_context, self.home_context)
+                adj_probs = self._adjust_transition_probs(
+                    self.away_context, self.home_context, game_context
+                )
             outcome = self._sample_adjusted_transition(adj_probs)
         else:
-            outcome = self.transition_matrix.sample_transition("possession")
-        
+            outcome = self.transition_matrix.sample_transition("possession", game_context)
+
         if outcome in ("two_point_make", "three_point_make"):
-            scorer = self._select_involved_player(offense, "pts")
+            # Pass game context for clutch usage boost
+            scorer = self._select_involved_player(offense, "pts", game_context)
             if scorer:
                 points = 3 if outcome == "three_point_make" else 2
                 player_name = scorer.get("name", scorer.get("player_name", ""))
                 state.add_player_stat(player_name, "pts", points)
-                
+
                 if state.possession_team == "home":
                     state.home_score += points
                 else:
                     state.away_score += points
-                
-                if random.random() < 0.25:
-                    assister = self._select_involved_player(offense, "ast")
+
+                # Assists - less likely in clutch (more ISO plays)
+                assist_prob = 0.20 if game_context.is_clutch else 0.25
+                if random.random() < assist_prob:
+                    assister = self._select_involved_player(offense, "ast", game_context)
                     if assister and assister != scorer:
-                        state.add_player_stat(assister.get("name", assister.get("player_name", "")), "ast", 1)
-        
+                        state.add_player_stat(
+                            assister.get("name", assister.get("player_name", "")), "ast", 1
+                        )
+
         elif outcome == "free_throws":
-            scorer = self._select_involved_player(offense, "pts")
+            scorer = self._select_involved_player(offense, "pts", game_context)
             if scorer:
-                made = random.choices([0, 1, 2], weights=[0.1, 0.2, 0.7])[0]
+                # Clutch free throws: more pressure, slightly lower makes
+                if game_context.is_clutch:
+                    weights = [0.15, 0.25, 0.60]  # Worse in clutch
+                else:
+                    weights = [0.10, 0.20, 0.70]  # Normal FT shooting
+
+                made = random.choices([0, 1, 2], weights=weights)[0]
                 player_name = scorer.get("name", scorer.get("player_name", ""))
                 state.add_player_stat(player_name, "pts", made)
                 if state.possession_team == "home":
                     state.home_score += made
                 else:
                     state.away_score += made
-        
+
         if outcome in ("two_point_miss", "three_point_miss"):
             defense = away_players if state.possession_team == "home" else home_players
-            rebounder = self._select_involved_player(defense, "reb")
+            rebounder = self._select_involved_player(defense, "reb", game_context)
             if rebounder:
-                state.add_player_stat(rebounder.get("name", rebounder.get("player_name", "")), "reb", 1)
-        
+                state.add_player_stat(
+                    rebounder.get("name", rebounder.get("player_name", "")), "reb", 1
+                )
+
         state.possession_team = "away" if state.possession_team == "home" else "home"
         return state
     
@@ -627,14 +909,24 @@ class MarkovSimulator:
         
         return state
     
-    def simulate_game(self, n_possessions: int = 200, seed: Optional[int] = None) -> MarkovState:
+    def simulate_game(
+        self,
+        n_possessions: int = 200,
+        seed: Optional[int] = None,
+        use_time_based: bool = True
+    ) -> MarkovState:
         """
         Simulate a full game and return final state with player stats.
-        
+
+        Supports two simulation modes:
+        1. Possession-based (legacy): Fixed number of possessions
+        2. Time-based (new): Simulates until time expires, with dynamic clutch logic
+
         Args:
-            n_possessions: Number of possessions/plays to simulate
+            n_possessions: Number of possessions/plays to simulate (possession-based mode)
             seed: Random seed for reproducibility
-        
+            use_time_based: If True, simulate based on game time rather than fixed possessions
+
         Returns:
             MarkovState with accumulated player statistics
         """
@@ -642,24 +934,69 @@ class MarkovSimulator:
             random.seed(seed)
             if np is not None:
                 np.random.seed(seed)
-        
-        state = MarkovState(league=self.league)
-        home_players = [p for p in self.players if p.get("team_side") == "home" or p.get("is_home", False)]
-        away_players = [p for p in self.players if p.get("team_side") == "away" or p.get("is_home", False) is False]
-        
+
+        # Initialize game time based on league
+        if self.league == "NBA":
+            initial_time = 48.0  # 48 minutes
+        elif self.league == "NFL":
+            initial_time = 60.0  # 60 minutes
+        elif self.league == "NHL":
+            initial_time = 60.0  # 60 minutes
+        elif self.league == "NCAAB":
+            initial_time = 40.0  # 40 minutes
+        else:
+            initial_time = 48.0
+
+        state = MarkovState(league=self.league, time_remaining=initial_time)
+
+        # Separate home and away players
+        home_players = [
+            p for p in self.players
+            if p.get("team_side") == "home" or p.get("is_home", False)
+        ]
+        away_players = [
+            p for p in self.players
+            if p.get("team_side") == "away" or p.get("is_home", False) is False
+        ]
+
         if not home_players:
             home_players = self.players[:len(self.players)//2]
         if not away_players:
             away_players = self.players[len(self.players)//2:]
-        
-        for _ in range(n_possessions):
-            if self.league == "NBA":
-                state = self._simulate_nba_possession(state, home_players, away_players)
-            elif self.league == "NFL":
-                state = self._simulate_nfl_play(state, home_players, away_players)
-            else:
-                state = self._simulate_nba_possession(state, home_players, away_players)
-        
+
+        if use_time_based:
+            # TIME-BASED SIMULATION: Run until clock expires
+            # This enables dynamic clutch logic as time winds down
+            possession_count = 0
+            max_possessions = 300  # Safety limit
+
+            while state.time_remaining > 0 and possession_count < max_possessions:
+                if self.league == "NBA" or self.league == "NCAAB":
+                    state = self._simulate_nba_possession(state, home_players, away_players)
+                elif self.league == "NFL":
+                    state = self._simulate_nfl_play(state, home_players, away_players)
+                else:
+                    state = self._simulate_nba_possession(state, home_players, away_players)
+
+                possession_count += 1
+
+                # Log clutch time events
+                context = state.get_context()
+                if context.is_clutch and possession_count % 5 == 0:
+                    logger.debug(
+                        f"Clutch: {state.time_remaining:.1f}m left, "
+                        f"Score {state.home_score:.0f}-{state.away_score:.0f}"
+                    )
+        else:
+            # POSSESSION-BASED SIMULATION (legacy mode)
+            for _ in range(n_possessions):
+                if self.league == "NBA" or self.league == "NCAAB":
+                    state = self._simulate_nba_possession(state, home_players, away_players)
+                elif self.league == "NFL":
+                    state = self._simulate_nfl_play(state, home_players, away_players)
+                else:
+                    state = self._simulate_nba_possession(state, home_players, away_players)
+
         return state
     
     def run_simulation(

@@ -202,7 +202,7 @@ class AutoCalibrator:
     ) -> None:
         """
         Update a prediction with its actual outcome.
-        
+
         Args:
             prediction_id: ID returned from log_prediction
             actual_value: Actual outcome value
@@ -215,10 +215,192 @@ class AutoCalibrator:
             actual_result=actual_result,
             profit_loss=profit_loss
         )
-        
+
         # Check if performance alerts should be triggered
         if self.config.alert_on_poor_performance:
             self._check_performance_alerts()
+
+    def track_clv(
+        self,
+        prediction_id: str,
+        closing_odds: int,
+        market_type: str = "spread"
+    ) -> Dict[str, Any]:
+        """
+        Track Closing Line Value (CLV) for a prediction.
+
+        CLV is the truest measure of a model's skill. It compares our predicted
+        probability at the time of the bet against the market's closing line
+        (just before game start).
+
+        Positive CLV = We had an edge (beat the closing line)
+        Negative CLV = We gave up value (closing line moved against us)
+
+        Args:
+            prediction_id: ID of the prediction to track
+            closing_odds: The closing line odds (American format, e.g., -110)
+            market_type: Type of market (spread, total, moneyline)
+
+        Returns:
+            Dict with CLV analysis:
+            - predicted_prob: Our probability at bet time
+            - closing_implied: Market's closing implied probability
+            - clv_pct: CLV as percentage (positive = edge captured)
+            - clv_cents: CLV in cents (industry standard)
+        """
+        # Get the prediction record
+        prediction = self.tracker.get_prediction(prediction_id)
+        if not prediction:
+            logger.warning(f"Prediction {prediction_id} not found for CLV tracking")
+            return {"error": "Prediction not found"}
+
+        predicted_prob = prediction.get("predicted_probability", 0.5)
+
+        # Convert closing odds to implied probability
+        closing_implied = self._odds_to_implied_prob(closing_odds)
+
+        # Calculate CLV
+        # CLV = predicted_prob - closing_implied
+        # Positive = we beat the closing line (had edge)
+        clv_pct = (predicted_prob - closing_implied) * 100
+
+        # CLV in cents (industry standard: multiply by line movement)
+        # e.g., moving from -110 to -115 is about 2.5 cents
+        clv_cents = clv_pct * 2.5  # Rough conversion
+
+        clv_result = {
+            "prediction_id": prediction_id,
+            "predicted_prob": round(predicted_prob, 4),
+            "closing_implied": round(closing_implied, 4),
+            "closing_odds": closing_odds,
+            "clv_pct": round(clv_pct, 2),
+            "clv_cents": round(clv_cents, 1),
+            "market_type": market_type,
+            "beat_closing_line": clv_pct > 0,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        # Store CLV in prediction metadata
+        self.tracker.update_prediction_metadata(
+            prediction_id,
+            {"clv": clv_result}
+        )
+
+        # Log significant CLV
+        if abs(clv_pct) > 2.0:
+            logger.info(
+                f"CLV tracked: {prediction_id} | CLV={clv_pct:+.2f}% | "
+                f"Pred={predicted_prob:.3f} vs Close={closing_implied:.3f}"
+            )
+
+        return clv_result
+
+    def _odds_to_implied_prob(self, american_odds: int) -> float:
+        """
+        Convert American odds to implied probability.
+
+        Args:
+            american_odds: American format odds (e.g., -110, +150)
+
+        Returns:
+            Implied probability as decimal (0-1)
+        """
+        if american_odds >= 100:
+            # Positive odds: underdog
+            return 100.0 / (american_odds + 100)
+        else:
+            # Negative odds: favorite
+            return abs(american_odds) / (abs(american_odds) + 100)
+
+    def get_clv_summary(
+        self,
+        league: Optional[str] = None,
+        market_type: Optional[str] = None,
+        recent_n: int = 100
+    ) -> Dict[str, Any]:
+        """
+        Get summary of CLV performance across predictions.
+
+        Args:
+            league: Filter by league
+            market_type: Filter by market type
+            recent_n: Number of recent predictions to analyze
+
+        Returns:
+            Dict with CLV metrics:
+            - avg_clv_pct: Average CLV percentage
+            - clv_positive_rate: % of bets that beat closing line
+            - total_clv_cents: Total CLV in cents
+            - by_confidence_tier: CLV breakdown by tier
+        """
+        predictions = self.tracker.get_predictions_with_clv(
+            league=league,
+            market_type=market_type,
+            recent_n=recent_n
+        )
+
+        if not predictions:
+            return {
+                "avg_clv_pct": 0.0,
+                "clv_positive_rate": 0.0,
+                "total_clv_cents": 0.0,
+                "sample_size": 0
+            }
+
+        clv_values = [p.get("clv", {}).get("clv_pct", 0) for p in predictions]
+        positive_clv = sum(1 for c in clv_values if c > 0)
+
+        # Group by confidence tier
+        tier_clv = {}
+        for p in predictions:
+            tier = p.get("confidence_tier", "C")
+            clv = p.get("clv", {}).get("clv_pct", 0)
+            if tier not in tier_clv:
+                tier_clv[tier] = []
+            tier_clv[tier].append(clv)
+
+        tier_summary = {
+            tier: {
+                "avg_clv": sum(vals) / len(vals) if vals else 0,
+                "count": len(vals)
+            }
+            for tier, vals in tier_clv.items()
+        }
+
+        return {
+            "avg_clv_pct": sum(clv_values) / len(clv_values) if clv_values else 0,
+            "clv_positive_rate": positive_clv / len(predictions) if predictions else 0,
+            "total_clv_cents": sum(c * 2.5 for c in clv_values),
+            "sample_size": len(predictions),
+            "by_confidence_tier": tier_summary,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    def get_performance_summary(
+        self,
+        prediction_type: Optional[str] = None,
+        league: Optional[str] = None,
+        recent_n: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """
+        Get comprehensive performance summary for the model.
+
+        This is the main interface for other modules to check model health.
+
+        Args:
+            prediction_type: Filter by prediction type
+            league: Filter by league
+            recent_n: Number of recent predictions (uses config default if None)
+
+        Returns:
+            Dict with performance metrics including brier_score, roi, etc.
+        """
+        window = recent_n or self.config.performance_window
+        return self.tracker.get_performance_summary(
+            prediction_type=prediction_type,
+            league=league,
+            recent_n=window
+        )
     
     def run_calibration(
         self,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 from collections.abc import Callable
@@ -9,6 +10,7 @@ from src.simulation.simulation_engine import OmegaSimulationEngine
 from src.betting.odds_eval import implied_probability, edge_percentage, expected_value_percent
 from src.betting.kelly_staking import recommend_stake
 from src.validation.probability_calibration import calibrate_probability, should_apply_calibration
+from src.validation.auto_calibrator import get_global_calibrator, AutoCalibrator
 from src.data.providers import (
     GamesProvider,
     TeamContextProvider,
@@ -16,6 +18,14 @@ from src.data.providers import (
     OddsProvider,
     WeatherNewsProvider,
 )
+
+logger = logging.getLogger(__name__)
+
+# Performance thresholds for dynamic edge adjustment
+BRIER_SCORE_COLD_THRESHOLD = 0.25  # Model is underperforming
+BRIER_SCORE_HOT_THRESHOLD = 0.20   # Model is performing well
+EDGE_THRESHOLD_CONSERVATIVE = 0.05  # 5% edge required when cold
+EDGE_THRESHOLD_STANDARD = 0.03      # 3% edge in normal conditions
 
 
 @dataclass
@@ -58,6 +68,12 @@ class AnalystEngine:
     - Runs fast simulations
     - Calibrates probabilities to avoid extreme bias
     - Computes edge, EV%, and Kelly-based stake sizing
+    - Dynamically adjusts edge thresholds based on model performance (feedback loop)
+
+    CALIBRATION INTEGRATION:
+    - Queries AutoCalibrator.get_performance_summary() before evaluating markets
+    - If Brier Score > 0.25 (model is "cold"): increases edge threshold to 5%
+    - If Brier Score < 0.20 (model is "hot"): allows standard 3% threshold
     """
 
     def __init__(
@@ -74,8 +90,11 @@ class AnalystEngine:
         player_context_provider: Optional[PlayerContextProvider] = None,
         odds_provider: Optional[OddsProvider] = None,
         weather_news_provider: Optional[WeatherNewsProvider] = None,
+        use_dynamic_edge: bool = True,
+        calibrator: Optional[AutoCalibrator] = None,
     ) -> None:
         self.bankroll = bankroll
+        self._base_edge_threshold = edge_threshold
         self.edge_threshold = edge_threshold
         self.n_iterations = n_iterations
         self.calibration_method = calibration_method
@@ -83,12 +102,111 @@ class AnalystEngine:
         self.cap_max = cap_max
         self.cap_min = cap_min
         self.engine = OmegaSimulationEngine()
+
         # Allow web-derived or external game feeds (scraped, cached, API).
         self.games_provider = games_provider or get_todays_games
         self.team_context_provider = team_context_provider
         self.player_context_provider = player_context_provider
         self.odds_provider = odds_provider
         self.weather_news_provider = weather_news_provider
+
+        # Calibration integration
+        self.use_dynamic_edge = use_dynamic_edge
+        self._calibrator = calibrator
+        self._last_performance_check: Optional[Dict[str, Any]] = None
+
+    @property
+    def calibrator(self) -> AutoCalibrator:
+        """Get or create the calibrator instance."""
+        if self._calibrator is None:
+            self._calibrator = get_global_calibrator()
+        return self._calibrator
+
+    def _get_dynamic_edge_threshold(self, league: Optional[str] = None) -> float:
+        """
+        Get the dynamic edge threshold based on recent model performance.
+
+        When the model is "cold" (Brier Score > 0.25), we become more conservative
+        and require a higher edge to place bets. When "hot" (< 0.20), we use
+        standard sizing.
+
+        Args:
+            league: Optional league to filter performance
+
+        Returns:
+            Edge threshold (0.03 standard, 0.05 conservative)
+        """
+        if not self.use_dynamic_edge:
+            return self._base_edge_threshold
+
+        try:
+            performance = self.calibrator.get_performance_summary(league=league)
+            self._last_performance_check = performance
+
+            brier_score = performance.get("brier_score", 0.22)
+            settled_predictions = performance.get("settled_predictions", 0)
+
+            # Need minimum sample size for reliable adjustment
+            if settled_predictions < 20:
+                logger.debug(
+                    f"Insufficient samples ({settled_predictions}) for dynamic edge, "
+                    f"using base threshold: {self._base_edge_threshold}"
+                )
+                return self._base_edge_threshold
+
+            # Model is "cold" - be more conservative
+            if brier_score > BRIER_SCORE_COLD_THRESHOLD:
+                logger.info(
+                    f"Model is COLD (Brier={brier_score:.3f} > {BRIER_SCORE_COLD_THRESHOLD}), "
+                    f"increasing edge threshold to {EDGE_THRESHOLD_CONSERVATIVE*100:.0f}%"
+                )
+                return EDGE_THRESHOLD_CONSERVATIVE
+
+            # Model is "hot" - allow standard sizing
+            elif brier_score < BRIER_SCORE_HOT_THRESHOLD:
+                logger.info(
+                    f"Model is HOT (Brier={brier_score:.3f} < {BRIER_SCORE_HOT_THRESHOLD}), "
+                    f"using standard threshold {EDGE_THRESHOLD_STANDARD*100:.0f}%"
+                )
+                return EDGE_THRESHOLD_STANDARD
+
+            # Normal performance
+            else:
+                return self._base_edge_threshold
+
+        except Exception as e:
+            logger.warning(f"Error getting dynamic edge threshold: {e}")
+            return self._base_edge_threshold
+
+    def get_model_status(self, league: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get current model performance status.
+
+        Returns:
+            Dict with model health indicators
+        """
+        performance = self.calibrator.get_performance_summary(league=league)
+        brier_score = performance.get("brier_score", 0.22)
+
+        if brier_score > BRIER_SCORE_COLD_THRESHOLD:
+            status = "COLD"
+            recommendation = "Increase edge threshold, reduce position sizes"
+        elif brier_score < BRIER_SCORE_HOT_THRESHOLD:
+            status = "HOT"
+            recommendation = "Model performing well, standard sizing OK"
+        else:
+            status = "NORMAL"
+            recommendation = "Use standard parameters"
+
+        return {
+            "status": status,
+            "brier_score": brier_score,
+            "roi": performance.get("roi", 0),
+            "settled_predictions": performance.get("settled_predictions", 0),
+            "recommendation": recommendation,
+            "current_edge_threshold": self._get_dynamic_edge_threshold(league),
+            "base_edge_threshold": self._base_edge_threshold
+        }
 
     def _calibrate_prob(self, raw_prob: float, calibration_map: Optional[Dict[float, float]] = None) -> float:
         """
@@ -117,6 +235,15 @@ class AnalystEngine:
         market_odds: Dict[str, Any],
         calibration_map: Optional[Dict[float, float]] = None,
     ) -> Optional[EdgeResult]:
+        """
+        Evaluate a market for edge using simulation results and calibration.
+
+        CALIBRATION FEEDBACK LOOP:
+        - Queries model performance before evaluating
+        - Adjusts edge threshold dynamically based on Brier score
+        - Cold model (Brier > 0.25) -> 5% edge required
+        - Hot model (Brier < 0.20) -> 3% edge (standard)
+        """
         true_prob_home = sim_result["home_win_prob"] / 100
         calibrated_prob_home = self._calibrate_prob(true_prob_home, calibration_map)
 
@@ -135,11 +262,18 @@ class AnalystEngine:
         market_implied = implied_probability(spread_price)
         edge = edge_percentage(calibrated_prob_home, market_implied)
 
-        if abs(edge) <= self.edge_threshold * 100:
+        # Get DYNAMIC edge threshold based on model performance
+        dynamic_threshold = self._get_dynamic_edge_threshold(league)
+
+        if abs(edge) <= dynamic_threshold * 100:
             return None
 
-        # Tiering based on iterations & calibration confidence
-        tier = "A" if sim_result.get("iterations", 0) >= self.n_iterations else "B"
+        # Determine confidence tier based on:
+        # 1. Simulation iterations
+        # 2. Model performance (hot/cold)
+        # 3. Edge magnitude
+        tier = self._determine_confidence_tier(sim_result, edge, league)
+
         ev_pct = expected_value_percent(calibrated_prob_home, spread_price)
         stake = recommend_stake(
             true_prob=calibrated_prob_home,
@@ -164,8 +298,68 @@ class AnalystEngine:
                 "predicted_home_score": sim_result.get("predicted_home_score"),
                 "predicted_away_score": sim_result.get("predicted_away_score"),
                 "iterations": sim_result.get("iterations", self.n_iterations),
+                "dynamic_edge_threshold": dynamic_threshold,
+                "model_performance": self._last_performance_check,
             },
         )
+
+    def _determine_confidence_tier(
+        self,
+        sim_result: Dict[str, Any],
+        edge: float,
+        league: str
+    ) -> str:
+        """
+        Determine confidence tier based on multiple factors.
+
+        Tier A: High confidence
+        - Sufficient iterations
+        - Model is HOT (low Brier score)
+        - Large edge
+
+        Tier B: Medium confidence
+        - Normal model performance
+        - Moderate edge
+
+        Tier C: Low confidence
+        - Model is COLD
+        - Small edge
+        - Insufficient data
+
+        Returns:
+            Confidence tier (A, B, or C)
+        """
+        iterations = sim_result.get("iterations", 0)
+
+        # Base tier from iterations
+        if iterations >= self.n_iterations:
+            base_tier = "A"
+        elif iterations >= self.n_iterations // 2:
+            base_tier = "B"
+        else:
+            base_tier = "C"
+
+        # Adjust based on model performance
+        try:
+            performance = self.calibrator.get_performance_summary(league=league)
+            brier_score = performance.get("brier_score", 0.22)
+
+            if brier_score > BRIER_SCORE_COLD_THRESHOLD:
+                # Model is cold - downgrade tier
+                if base_tier == "A":
+                    return "B"
+                elif base_tier == "B":
+                    return "C"
+                return "C"
+
+            elif brier_score < BRIER_SCORE_HOT_THRESHOLD and abs(edge) > 5:
+                # Model is hot AND large edge - keep/upgrade tier
+                return base_tier
+
+        except Exception:
+            pass
+
+        return base_tier
 
     def analyze_league(
         self,
