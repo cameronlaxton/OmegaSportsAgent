@@ -1,13 +1,19 @@
 """
 Database connection management with SQLAlchemy.
 Uses Replit's PostgreSQL database via DATABASE_URL environment variable.
+
+This module provides connection management and session handling.
+All models are defined in src.db.schema (the single source of truth).
 """
 
 import os
 from contextlib import contextmanager
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
+
+# Import Base from schema - the SINGLE SOURCE OF TRUTH for all models
+from src.db.schema import Base
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -25,8 +31,6 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
 
 
 @contextmanager
@@ -56,8 +60,9 @@ def check_connection():
 
 
 def create_all_tables():
-    """Create all tables defined in models."""
-    from src.db import models
+    """Create all tables defined in schema."""
+    # Import all models to ensure they're registered with Base
+    from src.db import schema  # noqa: F401 - import for side effects
     Base.metadata.create_all(bind=engine)
     print("All tables created successfully")
 

@@ -54,7 +54,13 @@ from src.data.stats_ingestion import (
     get_player_context,
     get_game_context,
     clear_cache as clear_stats_cache,
-    clear_all_cache as clear_all_stats_cache
+    clear_all_cache as clear_all_stats_cache,
+    # Async functions (aiohttp-based)
+    async_get_team_context,
+    async_get_player_context,
+    fetch_slate_context,
+    fetch_slate_context_sync,
+    AIOHTTP_AVAILABLE,
 )
 
 from src.data.player_game_log import (
@@ -69,21 +75,25 @@ from src.data.data_recovery import (
 )
 
 __all__ = [
+    # Odds scraper
     "get_upcoming_games",
     "get_current_odds",
     "get_player_props",
     "get_available_sports",
     "check_odds_api_status",
+    # Stats scraper
     "get_player_stats",
     "get_team_stats",
     "get_season_averages",
     "search_players",
+    # Schedule API
     "get_todays_games",
     "get_game_details",
     "get_upcoming_schedule",
     "get_standings",
     "get_team_schedule",
     "check_espn_api_status",
+    # Free sources
     "DataCategory",
     "DataSource",
     "FREE_DATA_SOURCES",
@@ -93,6 +103,7 @@ __all__ = [
     "create_client",
     "get_supported_leagues",
     "get_league_sources",
+    # Stats ingestion (sync)
     "TeamContext",
     "PlayerContext",
     "get_team_context",
@@ -100,9 +111,17 @@ __all__ = [
     "get_game_context",
     "clear_stats_cache",
     "clear_all_stats_cache",
+    # Stats ingestion (async)
+    "async_get_team_context",
+    "async_get_player_context",
+    "fetch_slate_context",
+    "fetch_slate_context_sync",
+    "AIOHTTP_AVAILABLE",
+    # Player game log
     "get_player_game_log",
     "get_cached_player_game_log",
     "get_espn_player_id",
+    # Data recovery
     "DataRecoveryService",
-    "get_recovery_service"
+    "get_recovery_service",
 ]

@@ -3,9 +3,13 @@ Stats Ingestion Service
 
 Provides structured context dataclasses and functions for ingesting
 player and team statistics for use in projections and simulations.
+
+Supports both synchronous (requests) and asynchronous (aiohttp) operations
+for maximum flexibility and performance.
 """
 
 from __future__ import annotations
+import asyncio
 import json
 import logging
 import os
@@ -13,10 +17,18 @@ import re
 import time
 from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from urllib.parse import quote
 
 import requests
+
+# Async HTTP support
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
+    aiohttp = None  # type: ignore
 
 from src.foundation.api_config import get_balldontlie_key, get_balldontlie_url
 from src.data import stats_scraper
@@ -1652,8 +1664,473 @@ def clear_cache(older_than_days: int = 1) -> int:
 def clear_all_cache() -> int:
     """
     Clear all stats ingestion cache files.
-    
+
     Returns:
         Number of files removed
     """
     return clear_cache(older_than_days=0)
+
+
+# =============================================================================
+# ASYNC DATA INGESTION (aiohttp-based for concurrent fetching)
+# =============================================================================
+
+async def _async_fetch_json(
+    session: "aiohttp.ClientSession",
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    timeout: int = REQUEST_TIMEOUT
+) -> Optional[Dict[str, Any]]:
+    """
+    Async helper to fetch JSON from a URL.
+
+    Args:
+        session: aiohttp ClientSession
+        url: URL to fetch
+        headers: Optional request headers
+        params: Optional query parameters
+        timeout: Request timeout in seconds
+
+    Returns:
+        Parsed JSON dict or None if failed
+    """
+    if not AIOHTTP_AVAILABLE:
+        logger.error("aiohttp not available for async operations")
+        return None
+
+    try:
+        async with session.get(
+            url,
+            headers=headers or HEADERS,
+            params=params,
+            timeout=aiohttp.ClientTimeout(total=timeout)
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+            else:
+                logger.warning(f"Async fetch failed: {url} returned {response.status}")
+                return None
+    except asyncio.TimeoutError:
+        logger.warning(f"Async fetch timeout: {url}")
+        return None
+    except Exception as e:
+        logger.error(f"Async fetch error for {url}: {e}")
+        return None
+
+
+async def _async_get_espn_team_stats(
+    session: "aiohttp.ClientSession",
+    team_name: str,
+    league: str
+) -> Optional[Dict[str, Any]]:
+    """Async version of _get_espn_team_stats_direct."""
+    league_path = LEAGUE_PATHS.get(league.upper(), "basketball/nba")
+    url = f"{ESPN_API_BASE}/{league_path}/teams"
+
+    data = await _async_fetch_json(session, url)
+    if not data:
+        return None
+
+    teams = data.get("sports", [{}])[0].get("leagues", [{}])[0].get("teams", [])
+    team_lower = team_name.lower()
+
+    for team_data in teams:
+        team_info = team_data.get("team", {})
+        display_name = team_info.get("displayName", "")
+        short_name = team_info.get("shortDisplayName", "")
+        abbreviation = team_info.get("abbreviation", "")
+
+        if (team_lower in display_name.lower() or
+            team_lower in short_name.lower() or
+            team_lower == abbreviation.lower()):
+
+            team_id = team_info.get("id")
+            if team_id:
+                # Fetch detailed stats
+                stats_url = f"{ESPN_API_BASE}/{league_path}/teams/{team_id}/statistics"
+                stats_data = await _async_fetch_json(session, stats_url)
+                stats = {}
+
+                if stats_data:
+                    for category in stats_data.get("splits", {}).get("categories", []):
+                        for stat in category.get("stats", []):
+                            stat_name = stat.get("name", "")
+                            stat_value = stat.get("value", 0)
+                            stats[stat_name] = stat_value
+
+                return {
+                    "name": display_name,
+                    "abbreviation": abbreviation,
+                    "id": team_id,
+                    "league": league.upper(),
+                    "source": "espn_async",
+                    "stats": stats
+                }
+
+    return None
+
+
+async def async_get_team_context(
+    team_name: str,
+    league: str,
+    session: Optional["aiohttp.ClientSession"] = None
+) -> Optional[TeamContext]:
+    """
+    Async version of get_team_context.
+
+    Fetches team context using non-blocking HTTP calls.
+    Falls back to synchronous methods if async fails.
+
+    Args:
+        team_name: Team name or abbreviation
+        league: League code (NBA, NFL, etc.)
+        session: Optional aiohttp ClientSession (creates one if not provided)
+
+    Returns:
+        TeamContext with team statistics or None
+    """
+    if not AIOHTTP_AVAILABLE:
+        logger.warning("aiohttp not available, falling back to sync get_team_context")
+        return get_team_context(team_name, league)
+
+    league = league.upper()
+    cache_path = _get_cache_path("team_stats", f"{team_name}_{league}")
+
+    # Check cache first
+    cached = _load_cache(cache_path)
+    if cached and not cached.get("is_stale"):
+        logger.debug(f"Loaded team context from cache: {team_name}")
+        return TeamContext.from_dict(cached)
+
+    context = None
+    source = None
+
+    # Create session if not provided
+    own_session = session is None
+    if own_session:
+        session = aiohttp.ClientSession()
+
+    try:
+        # Try ESPN async
+        team_stats = await _async_get_espn_team_stats(session, team_name, league)
+        if team_stats:
+            context = _build_team_context_from_espn(team_name, league, team_stats)
+            if context:
+                source = "espn_async"
+
+        # Fall back to sync methods if async fails
+        if context is None:
+            logger.debug(f"Async fetch failed for {team_name}, falling back to sync")
+            # Use sync fallback chain
+            return get_team_context(team_name, league)
+
+        # Cache the result
+        if context:
+            cache_data = context.to_dict()
+            cache_data["source"] = source
+            cache_data["fetched_at"] = datetime.now().isoformat()
+            cache_data["is_stale"] = False
+            _save_cache(cache_path, cache_data)
+
+            last_known_good.save_team_data(team_name, league, context.to_dict(), source)
+            logger.info(f"Async team context for {team_name}: source={source}")
+
+        return context
+
+    finally:
+        if own_session and session:
+            await session.close()
+
+
+async def _async_get_balldontlie_player_stats(
+    session: "aiohttp.ClientSession",
+    player_name: str,
+    league: str
+) -> Optional[Dict[str, Any]]:
+    """Async version of get_player_stats_from_balldontlie."""
+    if not BALLDONTLIE_API_KEY:
+        return None
+
+    league = league.upper()
+    api_url = get_balldontlie_url(league)
+    headers = {"Authorization": f"Bearer {BALLDONTLIE_API_KEY}"}
+
+    # Search for player
+    search_url = f"{api_url}/players"
+    params = {"search": player_name}
+
+    data = await _async_fetch_json(session, search_url, headers=headers, params=params)
+    if not data:
+        return None
+
+    players = data.get("data", [])
+    if not players:
+        return None
+
+    player = players[0]
+    player_id = player.get("id")
+    if not player_id:
+        return None
+
+    # Fetch season averages
+    stats_url = f"{api_url}/season_averages"
+    current_season = 2024
+    stats_params = {"season": current_season, "player_ids[]": player_id}
+
+    stats_data = await _async_fetch_json(session, stats_url, headers=headers, params=stats_params)
+    if not stats_data:
+        return None
+
+    averages = stats_data.get("data", [])
+    if not averages:
+        return None
+
+    season_avg = averages[0]
+
+    if league in ["NBA", "NCAAB"]:
+        pts_mean = season_avg.get("pts", 0.0)
+        if pts_mean <= 0:
+            return None
+
+        return {
+            "pts_mean": float(pts_mean),
+            "reb_mean": float(season_avg.get("reb", 0.0)),
+            "ast_mean": float(season_avg.get("ast", 0.0)),
+            "team": player.get("team", {}).get("full_name", ""),
+            "position": player.get("position", ""),
+            "source": f"balldontlie_{league.lower()}_async"
+        }
+
+    return None
+
+
+async def async_get_player_context(
+    player_name: str,
+    league: str,
+    session: Optional["aiohttp.ClientSession"] = None
+) -> Optional[PlayerContext]:
+    """
+    Async version of get_player_context.
+
+    Fetches player context using non-blocking HTTP calls.
+    Falls back to synchronous methods if async fails.
+
+    Args:
+        player_name: Player's full name
+        league: League code (NBA, NFL, etc.)
+        session: Optional aiohttp ClientSession
+
+    Returns:
+        PlayerContext with player statistics or None
+    """
+    if not AIOHTTP_AVAILABLE:
+        logger.warning("aiohttp not available, falling back to sync get_player_context")
+        return get_player_context(player_name, league)
+
+    league = league.upper()
+    cache_path = _get_cache_path("player_stats", f"{player_name}_{league}")
+
+    # Check cache first
+    cached = _load_cache(cache_path)
+    if cached and not cached.get("is_stale"):
+        logger.debug(f"Loaded player context from cache: {player_name}")
+        return PlayerContext.from_dict(cached)
+
+    context = None
+    source = None
+
+    # Create session if not provided
+    own_session = session is None
+    if own_session:
+        session = aiohttp.ClientSession()
+
+    try:
+        # Try Ball Don't Lie async for NBA/NCAAB
+        if league in ["NBA", "NCAAB"]:
+            bdl_data = await _async_get_balldontlie_player_stats(session, player_name, league)
+
+            if bdl_data and bdl_data.get("pts_mean"):
+                pts_mean = bdl_data["pts_mean"]
+                reb_mean = bdl_data.get("reb_mean", 0.0) or 0.0
+                ast_mean = bdl_data.get("ast_mean", 0.0) or 0.0
+
+                usage_rate = min(0.35, pts_mean / 50.0) if pts_mean > 0 else 0.15
+
+                context = PlayerContext(
+                    name=player_name,
+                    team=bdl_data.get("team", ""),
+                    position=bdl_data.get("position", ""),
+                    usage_rate=usage_rate,
+                    pts_mean=pts_mean,
+                    pts_std=pts_mean * 0.25,
+                    reb_mean=reb_mean,
+                    reb_std=reb_mean * 0.25 if reb_mean > 0 else 1.0,
+                    ast_mean=ast_mean,
+                    ast_std=ast_mean * 0.25 if ast_mean > 0 else 0.75
+                )
+                source = "balldontlie_async"
+
+        # Fall back to sync methods if async fails
+        if context is None:
+            logger.debug(f"Async fetch failed for {player_name}, falling back to sync")
+            return get_player_context(player_name, league)
+
+        # Cache the result
+        if context:
+            cache_data = context.to_dict()
+            cache_data["source"] = source
+            cache_data["fetched_at"] = datetime.now().isoformat()
+            cache_data["is_stale"] = False
+            _save_cache(cache_path, cache_data)
+
+            last_known_good.save_player_data(player_name, league, context.to_dict(), source)
+            logger.info(f"Async player context for {player_name}: source={source}")
+
+        return context
+
+    finally:
+        if own_session and session:
+            await session.close()
+
+
+async def fetch_slate_context(
+    matchups: List[Dict[str, Any]],
+    league: str = "NBA"
+) -> Dict[str, Any]:
+    """
+    Fetch context for all teams and key players in a slate of games concurrently.
+
+    This is the main async entry point that dramatically reduces data fetch time
+    by using asyncio.gather to parallelize all API calls.
+
+    Args:
+        matchups: List of matchup dicts with 'home_team' and 'away_team' keys
+                  Example: [{"home_team": "Lakers", "away_team": "Warriors"}, ...]
+        league: League code (NBA, NFL, etc.)
+
+    Returns:
+        Dict with:
+        - "team_contexts": {team_name: TeamContext, ...}
+        - "player_contexts": {player_name: PlayerContext, ...}
+        - "fetch_time_seconds": total fetch time
+        - "teams_fetched": number of teams
+        - "players_fetched": number of players
+        - "errors": list of any errors encountered
+
+    Example:
+        matchups = [
+            {"home_team": "Lakers", "away_team": "Warriors"},
+            {"home_team": "Celtics", "away_team": "Heat"}
+        ]
+        context = await fetch_slate_context(matchups, "NBA")
+    """
+    if not AIOHTTP_AVAILABLE:
+        logger.error("aiohttp not available. Install with: pip install aiohttp")
+        return {
+            "team_contexts": {},
+            "player_contexts": {},
+            "fetch_time_seconds": 0,
+            "teams_fetched": 0,
+            "players_fetched": 0,
+            "errors": ["aiohttp not available"]
+        }
+
+    start_time = time.time()
+    errors: List[str] = []
+
+    # Extract unique team names
+    teams_to_fetch = set()
+    for matchup in matchups:
+        home = matchup.get("home_team") or matchup.get("home")
+        away = matchup.get("away_team") or matchup.get("away")
+        if home:
+            teams_to_fetch.add(home)
+        if away:
+            teams_to_fetch.add(away)
+
+    logger.info(f"Fetching context for {len(teams_to_fetch)} teams across {len(matchups)} games")
+
+    team_contexts: Dict[str, TeamContext] = {}
+    player_contexts: Dict[str, PlayerContext] = {}
+
+    async with aiohttp.ClientSession() as session:
+        # Fetch all team contexts concurrently
+        team_tasks = [
+            async_get_team_context(team, league, session)
+            for team in teams_to_fetch
+        ]
+
+        team_results = await asyncio.gather(*team_tasks, return_exceptions=True)
+
+        for team, result in zip(teams_to_fetch, team_results):
+            if isinstance(result, Exception):
+                errors.append(f"Error fetching team {team}: {result}")
+                logger.error(f"Error fetching team context for {team}: {result}")
+            elif result:
+                team_contexts[team] = result
+            else:
+                errors.append(f"No data for team {team}")
+
+        # For NBA, fetch key player contexts (top players per team)
+        # This can be extended to fetch full rosters if needed
+        if league.upper() in ["NBA", "NCAAB"]:
+            # Get player lists for each team
+            player_fetch_tasks = []
+            player_names = []
+
+            for team in teams_to_fetch:
+                team_id = _get_team_id_from_name(team, league)
+                if team_id:
+                    roster = _get_espn_team_roster(team_id, league, limit=5)  # Top 5 players
+                    for player_info in roster:
+                        player_name = player_info.get("name")
+                        if player_name:
+                            player_names.append(player_name)
+                            player_fetch_tasks.append(
+                                async_get_player_context(player_name, league, session)
+                            )
+
+            if player_fetch_tasks:
+                player_results = await asyncio.gather(*player_fetch_tasks, return_exceptions=True)
+
+                for player_name, result in zip(player_names, player_results):
+                    if isinstance(result, Exception):
+                        errors.append(f"Error fetching player {player_name}: {result}")
+                    elif result:
+                        player_contexts[player_name] = result
+
+    fetch_time = time.time() - start_time
+
+    logger.info(
+        f"Slate context fetch complete: {len(team_contexts)} teams, "
+        f"{len(player_contexts)} players in {fetch_time:.2f}s"
+    )
+
+    return {
+        "team_contexts": {k: v.to_dict() for k, v in team_contexts.items()},
+        "player_contexts": {k: v.to_dict() for k, v in player_contexts.items()},
+        "fetch_time_seconds": round(fetch_time, 2),
+        "teams_fetched": len(team_contexts),
+        "players_fetched": len(player_contexts),
+        "errors": errors
+    }
+
+
+def fetch_slate_context_sync(
+    matchups: List[Dict[str, Any]],
+    league: str = "NBA"
+) -> Dict[str, Any]:
+    """
+    Synchronous wrapper for fetch_slate_context.
+
+    Use this when calling from non-async code.
+
+    Args:
+        matchups: List of matchup dicts
+        league: League code
+
+    Returns:
+        Same as fetch_slate_context
+    """
+    return asyncio.run(fetch_slate_context(matchups, league))
