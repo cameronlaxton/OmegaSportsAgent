@@ -1,8 +1,11 @@
 """
-Injury API Module
+Injury API Module  [DEPRECATED — only imported by cache_service.py, which is itself unused]
 
 Functions to check player availability status using ESPN injury API.
 Filters out injured/inactive players before suggesting bets or running simulations.
+
+Status: Lifecycle tied to cache_service.py. If cache_service is revived, this
+becomes active again. Otherwise safe to delete.
 """
 
 import time

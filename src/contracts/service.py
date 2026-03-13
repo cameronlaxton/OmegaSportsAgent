@@ -1,12 +1,18 @@
 """
 Stable service interface wrapping OmegaSportsAgent internals.
 
-These functions are the ONLY entry points that external code (FastAPI, agent,
-CLI) should use. They guarantee structured responses and never raise on
-bad data — they return status="skipped" or status="error" instead.
+This is one of two analysis paths in the system:
 
-Architecture: JSON-in/JSON-out only. No network calls to fetch games or context;
-caller must supply request.games, request.home_context, request.away_context.
+    1. src/contracts/service.py (this file) — JSON-in/JSON-out service layer.
+       Used by: FastAPI (server/app.py).
+       Caller supplies all context; no data fetching, no config loading.
+
+    2. src/analyst_engine.py — Provider-injected orchestration.
+       Used by: agent/, main.py --daily, any caller that fetches or injects data.
+       Supports data providers, config loading, edge filtering.
+
+Both share the same simulation engine (OmegaSimulationEngine) and calibration
+logic (probability_calibration). This is intentional, not duplication.
 """
 
 from __future__ import annotations

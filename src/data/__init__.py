@@ -1,14 +1,24 @@
 """
 OMEGA Data Layer
 
-Data scraping and API integration for sports betting data.
+Data scraping, API integration, and resilience for sports betting data.
 Uses FREE APIs and web scraping only.
 
 Modules:
-- odds_scraper: Get odds data from The Odds API and fallback sources
-- stats_scraper: Scrape player/team stats from Basketball/Football Reference
-- schedule_api: Get game schedules from ESPN API
+- providers: Protocol definitions and schemas for injected data sources
+- odds_scraper: Odds data from The Odds API and fallback sources
+- stats_scraper: Player/team stats from Basketball/Football Reference
+- stats_ingestion: Agent-only network layer (ESPN, Ball Don't Lie, Perplexity)
+- schedule_api: Game schedules from ESPN API
 - free_sources: Catalog of free data sources with unified interface
+- player_game_log: ESPN player game log retrieval
+- data_recovery: Fallback chain orchestrator (ESPN → BBRef → NBA.com → Perplexity → LKG)
+- last_known_good: File-based persistence for stale-but-real data fallback
+
+Deprecated (not imported at runtime):
+- cache_service: Postgres-backed TTL cache (may revive if Postgres becomes primary)
+- injury_api: ESPN injury data (lifecycle tied to cache_service)
+- nfl_stats: NFL-specific collectors (data flows through stats_ingestion instead)
 """
 
 from src.data.odds_scraper import (
@@ -68,22 +78,38 @@ from src.data.data_recovery import (
     get_recovery_service
 )
 
+from src.data.providers import (
+    TeamContextInput,
+    PlayerContextInput,
+    OddsQuote,
+    WeatherNewsSignal,
+    GamesProvider,
+    TeamContextProvider,
+    PlayerContextProvider,
+    OddsProvider,
+    WeatherNewsProvider,
+)
+
 __all__ = [
+    # Odds
     "get_upcoming_games",
     "get_current_odds",
     "get_player_props",
     "get_available_sports",
     "check_odds_api_status",
+    # Stats scraping
     "get_player_stats",
     "get_team_stats",
     "get_season_averages",
     "search_players",
+    # Schedule
     "get_todays_games",
     "get_game_details",
     "get_upcoming_schedule",
     "get_standings",
     "get_team_schedule",
     "check_espn_api_status",
+    # Free sources
     "DataCategory",
     "DataSource",
     "FREE_DATA_SOURCES",
@@ -93,6 +119,7 @@ __all__ = [
     "create_client",
     "get_supported_leagues",
     "get_league_sources",
+    # Stats ingestion (agent-only)
     "TeamContext",
     "PlayerContext",
     "get_team_context",
@@ -100,9 +127,21 @@ __all__ = [
     "get_game_context",
     "clear_stats_cache",
     "clear_all_stats_cache",
+    # Player game logs
     "get_player_game_log",
     "get_cached_player_game_log",
     "get_espn_player_id",
+    # Recovery
     "DataRecoveryService",
-    "get_recovery_service"
+    "get_recovery_service",
+    # Provider protocols and schemas
+    "TeamContextInput",
+    "PlayerContextInput",
+    "OddsQuote",
+    "WeatherNewsSignal",
+    "GamesProvider",
+    "TeamContextProvider",
+    "PlayerContextProvider",
+    "OddsProvider",
+    "WeatherNewsProvider",
 ]

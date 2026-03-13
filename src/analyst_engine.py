@@ -1,16 +1,34 @@
 """
 Analyst Engine: Search -> Simulate -> Calibrate -> Report.
 
-Architecture: Allowed to call injected providers (games, team/player context, odds).
-Must not perform network calls itself when used from service; use pre-populated
-games and context from the caller (e.g. agent). Default games_provider is schedule
-API (agent-only when live data is needed).
+This is one of two analysis paths in the system:
+
+    1. analyst_engine.py (this file) — Provider-injected orchestration.
+       Used by: agent/, main.py --daily, any caller that fetches or injects data.
+       Supports data providers, config loading, edge filtering.
+
+    2. src/contracts/service.py — JSON-in/JSON-out service layer.
+       Used by: FastAPI (server/app.py).
+       Caller supplies all context; no data fetching, no config loading.
+
+Both share the same simulation engine (OmegaSimulationEngine) and calibration
+logic (probability_calibration). This is intentional, not duplication.
+
+Public API:
+    find_daily_edges() — canonical programmatic entrypoint (multi-league, filtered, standardized output)
+    analyze_edges()    — lower-level multi-league wrapper (no filtering, no config loading)
+    AnalystEngine      — single-league engine (inject your own providers)
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+import logging
+import os
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from collections.abc import Callable
+
+import yaml
 
 from src.data.schedule_api import get_todays_games
 from src.simulation.simulation_engine import OmegaSimulationEngine
@@ -24,6 +42,40 @@ from src.data.providers import (
     OddsProvider,
     WeatherNewsProvider,
 )
+
+logger = logging.getLogger(__name__)
+
+_CONFIG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config")
+
+
+def _load_league_calibrations() -> Dict[str, Any]:
+    """Load league_calibrations.yaml; returns empty dict on failure."""
+    path = os.path.join(_CONFIG_DIR, "league_calibrations.yaml")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    except Exception:
+        logger.warning("Could not load league_calibrations.yaml; using defaults")
+        return {}
+
+
+@dataclass
+class EdgeFilter:
+    """Controls which edges are returned by find_daily_edges."""
+    min_edge_pct: Optional[float] = None        # override per-league threshold
+    max_edges_per_league: Optional[int] = None   # cap output volume
+    markets: Optional[List[str]] = None          # e.g. ["spread", "moneyline"]
+    min_confidence: Optional[str] = None         # "A", "B", or "C" — minimum tier
+    max_units: Optional[float] = None            # cap recommended stake
+
+    _TIER_ORDER = {"A": 0, "B": 1, "C": 2}
+
+    def passes(self, edge: Dict[str, Any]) -> bool:
+        if self.min_confidence:
+            edge_tier = edge.get("confidence_tier", "C")
+            if self._TIER_ORDER.get(edge_tier, 2) > self._TIER_ORDER.get(self.min_confidence, 2):
+                return False
+        return True
 
 
 @dataclass
@@ -291,3 +343,144 @@ def analyze_edges(
             league, calibration_map, games=league_games
         )
     return results
+
+
+def find_daily_edges(
+    leagues: Optional[List[str]] = None,
+    bankroll: float = 1000.0,
+    n_iterations: int = 1000,
+    calibration_method: str = "combined",
+    edge_filter: Optional[EdgeFilter] = None,
+    games_by_league: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+    games_provider: Optional[GamesProvider] = None,
+    team_context_provider: Optional[TeamContextProvider] = None,
+    player_context_provider: Optional[PlayerContextProvider] = None,
+    odds_provider: Optional[OddsProvider] = None,
+    weather_news_provider: Optional[WeatherNewsProvider] = None,
+) -> Dict[str, Any]:
+    """
+    Canonical programmatic entrypoint: find today's betting edges across leagues.
+
+    Loads per-league config from league_calibrations.yaml for edge thresholds,
+    shrinkage factors, and market restrictions. Applies EdgeFilter for output
+    control (caps, confidence tiers, market filters).
+
+    Returns a standardized dict:
+        {
+            "generated_at": "...",
+            "leagues": {
+                "NBA": {
+                    "edges": [...],
+                    "config_used": {...},
+                },
+                ...
+            },
+            "summary": {
+                "total_edges": N,
+                "leagues_scanned": N,
+            },
+        }
+
+    Each edge dict includes:
+        matchup, selection, true_prob, calibrated_prob, market_implied,
+        edge_pct, ev_pct, recommended_units, confidence_tier,
+        predicted_spread, predicted_total, factors (list of strings).
+    """
+    league_configs = _load_league_calibrations()
+    filt = edge_filter or EdgeFilter()
+
+    # Default to leagues that have config entries
+    if leagues is None:
+        leagues = list(league_configs.keys()) if league_configs else ["NBA", "NFL"]
+
+    output: Dict[str, Any] = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "leagues": {},
+        "summary": {"total_edges": 0, "leagues_scanned": 0},
+    }
+
+    for league in leagues:
+        lc = league_configs.get(league.upper(), {})
+        league_upper = league.upper()
+
+        # Per-league edge threshold: filter override > config edge_threshold > global default
+        if filt.min_edge_pct is not None:
+            edge_threshold = filt.min_edge_pct
+        else:
+            edge_threshold = lc.get("edge_threshold", 0.03)
+
+        shrink_factor = lc.get("shrinkage_factor", 0.7)
+        calibration_factors = lc.get("calibration_factors") or None
+        # Convert calibration_factors dict keys to float if present
+        cal_map = None
+        if calibration_factors and isinstance(calibration_factors, dict) and calibration_factors:
+            try:
+                cal_map = {float(k): float(v) for k, v in calibration_factors.items()}
+            except (ValueError, TypeError):
+                cal_map = None
+
+        engine = AnalystEngine(
+            bankroll=bankroll,
+            edge_threshold=edge_threshold,
+            n_iterations=n_iterations,
+            calibration_method=calibration_method,
+            shrink_factor=shrink_factor,
+            games_provider=games_provider,
+            team_context_provider=team_context_provider,
+            player_context_provider=player_context_provider,
+            odds_provider=odds_provider,
+            weather_news_provider=weather_news_provider,
+        )
+
+        league_games = games_by_league.get(league_upper) if games_by_league else None
+        raw_edges = engine.analyze_league(league, cal_map, games=league_games)
+
+        # Apply filters
+        filtered = []
+        for edge in raw_edges:
+            if not filt.passes(edge):
+                continue
+            if filt.max_units is not None and edge.get("recommended_units", 0) > filt.max_units:
+                edge["recommended_units"] = filt.max_units
+            # Add factors summary
+            edge["factors"] = _build_factors(edge)
+            filtered.append(edge)
+
+        if filt.max_edges_per_league is not None:
+            filtered = filtered[: filt.max_edges_per_league]
+
+        output["leagues"][league_upper] = {
+            "edges": filtered,
+            "config_used": {
+                "edge_threshold": edge_threshold,
+                "shrinkage_factor": shrink_factor,
+                "calibration_method": calibration_method,
+                "n_iterations": n_iterations,
+            },
+        }
+        output["summary"]["total_edges"] += len(filtered)
+        output["summary"]["leagues_scanned"] += 1
+
+    return output
+
+
+def _build_factors(edge: Dict[str, Any]) -> List[str]:
+    """Build concise human-readable factors list for an edge."""
+    factors = []
+    ep = edge.get("edge_pct", 0)
+    if abs(ep) >= 8:
+        factors.append(f"large edge ({ep:+.1f}%)")
+    elif abs(ep) >= 5:
+        factors.append(f"moderate edge ({ep:+.1f}%)")
+    else:
+        factors.append(f"small edge ({ep:+.1f}%)")
+
+    ev = edge.get("ev_pct", 0)
+    if ev > 0:
+        factors.append(f"+EV ({ev:.1f}%)")
+
+    spread = edge.get("predicted_spread")
+    if spread is not None:
+        factors.append(f"predicted spread {spread:+.1f}")
+
+    return factors

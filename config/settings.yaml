@@ -6,8 +6,11 @@ agent:
   scrape_schedule:
     cron: "0 9 * * *"
   leagues:
-    enabled: [NFL, NBA, NCAAB, MLB, CFL, NHL, PingPong, eSports]
-    scrape_order: [NFL, NBA, NCAAB, MLB, CFL, NHL, PingPong, eSports]
+    # Full pipeline (data collector + simulation): NFL, NBA
+    # Simulation + generic ESPN data: NCAAB, NCAAF
+    # Simulation only (no data collector): MLB, NHL, CFL, PingPong, eSports
+    enabled: [NFL, NBA, NCAAB, NCAAF, MLB, NHL]
+    scrape_order: [NFL, NBA, NCAAB, NCAAF, MLB, NHL]
   bookmakers:
     enabled: [DraftKings, FanDuel, Caesars, BetMGM]
     retry_limit: 3
@@ -23,4 +26,3 @@ logging:
   validation_mode: "LAX"  # Options: STRICT (fail), LAX (log only)
   output_dir: "data/production_logs"
   schema_validator_path: "config/schema_map.json"
-

@@ -30,11 +30,14 @@ class TestModuleImports:
         from src.data.schedule_api import get_todays_games
         from src.data.stats_scraper import get_team_stats
         from src.data.odds_scraper import get_upcoming_games
-        from src.data.injury_api import get_injured_players
+        from src.data.providers import GamesProvider, TeamContextProvider
 
     def test_simulation_modules(self):
         from src.simulation.simulation_engine import OmegaSimulationEngine
         from src.simulation.correlated_simulation import simulate_correlated_markets
+
+    def test_analyst_engine_modules(self):
+        from src.analyst_engine import find_daily_edges, EdgeFilter, AnalystEngine, analyze_edges
 
     def test_betting_modules(self):
         from src.betting.odds_eval import edge_percentage, implied_probability

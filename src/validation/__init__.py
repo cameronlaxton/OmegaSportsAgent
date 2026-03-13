@@ -8,12 +8,15 @@ Architecture:
     1. CAPTURE: When run_game_simulation runs, serialize full probability distribution
     2. RESOLVE: Asynchronously fetch final scores/stats
     3. CALIBRATE: Calculate ECE and Brier Scores
-    4. TUNE: Update config/league_calibrations.yaml to correct bias
+    4. TUNE: Update parameters and config to correct bias
 
 Components:
     - PredictionAudit: JSONB-heavy SQLAlchemy model for any market type
     - CalibrationEngine: ECE, Brier Score, reliability curves
-    - CalibrationTuner: Automatic config updates based on performance
+    - ParameterTuner: Runtime simulation parameter adjustment (used by AutoCalibrator)
+    - CalibrationTuner: Config write-back — reads CalibrationEngine results and updates
+      config/league_calibrations.yaml with corrected shrinkage/threshold values
+    - AutoCalibrator: Coordinates PerformanceTracker + ParameterTuner in the runtime loop
 
 Example Usage:
     from src.validation import (
@@ -31,7 +34,7 @@ Example Usage:
     engine.add_predictions_batch(historical_records)
     result = engine.compute_calibration()
 
-    # Auto-tune configuration
+    # Write back config corrections (CalibrationTuner)
     tuner = CalibrationTuner()
     tuner.add_league_calibration("NBA", result)
     recommendations = tuner.generate_recommendations()
@@ -81,7 +84,7 @@ __all__ = [
     "compute_single_brier",
     "compute_percentile_rank",
     "grade_prediction",
-    # Legacy/auto-calibration helpers
+    # Runtime auto-calibration (AutoCalibrator uses ParameterTuner)
     "AutoCalibrator",
     "CalibrationConfig",
     "get_global_calibrator",
@@ -90,7 +93,7 @@ __all__ = [
     "PredictionRecord",
     "ParameterTuner",
     "TuningStrategy",
-    # Tuner
+    # Config write-back (CalibrationTuner writes to league_calibrations.yaml)
     "CalibrationTuner",
     "TuningRecommendation",
     "TuningResult",

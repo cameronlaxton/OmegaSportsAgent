@@ -1,11 +1,12 @@
 """
-Calibration Tuner
+Calibration Tuner (Config Write-Back Layer)
 
-Implements the feedback mechanism of the Predict-Grade-Tune loop.
-Reads calibration results and updates config/league_calibrations.yaml
-to correct systematic biases in the model.
+Reads CalibrationEngine results and updates config/league_calibrations.yaml
+to correct systematic biases (shrinkage factors, thresholds, calibration factors).
 
-This allows the engine to "learn" from its past mistakes automatically.
+This is the config persistence layer of the Predict-Grade-Tune loop.
+For runtime parameter tuning (simulation params), see parameter_tuner.py.
+For the orchestration loop, see auto_calibrator.py.
 """
 
 from __future__ import annotations

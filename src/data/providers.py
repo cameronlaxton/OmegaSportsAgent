@@ -126,3 +126,24 @@ class WeatherNewsProvider(Protocol):
     def __call__(self, game: Dict[str, Any], league: str) -> Optional[WeatherNewsSignal]:
         ...
 
+
+# ---- Web/scrape provider stubs ----
+# Intentionally lightweight so LLM agents can plug in their own search/scrape
+# pipelines (e.g., ESPN, Rotowire, odds sites) and normalize results for the
+# AnalystEngine. Replace these with real implementations in the agent layer.
+
+
+def fetch_team_context_web(team: str, league: str) -> Optional[TeamContextInput]:
+    """Stub: web-derived team context (pace, off/def ratings, injury impacts)."""
+    return None
+
+
+def fetch_odds_web(game: Dict[str, Any], league: str) -> Optional[Dict[str, Any]]:
+    """Stub: web-derived odds (moneyline, spread, over_under, book, updated_at)."""
+    return None
+
+
+def fetch_weather_news_web(game: Dict[str, Any], league: str) -> Optional[WeatherNewsSignal]:
+    """Stub: web-derived weather/news signals (stadium weather, beat writers, injuries)."""
+    return None
+

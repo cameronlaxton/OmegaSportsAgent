@@ -237,6 +237,42 @@ def run_example_simulation(
     return analysis
 
 
+def _print_daily_report(result: dict) -> None:
+    """Print a human-readable daily edges report."""
+    print(f"\n{'='*60}")
+    print("OmegaSportsAgent - Daily Edge Scan")
+    print(f"{'='*60}")
+    print(f"Generated: {result.get('generated_at', 'N/A')}")
+    summary = result.get("summary", {})
+    print(f"Leagues scanned: {summary.get('leagues_scanned', 0)}")
+    print(f"Total edges found: {summary.get('total_edges', 0)}")
+
+    for league, data in result.get("leagues", {}).items():
+        edges = data.get("edges", [])
+        print(f"\n{'-'*60}")
+        print(f"{league} ({len(edges)} edge{'s' if len(edges) != 1 else ''})")
+        print(f"{'-'*60}")
+
+        if not edges:
+            print("  No actionable edges found.")
+            continue
+
+        for edge in edges:
+            print(f"\n  {edge.get('matchup', '?')}")
+            print(f"    Selection:  {edge.get('selection', '?')}")
+            print(f"    Edge:       {edge.get('edge_pct', 0):+.1f}%")
+            print(f"    EV:         {edge.get('ev_pct', 0):+.1f}%")
+            print(f"    Confidence: {edge.get('confidence_tier', '?')}")
+            print(f"    Units:      {edge.get('recommended_units', 0):.2f}")
+            factors = edge.get("factors", [])
+            if factors:
+                print(f"    Factors:    {', '.join(factors)}")
+
+    print(f"\n{'='*60}")
+    print("NOTE: This is decision support data. Human makes final decision.")
+    print(f"{'='*60}\n")
+
+
 def main():
     """Main entry point demonstrating library usage."""
     parser = argparse.ArgumentParser(
@@ -250,9 +286,8 @@ Examples:
 
 This is a demonstration script. For programmatic usage:
 
-  from src.simulation.simulation_engine import OmegaSimulationEngine
-  engine = OmegaSimulationEngine()
-  result = engine.run_fast_game_simulation("Lakers", "Warriors", "NBA")
+  from src.analyst_engine import find_daily_edges
+  result = find_daily_edges(leagues=["NBA", "NFL"])
 """
     )
 
@@ -264,8 +299,27 @@ This is a demonstration script. For programmatic usage:
                         help="League: NBA, NFL (full support), NCAAB, NCAAF (beta), MLB, NHL (sim-only, no data collector)")
     parser.add_argument("--json", action="store_true",
                         help="Output raw JSON instead of formatted report")
+    parser.add_argument("--daily", action="store_true",
+                        help="Run find_daily_edges() across configured leagues")
+    parser.add_argument("--leagues", nargs="+", default=None,
+                        help="Leagues to scan with --daily (default: all configured)")
+    parser.add_argument("--max-edges", type=int, default=None,
+                        help="Max edges per league with --daily")
 
     args = parser.parse_args()
+
+    if args.daily:
+        from src.analyst_engine import find_daily_edges, EdgeFilter
+
+        edge_filter = EdgeFilter(max_edges_per_league=args.max_edges)
+        leagues = [l.upper() for l in args.leagues] if args.leagues else None
+        result = find_daily_edges(leagues=leagues, edge_filter=edge_filter)
+
+        if args.json:
+            print(json.dumps(result, indent=2, default=str))
+        else:
+            _print_daily_report(result)
+        return
 
     result = run_example_simulation(
         home_team=args.home,

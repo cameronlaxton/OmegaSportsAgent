@@ -1,8 +1,11 @@
 """
-NFL Stats Data Sources
+NFL Stats Data Sources  [DEPRECATED — not imported by any runtime module]
 
 Provides NFL team and player data from ESPN, Pro Football Reference, and Perplexity fallback.
 Architecture: Agent-only for network calls. Engine receives pre-fetched context from caller.
+
+Status: NFL data currently flows through stats_ingestion.py → ESPN path instead.
+This module may be useful for NFL-specific collection. Review before NFL season.
 """
 
 import json

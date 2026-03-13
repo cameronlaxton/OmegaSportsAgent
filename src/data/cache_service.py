@@ -1,8 +1,11 @@
 """
-Data Cache Service
+Data Cache Service  [DEPRECATED — not imported by any runtime module]
 
 Caches sports data in PostgreSQL for fast pipeline reads.
 Uses psycopg2 with connection pooling for efficient database access.
+
+Status: No module imports this file. Retained because it may become relevant
+if Postgres is promoted to primary persistence. Review before deleting.
 """
 
 import json
