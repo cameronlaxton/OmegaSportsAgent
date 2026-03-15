@@ -8,6 +8,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: BACKEND_URL
+        sync: false  # Set this in Render dashboard to your backend service URL
     buildFilter:
       paths:
         - frontend/**

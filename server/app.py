@@ -81,13 +81,16 @@ app = FastAPI(
 )
 
 # CORS — allow the Next.js frontend (dev and production)
+# Set CORS_ORIGINS env var to a comma-separated list for production origins.
+import os as _os
+
+_default_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+_extra = _os.environ.get("CORS_ORIGINS", "")
+_origins = _default_origins + [o.strip() for o in _extra.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://omegasportsagent-frontend:10000",
-    ],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
