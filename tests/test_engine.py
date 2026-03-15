@@ -46,7 +46,6 @@ class TestModuleImports:
     def test_utility_modules(self):
         from src.utilities.output_formatter import format_full_output
         from src.utilities.data_logging import log_bet_recommendation
-        from src.utilities.sandbox_persistence import OmegaCacheLogger
 
 
 class TestContractSchemas:

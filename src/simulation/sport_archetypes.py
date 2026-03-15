@@ -41,6 +41,10 @@ class SportArchetype:
     required_team_keys: Tuple[str, ...]
     optional_team_keys: Tuple[str, ...] = ()
 
+    # Critical subset of required keys: missing ANY one prevents formal edge output.
+    # Important keys (required minus critical) allow sim but cap confidence at C.
+    critical_team_keys: Tuple[str, ...] = ()
+
     # Required player/participant context keys
     required_player_keys: Tuple[str, ...] = ()
     optional_player_keys: Tuple[str, ...] = ()
@@ -78,6 +82,7 @@ BASKETBALL = SportArchetype(
     supports_draw=False,
     result_type="team_score",
     required_team_keys=("off_rating", "def_rating", "pace"),
+    critical_team_keys=("off_rating", "def_rating"),
     optional_team_keys=("fg_pct", "three_pt_pct", "ft_pct", "turnover_rate",
                         "off_reb_pct", "home_court_adj"),
     required_player_keys=("name",),
@@ -102,6 +107,7 @@ AMERICAN_FOOTBALL = SportArchetype(
     supports_draw=False,
     result_type="team_score",
     required_team_keys=("off_rating", "def_rating"),
+    critical_team_keys=("off_rating", "def_rating"),
     optional_team_keys=("pace", "pass_eff", "rush_eff", "turnover_diff",
                         "red_zone_pct", "third_down_pct"),
     required_player_keys=("name", "position"),
@@ -128,6 +134,7 @@ BASEBALL = SportArchetype(
     supports_draw=False,
     result_type="team_score",
     required_team_keys=("off_rating", "def_rating"),
+    critical_team_keys=("off_rating", "def_rating"),
     optional_team_keys=("pace", "batting_avg", "obp", "slg", "era",
                         "whip", "bullpen_era", "park_factor"),
     required_player_keys=("name", "role"),  # role: "pitcher" or "batter"
@@ -155,6 +162,7 @@ HOCKEY = SportArchetype(
     supports_draw=True,  # regulation can draw → OT decides
     result_type="team_score",
     required_team_keys=("off_rating", "def_rating"),
+    critical_team_keys=("off_rating", "def_rating"),
     optional_team_keys=("pace", "shots_per_game", "save_pct",
                         "pp_pct", "pk_pct", "xgf_per_60", "xga_per_60",
                         "goalie_sv_pct", "goalie_gsax"),
@@ -180,6 +188,7 @@ SOCCER = SportArchetype(
     supports_draw=True,
     result_type="team_score",
     required_team_keys=("off_rating", "def_rating"),
+    critical_team_keys=("off_rating", "def_rating"),
     optional_team_keys=("pace", "xg_for", "xg_against", "possession_pct",
                         "shots_per_game", "shots_on_target", "corners_per_game"),
     required_player_keys=("name",),
@@ -205,6 +214,7 @@ TENNIS = SportArchetype(
     supports_draw=False,
     result_type="individual_matchup",
     required_team_keys=("serve_win_pct", "return_win_pct"),
+    critical_team_keys=("serve_win_pct", "return_win_pct"),
     optional_team_keys=("ace_rate", "double_fault_rate", "first_serve_pct",
                         "break_point_conversion", "surface_adj",
                         "elo_rating", "fatigue_factor"),
@@ -231,6 +241,7 @@ GOLF = SportArchetype(
     supports_draw=False,
     result_type="field",
     required_team_keys=("strokes_gained_total",),
+    critical_team_keys=("strokes_gained_total",),
     optional_team_keys=("sg_off_tee", "sg_approach", "sg_around_green",
                         "sg_putting", "course_fit", "recent_form",
                         "elo_rating", "driving_distance", "gir_pct"),
@@ -257,6 +268,7 @@ FIGHTING = SportArchetype(
     supports_draw=True,  # draws possible in boxing, rare in MMA
     result_type="combat",
     required_team_keys=("win_pct", "finish_rate"),
+    critical_team_keys=("win_pct",),
     optional_team_keys=("ko_tko_rate", "submission_rate", "decision_rate",
                         "sig_strikes_per_min", "sig_strike_accuracy",
                         "takedown_avg", "takedown_defense",
@@ -287,6 +299,7 @@ ESPORTS = SportArchetype(
     supports_draw=False,
     result_type="individual_matchup",  # best-of-N maps
     required_team_keys=("map_win_rate", "recent_form"),
+    critical_team_keys=("map_win_rate",),
     optional_team_keys=("win_rate_by_map", "avg_round_diff",
                         "first_blood_rate", "side_win_rates",
                         "elo_rating", "roster_stability"),
@@ -440,6 +453,30 @@ def get_required_inputs(league: str) -> List[str]:
     if archetype is None:
         return []
     return list(archetype.required_team_keys)
+
+
+def get_critical_inputs(league: str) -> List[str]:
+    """Return the critical team context keys for a league.
+
+    Missing any critical input should prevent formal edge output.
+    """
+    archetype = get_archetype(league)
+    if archetype is None:
+        return []
+    return list(archetype.critical_team_keys)
+
+
+def get_important_inputs(league: str) -> List[str]:
+    """Return important (required but non-critical) team context keys.
+
+    These are required_team_keys minus critical_team_keys.
+    Missing these caps confidence at tier C but allows simulation.
+    """
+    archetype = get_archetype(league)
+    if archetype is None:
+        return []
+    critical = set(archetype.critical_team_keys)
+    return [k for k in archetype.required_team_keys if k not in critical]
 
 
 def get_supported_markets(league: str) -> List[str]:

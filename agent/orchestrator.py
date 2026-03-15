@@ -1,14 +1,14 @@
 """
-Agent Orchestrator — browsing-capable LLM that bridges natural language
-to the OmegaSportsAgent engine.
+Agent Orchestrator — execution lifecycle controller.
 
-Flow:
-    1. Parse natural-language prompt → identify league, teams, markets
-    2. Use LLM web search/fetch to gather odds + public stats
-    3. Normalize into engine schemas (GameAnalysisRequest)
-    4. Call the backend service (in-process or via HTTP)
-    5. Handle errors with structured retries / fallbacks
-    6. Return strict JSON (GameAnalysisResponse) for the frontend
+Orchestrates the full pipeline:
+    1. Intent Understanding → QueryUnderstanding
+    2. Answer Strategist → AnswerPlan
+    3. Requirement Planner → List[GatherSlot]
+    4. Fact Gatherer → List[GatheredFact]
+    5. Quality Gate → revised AnswerPlan
+    6. Execution Engine → ExecutionResult
+    7. Response Composer → structured response
 
 This module is the ONLY place that fetches live data. The engine and
 service layers are input-driven and never make network calls.
@@ -27,20 +27,32 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
+from agent.answer_strategist import build_answer_plan
+from agent.fact_gatherer import (
+    build_data_completeness,
+    compute_aggregate_quality,
+    critical_inputs_filled,
+    gather_facts,
+    important_inputs_filled,
+)
+from agent.intent_understanding import understand
+from agent.models import (
+    AnswerPlan,
+    ExecutionMode,
+    ExecutionResult,
+    GatheredFact,
+    OutputPackage,
+    QueryUnderstanding,
+)
+from agent.quality_gate import apply_quality_gate
+from agent.requirement_planner import build_gather_list
+from agent.response_composer import compose_response
 from src.contracts.schemas import (
-    ErrorResponse,
     GameAnalysisRequest,
-    GameAnalysisResponse,
     OddsInput,
     SlateAnalysisRequest,
-    SlateAnalysisResponse,
 )
 from src.contracts.service import analyze_game, analyze_slate
-from src.simulation.sport_archetypes import (
-    get_archetype,
-    get_required_inputs,
-    LEAGUE_TO_ARCHETYPE,
-)
 
 logger = logging.getLogger("omega.agent")
 
@@ -53,25 +65,19 @@ logger = logging.getLogger("omega.agent")
 class AgentConfig:
     """Runtime configuration for the agent orchestrator."""
 
-    # LLM provider settings (Claude, OpenAI, local, etc.)
-    llm_provider: str = "anthropic"  # "anthropic", "openai", "local"
+    llm_provider: str = "anthropic"
     llm_model: str = "claude-sonnet-4-20250514"
-    llm_api_key: str = ""  # Set from env
+    llm_api_key: str = ""
 
-    # Backend mode: "in_process" calls service.py directly (no HTTP);
-    # "http" calls the FastAPI server.
     backend_mode: str = "in_process"
     backend_url: str = "http://localhost:8000"
 
-    # Retry / error handling
     max_retries: int = 2
     retry_delay_sec: float = 1.0
 
-    # Cache
     cache_dir: str = ".omega_cache/agent"
-    cache_ttl_sec: int = 300  # 5 minutes for odds, 3600 for stats
+    cache_ttl_sec: int = 300
 
-    # Bankroll default
     default_bankroll: float = 1000.0
 
     def __post_init__(self) -> None:
@@ -136,7 +142,7 @@ class AgentCache:
 class AgentOrchestrator:
     """
     Stateful agent that takes natural-language betting questions,
-    gathers data via web search, and returns structured analysis.
+    gathers data via the provider registry, and returns structured analysis.
 
     Usage:
         agent = AgentOrchestrator()
@@ -154,262 +160,256 @@ class AgentOrchestrator:
 
     def handle_query(self, user_prompt: str) -> Dict[str, Any]:
         """
-        Main entry point. Takes a natural-language prompt and returns
-        a dict compatible with GameAnalysisResponse or SlateAnalysisResponse.
+        Main entry point. Executes the full lifecycle pipeline.
 
-        Returns error dict on failure (never raises).
+        Returns a structured response dict (never raises).
         """
         logger.info("Agent query: %s", user_prompt[:120])
+        start_time = time.time()
 
-        # Step 1: Parse intent
-        intent = self.parse_intent(user_prompt)
-        if intent.get("error"):
+        # Stage 1: Intent Understanding
+        try:
+            understanding = understand(user_prompt)
+        except Exception as exc:
+            logger.warning("Intent understanding failed: %s", exc)
             return self._error_response(AgentError(
                 code="PARSE_FAILED",
-                message=intent["error"],
+                message=str(exc),
                 fallback_hint="Rephrase with a specific matchup, e.g. 'Lakers vs Warriors NBA'",
             ))
 
-        query_type = intent.get("type", "game")
-        league = intent.get("league", "NBA")
+        # Stage 2: Answer Strategy
+        plan = build_answer_plan(understanding)
 
-        # Step 2: Gather data (odds + stats) — web search or cache
+        # Short-circuit: clarification needed
+        if plan.clarification_needed:
+            return {
+                "type": "clarification",
+                "question": plan.clarification_question,
+                "metadata": {"execution_mode": "none", "duration_ms": _elapsed_ms(start_time)},
+            }
+
+        # Stage 3: Requirement Planning
+        gather_slots = build_gather_list(understanding, plan)
+
+        # Stage 4: Fact Gathering
+        facts = gather_facts(gather_slots)
+
+        # Stage 5: Quality Gate — revise plan if data quality insufficient
+        revised_plan = apply_quality_gate(plan, facts)
+
+        # Stage 6: Execution
+        execution_result = self._execute(understanding, revised_plan, facts)
+
+        # Stage 7: Response Composition
+        response = compose_response(understanding, revised_plan, execution_result, facts)
+
+        elapsed = _elapsed_ms(start_time)
+        response.setdefault("metadata", {})["duration_ms"] = elapsed
+
+        # Stage 8: Audit trail (best-effort, never blocks response)
         try:
-            data = self.gather_data(intent)
-        except Exception as exc:
-            logger.warning("Data gathering failed: %s", exc)
-            return self._error_response(AgentError(
-                code="DATA_MISSING",
-                message=str(exc),
-                fallback_hint="Try providing odds manually or check team name spelling",
-                retryable=True,
-            ))
+            from src.storage import get_session
+            from src.storage.execution_store import record_execution
 
-        # Step 3: Build engine request and call backend
-        for attempt in range(1 + self.config.max_retries):
-            try:
-                if query_type == "slate":
-                    result = self._run_slate(intent, data)
-                else:
-                    result = self._run_game(intent, data)
+            session = get_session()
+            if session is not None:
+                record_execution(
+                    session, user_prompt, understanding, revised_plan,
+                    facts, execution_result, elapsed,
+                )
+                session.close()
+        except Exception:
+            logger.debug("Failed to record execution audit trail", exc_info=True)
 
-                # Check for missing_requirements → try to self-heal
-                missing = result.get("missing_requirements") or []
-                if missing and attempt < self.config.max_retries:
-                    logger.info("Missing requirements %s, re-fetching...", missing)
-                    data = self._fill_missing(data, missing, intent)
-                    continue
-
-                return result
-
-            except Exception as exc:
-                logger.warning("Attempt %d failed: %s", attempt + 1, exc)
-                if attempt < self.config.max_retries:
-                    time.sleep(self.config.retry_delay_sec)
-                    continue
-                return self._error_response(AgentError(
-                    code="SIM_FAILED",
-                    message=str(exc),
-                    fallback_hint="Engine simulation error — check input data",
-                ))
-
-        return self._error_response(AgentError(
-            code="MAX_RETRIES",
-            message="All retry attempts exhausted",
-        ))
+        return response
 
     # ------------------------------------------------------------------
-    # Intent parsing (rule-based; LLM-assisted in production)
+    # Legacy API — preserved for backward compatibility
     # ------------------------------------------------------------------
 
     def parse_intent(self, prompt: str) -> Dict[str, Any]:
-        """
-        Parse a natural-language prompt into structured intent.
+        """Legacy intent parser. Delegates to the new understand() function."""
+        understanding = understand(prompt)
+        # Convert to legacy format
+        home = None
+        away = None
+        for ent in understanding.entities:
+            if ent.role.value == "home":
+                home = ent.name
+            elif ent.role.value in ("away", "subject"):
+                away = away or ent.name
+        if not home and understanding.entities:
+            home = understanding.entities[0].name
+        if not away and len(understanding.entities) > 1:
+            away = understanding.entities[1].name
 
-        Returns dict with: type, league, home_team, away_team, etc.
-        In production this would call the LLM; here we use heuristics
-        with fallback to LLM when available.
-        """
-        prompt_lower = prompt.lower().strip()
-
-        # Detect league
-        league = self._detect_league(prompt_lower)
-
-        # Detect query type
-        query_type = "game"
-        if any(kw in prompt_lower for kw in ["slate", "all games", "today's games", "full card"]):
-            query_type = "slate"
-
-        # Extract team names (heuristic: "X vs Y" or "X at Y")
-        home, away = self._extract_teams(prompt)
-
-        if query_type == "game" and (not home or not away):
-            return {"error": "Could not identify two teams. Try: 'Lakers vs Warriors NBA'"}
+        query_type = "slate" if any(
+            s.value == "slate" for s in understanding.subjects
+        ) else "game"
 
         return {
             "type": query_type,
-            "league": league,
+            "league": understanding.league or "NBA",
             "home_team": home,
             "away_team": away,
             "raw_prompt": prompt,
         }
 
-    def _detect_league(self, text: str) -> str:
-        """Detect league from text. Returns uppercase league code."""
-        league_keywords = {
-            "NBA": ["nba", "basketball"],
-            "NFL": ["nfl", "football"],
-            "MLB": ["mlb", "baseball"],
-            "NHL": ["nhl", "hockey"],
-            "EPL": ["epl", "premier league", "soccer", "football club"],
-            "UFC": ["ufc", "mma", "fighting"],
-            "ATP": ["atp", "tennis"],
-            "PGA": ["pga", "golf"],
-            "CS2": ["cs2", "csgo", "counter-strike", "esports"],
-            "NCAAB": ["ncaab", "march madness", "college basketball"],
-            "NCAAF": ["ncaaf", "college football"],
-        }
-        for league, keywords in league_keywords.items():
-            for kw in keywords:
-                if kw in text:
-                    return league
-        return "NBA"  # default
-
-    def _extract_teams(self, prompt: str) -> tuple:
-        """Extract home/away teams from prompt. Returns (home, away) or (None, None)."""
-        import re
-
-        # Try "X vs Y", "X versus Y", "X at Y", "X @ Y"
-        patterns = [
-            r"(.+?)\s+(?:vs\.?|versus|v\.?)\s+(.+?)(?:\s+(?:nba|nfl|mlb|nhl|epl|ufc|atp|pga|cs2|ncaab|ncaaf)|\s*$)",
-            r"(.+?)\s+(?:at|@)\s+(.+?)(?:\s+(?:nba|nfl|mlb|nhl|epl|ufc|atp|pga|cs2|ncaab|ncaaf)|\s*$)",
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, prompt, re.IGNORECASE)
-            if match:
-                team_a = match.group(1).strip().strip('"\'')
-                team_b = match.group(2).strip().strip('"\'')
-                # "A vs B" → A=away, B=home (conventional); "A at B" → A=away, B=home
-                return team_b, team_a
-
-        return None, None
-
     # ------------------------------------------------------------------
-    # Data gathering (stub for web search — plug in LLM provider)
+    # Execution engine dispatcher
     # ------------------------------------------------------------------
 
-    def gather_data(self, intent: Dict[str, Any]) -> Dict[str, Any]:
+    def _execute(
+        self,
+        understanding: QueryUnderstanding,
+        plan: AnswerPlan,
+        facts: List[GatheredFact],
+    ) -> ExecutionResult:
+        """Execute the answer plan using the appropriate engine(s).
+
+        Routes to:
+        - Native simulation via service.py for NATIVE_SIM mode
+        - Research synthesis for RESEARCH mode
+        - Kelly/staking calculator for BANKROLL_CALC mode
+        - Narrative-only for NARRATIVE mode
         """
-        Gather odds and stats for the intent.
+        aggregate_quality = compute_aggregate_quality(facts)
+        completeness = build_data_completeness(facts)
 
-        In production, this calls:
-          - LLM with web_search tool to get current odds
-          - LLM with web_search tool to get team stats
-          - Normalizes everything into engine-compatible dicts
+        # Determine primary execution mode
+        primary_mode = plan.execution_modes[0] if plan.execution_modes else ExecutionMode.NARRATIVE
 
-        For now, returns a minimal structure that the engine can work with
-        using archetype defaults.
-        """
-        league = intent.get("league", "NBA")
-        home = intent.get("home_team", "")
-        away = intent.get("away_team", "")
+        if primary_mode in (ExecutionMode.NATIVE_SIM, ExecutionMode.MIXED):
+            return self._execute_simulation(understanding, plan, facts, aggregate_quality, completeness)
 
-        cache_key = f"data:{league}:{home}:{away}:{datetime.now().strftime('%Y-%m-%d')}"
-        cached = self.cache.get(cache_key, ttl_sec=self.config.cache_ttl_sec)
-        if cached:
-            logger.info("Cache hit for %s vs %s", away, home)
-            return cached
-
-        # Try to fetch via the data layer modules
-        data: Dict[str, Any] = {
-            "home_context": None,
-            "away_context": None,
-            "odds": None,
-        }
-
-        # Attempt to use free data sources
-        data["home_context"] = self._fetch_team_context(home, league)
-        data["away_context"] = self._fetch_team_context(away, league)
-        data["odds"] = self._fetch_odds(home, away, league)
-
-        self.cache.set(cache_key, data)
-        return data
-
-    def _fetch_team_context(self, team: str, league: str) -> Optional[Dict[str, Any]]:
-        """Fetch team context. Tries free sources, then falls back to LLM web search."""
-        # Try in-repo free sources first
-        try:
-            from src.data.free_sources import get_team_stats_free
-            stats = get_team_stats_free(team, league)
-            if stats:
-                return stats
-        except (ImportError, Exception) as exc:
-            logger.debug("free_sources unavailable: %s", exc)
-
-        # Fallback: LLM web search would go here
-        # For now, return None (engine will report missing_requirements)
-        return None
-
-    def _fetch_odds(self, home: str, away: str, league: str) -> Optional[Dict[str, Any]]:
-        """Fetch odds. Tries free sources, then falls back to LLM web search."""
-        try:
-            from src.data.free_sources import get_odds_free
-            odds = get_odds_free(home, away, league)
-            if odds:
-                return odds
-        except (ImportError, Exception) as exc:
-            logger.debug("free_sources odds unavailable: %s", exc)
-        return None
-
-    def _fill_missing(
-        self, data: Dict[str, Any], missing: List[str], intent: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Try to fill missing requirements by re-fetching specific fields."""
-        # In production, the LLM would be asked to specifically search for
-        # the missing keys (e.g. "home_context.off_rating for Lakers NBA").
-        # For now, just return data unchanged.
-        logger.info("Would re-fetch missing: %s", missing)
-        return data
-
-    # ------------------------------------------------------------------
-    # Backend calls
-    # ------------------------------------------------------------------
-
-    def _run_game(self, intent: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
-        """Build a GameAnalysisRequest and call the backend."""
-        odds_input = None
-        if data.get("odds"):
-            odds_input = OddsInput(**data["odds"])
-
-        request = GameAnalysisRequest(
-            home_team=intent["home_team"],
-            away_team=intent["away_team"],
-            league=intent["league"],
-            odds=odds_input,
-            home_context=data.get("home_context"),
-            away_context=data.get("away_context"),
+        # Research / Narrative / Bankroll — no simulation
+        return ExecutionResult(
+            mode=primary_mode,
+            simulation=None,
+            edges=[],
+            best_bet=None,
+            research_facts=facts,
+            data_quality_score=aggregate_quality,
+            data_completeness=completeness,
         )
 
-        if self.config.backend_mode == "in_process":
-            result = analyze_game(request, bankroll=self.config.default_bankroll)
-            return result.model_dump()
-        else:
-            return self._http_post("/analyze/game", request.model_dump())
+    def _execute_simulation(
+        self,
+        understanding: QueryUnderstanding,
+        plan: AnswerPlan,
+        facts: List[GatheredFact],
+        aggregate_quality: float,
+        completeness: Dict[str, str],
+    ) -> ExecutionResult:
+        """Run native simulation via the existing service layer."""
+        league = understanding.league or "NBA"
+        home_team = None
+        away_team = None
 
-    def _run_slate(self, intent: Dict[str, Any], data: Dict[str, Any]) -> Dict[str, Any]:
-        """Build a SlateAnalysisRequest and call the backend."""
-        request = SlateAnalysisRequest(
-            league=intent["league"],
-            bankroll=self.config.default_bankroll,
-            games=data.get("games", []),
-        )
+        for ent in understanding.entities:
+            if ent.role.value == "home":
+                home_team = ent.name
+            elif ent.role.value in ("away", "subject"):
+                if away_team is None:
+                    away_team = ent.name
 
-        if self.config.backend_mode == "in_process":
-            result = analyze_slate(request)
-            return result.model_dump()
-        else:
-            return self._http_post("/analyze/slate", request.model_dump())
+        # Fallback entity assignment
+        if not home_team and understanding.entities:
+            home_team = understanding.entities[0].name
+        if not away_team and len(understanding.entities) > 1:
+            away_team = understanding.entities[1].name
+
+        if not home_team or not away_team:
+            return ExecutionResult(
+                mode=ExecutionMode.RESEARCH,
+                research_facts=facts,
+                data_quality_score=aggregate_quality,
+                data_completeness=completeness,
+            )
+
+        # Build team contexts from gathered facts
+        home_context = self._build_team_context(facts, "home_team")
+        away_context = self._build_team_context(facts, "away_team")
+
+        # Build odds from gathered facts
+        odds_input = self._build_odds_input(facts)
+
+        try:
+            request = GameAnalysisRequest(
+                home_team=home_team,
+                away_team=away_team,
+                league=league,
+                odds=odds_input,
+                home_context=home_context or None,
+                away_context=away_context or None,
+            )
+
+            if self.config.backend_mode == "in_process":
+                result = analyze_game(request, bankroll=self.config.default_bankroll)
+                result_dict = result.model_dump()
+            else:
+                result_dict = self._http_post("/analyze/game", request.model_dump())
+
+            # Extract edges and best bet from service result
+            edges = []
+            best_bet = None
+            sim_data = result_dict.get("simulation")
+
+            if result_dict.get("best_bet"):
+                best_bet = result_dict["best_bet"]
+
+            if result_dict.get("edges"):
+                edges = result_dict["edges"]
+
+            return ExecutionResult(
+                mode=ExecutionMode.NATIVE_SIM,
+                simulation=sim_data,
+                edges=edges,
+                best_bet=best_bet,
+                research_facts=facts,
+                data_quality_score=aggregate_quality,
+                data_completeness=completeness,
+            )
+
+        except Exception as exc:
+            logger.warning("Simulation failed, falling back to research: %s", exc)
+            return ExecutionResult(
+                mode=ExecutionMode.RESEARCH,
+                research_facts=facts,
+                data_quality_score=aggregate_quality,
+                data_completeness=completeness,
+            )
+
+    def _build_team_context(
+        self, facts: List[GatheredFact], prefix: str
+    ) -> Optional[Dict[str, Any]]:
+        """Assemble a team context dict from gathered facts matching a prefix."""
+        context: Dict[str, Any] = {}
+        for fact in facts:
+            if fact.filled and fact.result and fact.slot.key.startswith(f"{prefix}."):
+                stat_key = fact.slot.key.split(".", 1)[1]
+                context[stat_key] = fact.result.data.get(stat_key)
+                # Also merge any extra data from the provider
+                for k, v in fact.result.data.items():
+                    if k not in context:
+                        context[k] = v
+        return context if context else None
+
+    def _build_odds_input(self, facts: List[GatheredFact]) -> Optional[OddsInput]:
+        """Build an OddsInput from gathered odds facts."""
+        for fact in facts:
+            if fact.filled and fact.result and fact.slot.data_type == "odds":
+                data = fact.result.data
+                try:
+                    return OddsInput(**data)
+                except Exception:
+                    logger.debug("Could not build OddsInput from %s", data)
+        return None
+
+    # ------------------------------------------------------------------
+    # HTTP backend
+    # ------------------------------------------------------------------
 
     def _http_post(self, path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         """POST to the FastAPI backend."""
@@ -434,3 +434,11 @@ class AgentOrchestrator:
             "fallback_hint": err.fallback_hint,
             "retryable": err.retryable,
         }
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _elapsed_ms(start: float) -> int:
+    return int((time.time() - start) * 1000)

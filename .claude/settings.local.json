@@ -49,7 +49,30 @@
       "Bash(rm -rf .omega_cache)",
       "Bash(rm -f outputs/recommendations/recs_2026-01-05.json)",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''main.py OK: {d[\"\"matchup\"\"]}''''\\)\")",
-      "Bash(PYTHONPATH=. python -m pytest tests/ -v)"
+      "Bash(PYTHONPATH=. python -m pytest tests/ -v)",
+      "Bash(for dir:*)",
+      "Bash(do test:*)",
+      "Bash(echo \"$dir EXISTS\")",
+      "Bash(echo \"$dir MISSING\")",
+      "Bash(done)",
+      "Bash(PYTHONPATH=. python -m pytest tests/ -v --tb=short)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"DATABASE_URL\\\\|postgres\\\\|redis\\\\|db\\\\|perplexity\\\\|anthropic\" /c/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main --include=*.py --include=*.md --include=*.txt --include=*.json)",
+      "Bash(python -m py_compile src/simulation/simulation_engine.py)",
+      "Bash(python -m pytest tests/ --co -q)",
+      "Bash(python -m pytest tests/test_engine.py -v)",
+      "Bash(python -m pytest tests/test_find_daily_edges.py -v)",
+      "Bash(ls -1 /c/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main/src/data/*.py)",
+      "Bash(wc -l /c/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main/src/data/*.py /c/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main/src/utilities/*.py /c/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main/src/foundation/*.py)",
+      "Bash(ls -d C:/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main/agent/ C:/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main/src/*/)",
+      "Bash(PYTHONPATH=. python -c \":*)",
+      "Bash(wc -l /c/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main/src/data/*.py)",
+      "Bash(find /c/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main/src/providers -type f -name *.py)",
+      "Bash(find /c/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main -name alembic.ini -o -name *.ini)",
+      "Bash(rm -rf src/providers/__pycache__)",
+      "Bash(rmdir src/providers)",
+      "Bash(PYTHONPATH=. python -m pytest src/data/tests/ -v)",
+      "Bash(PYTHONPATH=. python -m pytest src/data/tests/test_fusion.py::TestFactFuser::test_disagreeing_sources_prefer_higher_tier -v)"
     ]
   }
 }

@@ -317,6 +317,158 @@ def create_client() -> UnifiedDataClient:
 SUPPORTED_LEAGUES = ["NBA", "NFL", "MLB", "NHL", "NCAAB", "NCAAF", "WNBA", "MLS"]
 
 
+# ---------------------------------------------------------------------------
+# Convenience functions used by the Agent orchestrator
+# ---------------------------------------------------------------------------
+
+import logging as _logging
+
+_logger = _logging.getLogger("omega.free_sources")
+
+# League-specific defaults for deriving off/def ratings from raw stats
+_LEAGUE_DEFAULTS: Dict[str, Dict[str, float]] = {
+    "NBA":   {"avg_pts": 112.0, "avg_pace": 100.0},
+    "NCAAB": {"avg_pts": 72.0,  "avg_pace": 68.0},
+    "WNBA":  {"avg_pts": 82.0,  "avg_pace": 78.0},
+    "NFL":   {"avg_pts": 22.0,  "avg_pace": 12.0},
+    "NCAAF": {"avg_pts": 28.0,  "avg_pace": 12.0},
+    "MLB":   {"avg_pts": 4.5,   "avg_pace": 9.0},
+    "NHL":   {"avg_pts": 3.1,   "avg_pace": 60.0},
+}
+
+
+def _raw_stats_to_context(raw: Dict[str, Any], team: str, league: str) -> Dict[str, Any]:
+    """
+    Convert raw scraped team stats into the engine's TeamContext dict format.
+
+    The engine needs: name, league, off_rating, def_rating, pace.
+    Scraped data varies by source; this function does best-effort mapping.
+    """
+    defaults = _LEAGUE_DEFAULTS.get(league.upper(), {"avg_pts": 100.0, "avg_pace": 70.0})
+    stats_blob = raw.get("stats", {})
+
+    # --- Offensive rating ---
+    off = (
+        stats_blob.get("pts_per_game")
+        or raw.get("pts_per_game")
+        or stats_blob.get("points_for")
+        or defaults["avg_pts"]
+    )
+
+    # --- Defensive rating (points allowed) ---
+    def_val = (
+        stats_blob.get("pts_allowed_per_game")
+        or stats_blob.get("points_against")
+        or defaults["avg_pts"]
+    )
+
+    pace = stats_blob.get("pace") or defaults["avg_pace"]
+
+    context: Dict[str, Any] = {
+        "name": raw.get("name", team),
+        "league": league.upper(),
+        "off_rating": float(off),
+        "def_rating": float(def_val),
+        "pace": float(pace),
+        "pts_per_game": float(off),
+        "fg_pct": float(stats_blob.get("fg_pct", 0.45)),
+        "three_pt_pct": float(stats_blob.get("fg3_pct", 0.35)),
+    }
+
+    # Carry through any sport-specific extras
+    for k, v in stats_blob.items():
+        if k not in context:
+            context[k] = v
+
+    return context
+
+
+def get_team_stats_free(team: str, league: str) -> Optional[Dict[str, Any]]:
+    """
+    Fetch team stats from free sources and return in engine-ready dict format.
+
+    Falls back through: stats_scraper → ESPN → None.
+    """
+    try:
+        raw = stats_scraper.get_team_stats(team, league)
+        if raw:
+            return _raw_stats_to_context(raw, team, league)
+    except Exception as exc:
+        _logger.debug("stats_scraper.get_team_stats failed for %s/%s: %s", team, league, exc)
+
+    return None
+
+
+def get_odds_free(home: str, away: str, league: str) -> Optional[Dict[str, Any]]:
+    """
+    Fetch odds for a matchup and return in OddsInput-compatible dict format.
+
+    Uses The Odds API (via odds_scraper) first; returns None if unavailable.
+    """
+    try:
+        games = odds_scraper.get_upcoming_games(league)
+    except Exception as exc:
+        _logger.debug("odds_scraper.get_upcoming_games failed for %s: %s", league, exc)
+        return None
+
+    if not games:
+        return None
+
+    home_lower = home.lower()
+    away_lower = away.lower()
+
+    for game in games:
+        g_home = game.get("home_team", "").lower()
+        g_away = game.get("away_team", "").lower()
+
+        # Fuzzy match: check if the search term is a substring
+        if not ((home_lower in g_home or g_home in home_lower) and
+                (away_lower in g_away or g_away in away_lower)):
+            continue
+
+        # Extract consensus odds from first bookmaker
+        bookmakers = game.get("bookmakers", [])
+        if not bookmakers:
+            return None
+
+        book = bookmakers[0]
+        markets = book.get("markets", {})
+
+        odds_dict: Dict[str, Any] = {}
+
+        # Moneyline (h2h)
+        h2h = markets.get("h2h", [])
+        for outcome in h2h:
+            name_lower = outcome.get("name", "").lower()
+            if home_lower in name_lower or name_lower in g_home:
+                odds_dict["moneyline_home"] = outcome.get("price")
+            elif away_lower in name_lower or name_lower in g_away:
+                odds_dict["moneyline_away"] = outcome.get("price")
+            elif name_lower == "draw":
+                odds_dict["moneyline_draw"] = outcome.get("price")
+
+        # Spreads
+        spreads = markets.get("spreads", [])
+        for outcome in spreads:
+            name_lower = outcome.get("name", "").lower()
+            if home_lower in name_lower or name_lower in g_home:
+                odds_dict["spread_home"] = outcome.get("point")
+                odds_dict["spread_home_price"] = outcome.get("price", -110)
+                break
+
+        # Totals
+        totals = markets.get("totals", [])
+        for outcome in totals:
+            if outcome.get("name", "").lower() == "over":
+                odds_dict["over_under"] = outcome.get("point")
+                break
+
+        if odds_dict:
+            return odds_dict
+
+    return None
+
+
 def get_supported_leagues() -> List[str]:
     """Get list of supported leagues."""
     return SUPPORTED_LEAGUES.copy()

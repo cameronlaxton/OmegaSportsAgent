@@ -133,7 +133,6 @@ class TestModuleImports:
 
     def test_existing_utilities(self):
         from src.utilities.data_logging import log_bet_recommendation, get_log_directory
-        from src.utilities.sandbox_persistence import OmegaCacheLogger
 
     def test_betting_modules(self):
         from src.betting.odds_eval import edge_percentage, implied_probability

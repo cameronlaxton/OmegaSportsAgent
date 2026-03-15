@@ -12,13 +12,11 @@ Modules:
 - schedule_api: Game schedules from ESPN API
 - free_sources: Catalog of free data sources with unified interface
 - player_game_log: ESPN player game log retrieval
-- data_recovery: Fallback chain orchestrator (ESPN → BBRef → NBA.com → Perplexity → LKG)
 - last_known_good: File-based persistence for stale-but-real data fallback
 
-Deprecated (not imported at runtime):
-- cache_service: Postgres-backed TTL cache (may revive if Postgres becomes primary)
-- injury_api: ESPN injury data (lifecycle tied to cache_service)
-- nfl_stats: NFL-specific collectors (data flows through stats_ingestion instead)
+Deprecated modules removed in Phase B:
+- data_recovery, cache_service, nfl_stats, games_analysis (deleted)
+- injury_api: resurrected as src/providers/injury.py adapter
 """
 
 from src.data.odds_scraper import (
@@ -71,11 +69,6 @@ from src.data.player_game_log import (
     get_player_game_log,
     get_cached_player_game_log,
     get_espn_player_id
-)
-
-from src.data.data_recovery import (
-    DataRecoveryService,
-    get_recovery_service
 )
 
 from src.data.providers import (
@@ -131,9 +124,6 @@ __all__ = [
     "get_player_game_log",
     "get_cached_player_game_log",
     "get_espn_player_id",
-    # Recovery
-    "DataRecoveryService",
-    "get_recovery_service",
     # Provider protocols and schemas
     "TeamContextInput",
     "PlayerContextInput",

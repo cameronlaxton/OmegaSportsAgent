@@ -29,6 +29,46 @@ from src.data import last_known_good
 
 logger = logging.getLogger(__name__)
 
+
+# ---------------------------------------------------------------------------
+# Entity Resolution (opt-in — requires DATABASE_URL + populated tables)
+# ---------------------------------------------------------------------------
+
+def _try_resolve_team_name(name: str, league: str) -> str:
+    """Attempt to resolve a scraped team name to its canonical form.
+
+    Falls back to the original name if the DB is unavailable or no match found.
+    This is a no-op unless DATABASE_URL is configured and the canonical_names /
+    teams tables are populated.
+    """
+    try:
+        db_url = os.environ.get("DATABASE_URL")
+        if not db_url:
+            return name
+
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import Session as SASession
+        from src.utilities.entity_resolver import EntityResolver
+
+        engine = create_engine(db_url)
+        with SASession(engine) as session:
+            resolver = EntityResolver(session)
+            resolved_id = resolver.resolve_team(name, sport=league)
+            if resolved_id:
+                # Fetch the canonical full_name
+                from src.db.schema import Team
+                from sqlalchemy import select
+                team_row = session.execute(
+                    select(Team).where(Team.id == resolved_id)
+                ).scalars().first()
+                if team_row:
+                    logger.debug("Resolved team '%s' -> '%s'", name, team_row.full_name)
+                    return team_row.full_name
+    except Exception as exc:
+        logger.debug("Entity resolution skipped for '%s': %s", name, exc)
+
+    return name
+
 CACHE_DIR = "data/cache"
 REQUEST_TIMEOUT = 15
 ESPN_API_BASE = "https://site.api.espn.com/apis/site/v2/sports"
@@ -1127,15 +1167,17 @@ def get_team_context(team_name: str, league: str) -> Optional[TeamContext]:
     Get team context with offensive/defensive ratings and other stats.
     Fallback chain (agent-only): ESPN -> BBRef -> NBA Stats API -> Perplexity -> Last Known Good.
     Returns None if no data found in any source.
-    
+
     Args:
         team_name: Team name or abbreviation
         league: League code (NBA, NFL, etc.)
-    
+
     Returns:
         TeamContext with team statistics (may be stale but always real data)
     """
     league = league.upper()
+    # Attempt entity resolution (opt-in, no-op without DATABASE_URL)
+    team_name = _try_resolve_team_name(team_name, league)
     cache_path = _get_cache_path("team_stats", f"{team_name}_{league}")
     sources_tried = []
     

@@ -196,3 +196,78 @@ class CanonicalName(Base):
     __table_args__ = (
         Index("idx_canonical_alias_type", "alias", "entity_type"),
     )
+
+
+# --- AGENT STORAGE ---
+
+class FactSnapshot(Base):
+    """Timestamped data observation with source provenance and TTL.
+
+    The fact cache: stores every value the agent gathers from providers
+    so repeat queries hit the cache instead of re-fetching.
+    """
+    __tablename__ = "fact_snapshots"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    slot_key = Column(String, nullable=False, index=True)   # e.g. "home_team.off_rating"
+    data_type = Column(String, nullable=False)               # "team_stat", "odds", "injury", etc.
+    entity = Column(String, nullable=False, index=True)      # team or player name
+    league = Column(String, nullable=False)
+    data = Column(JSONB, nullable=False)                     # the actual payload
+    source = Column(String, nullable=False)                  # provider name
+    source_url = Column(String)                              # attribution URL
+    confidence = Column(Float, default=1.0)
+    fetched_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)            # fetched_at + TTL
+    quality_score = Column(Float, default=0.0)
+
+    __table_args__ = (
+        Index("idx_fact_snap_lookup", "slot_key", "entity", "league"),
+        Index("idx_fact_snap_expires", "expires_at"),
+        Index("idx_fact_snap_data_gin", "data", postgresql_using="gin"),
+    )
+
+
+class ExecutionRun(Base):
+    """Audit trail of every agent query execution.
+
+    Records what the agent understood, planned, gathered, and produced
+    so we can debug and improve the pipeline.
+    """
+    __tablename__ = "execution_runs"
+    id = Column(String, primary_key=True)                    # UUID4
+    query_text = Column(String, nullable=False)
+    understanding = Column(JSONB)                            # serialized QueryUnderstanding
+    plan = Column(JSONB)                                     # serialized AnswerPlan
+    slots_requested = Column(Integer)
+    slots_filled = Column(Integer)
+    data_quality_score = Column(Float)
+    execution_mode = Column(String)
+    providers_used = Column(JSONB, default=list)             # ["espn_schedule", "odds_api"]
+    errors = Column(JSONB, default=list)
+    duration_ms = Column(Integer)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+
+class Prediction(Base):
+    """Prediction ledger for backtesting and calibration.
+
+    Every formal edge the system outputs is logged here with
+    the market snapshot at prediction time, enabling later settlement
+    and walk-forward validation.
+    """
+    __tablename__ = "predictions"
+    id = Column(String, primary_key=True)                    # UUID4
+    execution_run_id = Column(String, ForeignKey("execution_runs.id"))
+    game_id = Column(String, ForeignKey("games.id"))
+    league = Column(String, nullable=False)
+    prediction_type = Column(String, nullable=False)         # "spread", "moneyline", "total", "player_prop"
+    prediction = Column(JSONB, nullable=False)               # {"side": "home", "line": -5.5, "model_prob": 0.58}
+    market_snapshot = Column(JSONB)                          # odds at prediction time
+    data_quality_score = Column(Float)
+    outcome = Column(String)                                 # "WIN", "LOSS", "PUSH", None if unsettled
+    settled_at = Column(DateTime)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    # Relationships
+    execution_run = relationship("ExecutionRun", backref="predictions")
+    game = relationship("Game", backref="predictions")
