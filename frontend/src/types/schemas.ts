@@ -62,6 +62,20 @@ export interface SlateAnalysisResponse {
   analyses: GameAnalysisResponse[];
 }
 
+export interface PlayerPropResponse {
+  player_name: string;
+  league: string;
+  prop_type: string;
+  line: number;
+  status: "success" | "skipped" | "error";
+  over_prob: number | null;
+  under_prob: number | null;
+  edge_over: number | null;
+  edge_under: number | null;
+  recommendation: string | null;
+  confidence_tier: "A" | "B" | "C" | "Pass";
+}
+
 export interface ErrorResponse {
   error_code: string;
   message: string;
