@@ -1,92 +1,71 @@
-# OmegaSportsAgent
+## OmegaSportsAgent
 
-## A Professional Decision Support Engine for Sports Analytics
+**A Professional Decision Support Engine for Sports Analytics**  
+*Quantitative research platform for identifying +EV betting opportunities*
 
 ---
 
-## Project Philosophy
+## 📌 Overview
+
+OmegaSportsAgent is a **quantitative research platform** that calculates true probabilities for sports outcomes using possession-level Markov chains and Monte Carlo simulation. It compares these probabilities against market implied odds to identify positive expected value (+EV) opportunities. The engine is designed for **decision support only**—it does not place bets or interface with sportsbooks.
+
+**Current Status:** 🧪 **QA / Validation Phase** – Core functionality is implemented, but rigorous backtesting and calibration are ongoing. Not yet recommended for live wagering.
+
+---
+
+## 🧠 Philosophy
 
 ### Decision Support, Not Execution
+This engine does not place bets. It calculates probabilities, identifies +EV opportunities, and provides deep analytical context to help the **human user** make informed decisions. The human is always the final decision-maker.
 
-> **This engine does not place bets.** It calculates probabilities, identifies +EV (Positive Expected Value) opportunities, and provides deep analytical context to help the human user make informed decisions.
+### Search-First Data Architecture
+We have moved away from hardcoded API adapters (e.g., `espn.py`, `oddsapi.py`). Instead, the system is built around an **LLM-driven web search and structured extraction pipeline**. This approach:
 
-OmegaSportsAgent is a quantitative research platform. It exists to answer one question: *"What is the true probability of this outcome, and how does it compare to the market's opinion?"*
+- Gathers current sports information from the web dynamically.
+- Extracts usable structured facts from multiple sources.
+- Normalizes facts into canonical models.
+- Validates freshness, agreement, and completeness.
+- Fuses results into a single trusted analysis input.
 
-The engine outputs:
-
-- **True Probabilities** derived from simulation
-- **Edge Calculations** (True Prob - Implied Prob)
-- **Suggested Unit Sizing** via Kelly Criterion
-- **Confidence Tiers** (A/B/C) based on data quality
-
-It does NOT:
-
-- Execute trades or place wagers
-- Interface with sportsbook APIs
-- Make autonomous financial decisions
-
-The human is always the final decision-maker.
-
----
+This architecture is more adaptable, resilient to source changes, and leverages the power of LLMs for intelligent data gathering.
 
 ### The "Hybrid" Edge
+Our data architecture combines:
+- **Rigid API Data** (optional fallback): Base statistics, schedules, standings when APIs are reliable.
+- **Search-First Extraction**: Primary method for obtaining real-time data (odds, injuries, lineups, advanced stats).
+- **JSONB Storage** (PostgreSQL): Sport-agnostic schema that adapts without migrations.
 
-Our competitive advantage comes from a deliberate data architecture strategy:
-
-| Layer | Source | Purpose |
-| ------- | -------- | --------- |
-| **Rigid API Data** | ESPN, BallDontLie, Official Stats | Base statistics, schedules, standings—structured and reliable |
-| **Scraping Layer** | Targeted sources | Granular data not available via API (usage rates, advanced metrics, injury context) |
-| **JSONB Storage** | PostgreSQL Hybrid Schema | Sport-agnostic storage: `{"pts": 24}` for NBA, `{"pass_yds": 280}` for NFL |
-
-This hybrid approach allows us to:
-
-1. Maintain data integrity with canonical entity resolution
-2. Adapt to new metrics without schema migrations
-3. Feed a unified simulation engine regardless of sport
+### The "No Defaults" Policy
+If essential data (e.g., team offensive/defensive ratings, pace) is missing, the simulation is **skipped** and logged. No game is simulated with incomplete data.
 
 ---
 
-### Methodology
+## 🏗️ Architecture
 
-We reject naive approaches. Our probability engine uses:
+### High-Level Pipeline
 
-## 1. Possession-Level Markov Chains**
-
-- Games are simulated play-by-play, not as single random variables
-- State transitions model real game flow (possessions, downs, plate appearances)
-- Player involvement is weighted by usage rates and target shares
-
-## 2. Monte Carlo Simulation**
-
-- 1,000–10,000 iterations per matchup
-- Full distribution outputs (mean, std, percentiles P10/P25/P50/P75/P90)
-- Captures tail risk and variance, not just point estimates
-
-## 3. Sport-Specific Distributions**
-
-- **Poisson**: Discrete counts (goals, touchdowns, receptions)
-- **Normal**: Continuous metrics (yards, points in high-scoring sports)
-- Distribution selection is automatic based on `(metric_key, league)` pairs
-
-## 4. Team Context Adjustment**
-
-- Offensive/Defensive ratings modify transition probabilities
-- Pace factors scale possession counts
-- No simulation runs on "default" data—incomplete games are skipped
-
-The output is a **True Probability** that we compare against **Market Implied Probability** to find edges.
-
----
-
-## System Architecture (The Pipeline)
-
-```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              DATA INGESTION                                  │
+│                         SEARCH-FIRST DATA PIPELINE                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  Schedule API  ──►  Stats Scraper  ──►  Entity Resolver  ──►  JSONB Store  │
-│  (ESPN)              (Multi-source)      (Alias → UUID)       (PostgreSQL)  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
+│  │  Acquisition │───▶│  Extractors  │───▶│ Normalizers  │                  │
+│  │  (web search,│    │  (pull facts │    │  (canonical  │                  │
+│  │   fetch)     │    │   from raw)  │    │   models)    │                  │
+│  └──────────────┘    └──────────────┘    └──────┬───────┘                  │
+│                                                   │                          │
+│                                                   ▼                          │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
+│  │   Fusion     │◀───│  Validators  │◀───│   Sources    │                  │
+│  │  (combine,   │    │  (freshness, │    │  (trust,     │                  │
+│  │   resolve)   │    │   agreement) │    │   priorities)│                  │
+│  └──────┬───────┘    └──────────────┘    └──────────────┘                  │
+│         │                                                                   │
+│         ▼                                                                   │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
+│  │   Models     │    │  Orchestration│   │    Cache     │                  │
+│  │ (canonical   │    │ (flow control)│   │ (storage,    │                  │
+│  │  structures) │    │              │   │  freshness)  │                  │
+│  └──────────────┘    └──────────────┘    └──────────────┘                  │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -110,7 +89,7 @@ The output is a **True Probability** that we compare against **Market Implied Pr
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Odds Evaluation (odds_eval.py)                                             │
 │  ├── american_to_decimal()      → Odds format conversion                    │
-│  ├── implied_probability()      → Market's implied win %                    │
+│  ├── implied_probability()      → Market's implied win % (vig-removed)      │
 │  ├── edge_percentage()          → (True Prob - Implied Prob) × 100          │
 │  └── expected_value_percent()   → EV as % of stake                          │
 │                                                                              │
@@ -138,205 +117,167 @@ The output is a **True Probability** that we compare against **Market Implied Pr
 │    "confidence_tier": "B"                                                   │
 │  }                                                                           │
 └─────────────────────────────────────────────────────────────────────────────┘
-```
+
+### Detailed Data Pipeline Components
+
+| Directory | Purpose |
+|-----------|---------|
+| `src/data/acquisition/` | Gets raw data from the outside world: web search, page fetches, cached retrieval, and optional direct API calls. |
+| `src/data/sources/` | Defines source trust, preferred sites by sport/data type, and source-specific rules without making every source a full adapter. |
+| `src/data/extractors/` | Pulls structured candidate facts out of raw pages, snippets, and search results: schedules, odds, stats, injuries, lineups, game logs, etc. |
+| `src/data/normalizers/` | Converts extracted facts into canonical internal models: standardizes team names, player identities, markets, statuses, dates, and stat fields. |
+| `src/data/validators/` | Checks whether extracted data is usable: freshness, completeness, agreement across sources, contradiction detection, and sanity checks. |
+| `src/data/fusion/` | Merges multiple validated source results into one trusted view: resolves conflicts, assigns confidence, and chooses the best combined output. |
+| `src/data/models/` | Holds the canonical data structures used by the rest of the system: games, markets, props, stats, injuries, lineups, and provenance-bearing result objects. |
+| `src/data/orchestration/` | Coordinates the end-to-end retrieval flow: decides what to search, what to fetch next, which extractors to run, and when to stop or fall back. |
+| `src/data/cache/` | Stores prior retrievals, parsed pages, normalized results, and freshness metadata to reduce repeated work and improve speed/stability. |
+| `src/data/tests/` | Validates extraction quality, normalization consistency, validation logic, fusion behavior, and retrieval orchestration reliability. |
 
 ---
 
-## How to Query This Engine (For AI Agents)
+## 📊 Methodology
 
-This section is the **LLM Operator Manual**. When integrated with an AI agent, the engine should be queried systematically, not ad-hoc.
+We reject naive approaches. Our probability engine uses:
 
-### The "Search → Sim → Report" Loop
+### 1. Possession-Level Markov Chains
+- Games are simulated play-by-play, not as single random variables.
+- State transitions model real game flow (possessions, downs, plate appearances).
+- Player involvement is weighted by usage rates and target shares.
+- **Sport‑specific state encodings** (e.g., down & distance for NFL, possession type for NBA) are used.
 
-When a user asks: *"What are the best NBA bets today?"*
+### 2. Monte Carlo Simulation
+- 1,000–10,000 iterations per matchup.
+- Full distribution outputs (mean, std, percentiles P10/P25/P50/P75/P90).
+- Captures tail risk and variance.
 
-**Do NOT guess.** Execute this workflow:
+### 3. Sport-Specific Distributions
+- **Poisson**: Discrete counts (goals, touchdowns, receptions).
+- **Normal**: Continuous metrics (yards, points in high-scoring sports).
+- Distribution selection is automatic based on `(metric_key, league)` pairs.
 
-```
-1. FETCH SCHEDULE
-   └── get_todays_games("NBA") → List of matchups with odds
+### 4. Team Context Adjustment
+- Offensive/Defensive ratings modify transition probabilities.
+- Pace factors scale possession counts.
+- No simulation runs on "default" data—incomplete games are skipped.
 
-2. FOR EACH MATCHUP:
-   └── VALIDATE data completeness
-       └── If missing team context → SKIP (do not simulate with defaults)
-   └── RUN SIMULATION
-       └── engine.run_game_simulation(home, away, "NBA", n_iter=1000)
-       └── Extract: true_prob_home, true_prob_away, predicted_spread, predicted_total
-
-3. FETCH MARKET ODDS
-   └── From schedule response or odds_snapshots table
-   └── Convert to implied probabilities
-
-4. CALCULATE EDGES
-   └── edge = true_prob - implied_prob
-   └── Filter: Only return edges > threshold (e.g., 3%)
-
-5. APPLY KELLY SIZING
-   └── recommend_stake(true_prob, odds, bankroll, confidence_tier)
-
-6. FORMAT REPORT
-   └── Sort by edge descending
-   └── Include confidence tier, units, and data quality notes
-```
-
-### Pseudo-Code Example
-
-```python
-from src.data.schedule_api import get_todays_games
-from src.simulation.simulation_engine import OmegaSimulationEngine
-from src.betting.odds_eval import implied_probability, edge_percentage
-from src.betting.kelly_staking import recommend_stake
-
-def find_daily_edges(league: str, bankroll: float, edge_threshold: float = 0.03):
-    """
-    The canonical workflow for finding +EV opportunities.
-    Returns edges, not bets. Human decides.
-    """
-    engine = OmegaSimulationEngine()
-    games = get_todays_games(league)
-    edges = []
-
-    for game in games:
-        home = game["home_team"]["name"]
-        away = game["away_team"]["name"]
-        market_odds = game.get("odds", {})
-
-        # Run simulation
-        sim_result = engine.run_fast_game_simulation(
-            home_team=home,
-            away_team=away,
-            league=league,
-            n_iterations=1000
-        )
-
-        # Skip games with incomplete data
-        if not sim_result.get("success"):
-            continue
-
-        true_prob_home = sim_result["home_win_prob"] / 100
-
-        # Calculate edge vs market
-        if market_odds.get("spread_home"):
-            market_implied = implied_probability(market_odds["spread_home"])
-            edge = edge_percentage(true_prob_home, market_implied)
-
-            if abs(edge) > edge_threshold * 100:
-                # Determine confidence tier based on data quality
-                tier = "A" if sim_result.get("iterations", 0) >= 1000 else "B"
-
-                stake = recommend_stake(
-                    true_prob=true_prob_home,
-                    odds=market_odds["spread_home"],
-                    bankroll=bankroll,
-                    confidence_tier=tier
-                )
-
-                edges.append({
-                    "matchup": f"{away} @ {home}",
-                    "selection": f"{home} spread",
-                    "true_prob": round(true_prob_home, 3),
-                    "market_implied": round(market_implied, 3),
-                    "edge_pct": round(edge, 1),
-                    "recommended_units": stake["units"],
-                    "confidence_tier": tier,
-                    "predicted_spread": sim_result["predicted_spread"],
-                    "predicted_total": sim_result["predicted_total"]
-                })
-
-    # Sort by edge, descending
-    return sorted(edges, key=lambda x: abs(x["edge_pct"]), reverse=True)
-```
-
-### Query Examples for AI Agents
-
-| User Query | Agent Action |
-|------------|--------------|
-| "What are the best NBA bets today?" | Run `find_daily_edges("NBA", bankroll)` → Return top 3-5 edges |
-| "Analyze Lakers vs Warriors" | Run `run_game_simulation("Lakers", "Warriors", "NBA")` → Full breakdown |
-| "Should I bet LeBron over 25.5 points?" | Run `run_player_prop_simulation("LeBron James", ...)` → Compare to line |
-| "Show me all edges above 5%" | Filter simulation results by `edge_pct > 5` |
-| "What's the true probability of Bills winning?" | Run NFL simulation → Return `true_prob` with confidence interval |
-
-### Data Validation Rules
-
-The engine enforces **NO DEFAULTS** policy:
-
-- If `off_rating`, `def_rating`, or `pace` is missing → Game is **SKIPPED**
-- If player has no historical stats → Player prop is **SKIPPED**
-- Skipped items are logged to `data/logs/data_integrity_log.json`
-
-An AI agent should **report skipped games** to the user, not hide them:
-
-```
-"3 games were skipped due to incomplete data:
- - Magic vs Hornets (Missing: Magic defensive rating)
- - Jazz vs Spurs (Missing: Both teams pace data)"
-```
+The output is a **True Probability** that we compare against **Market Implied Probability** (vig-removed) to find edges.
 
 ---
 
-## Roadmap
+## 🔬 Validation & Calibration (Phase 2 – In Progress)
 
-### Phase 1: Foundation ✓ (Completed)
+The simulation engine must earn its confidence. We are actively building:
 
-- [x] **Hybrid Schema**: PostgreSQL with JSONB for sport-agnostic box scores
-- [x] **Entity Resolution**: `canonical_names` table + alias mapping service
-- [x] **Simulation Engine**: Monte Carlo with Poisson/Normal distribution selection
-- [x] **Markov Engine**: Play-by-play simulation with player stat accumulation
-- [x] **Kelly Staking**: Quarter-Kelly with tier caps and risk controls
-- [x] **Odds Evaluation**: EV calculations and edge detection
-
-### Phase 2: The "Validator-Lab" 🔄 (In Progress)
-
-The simulation engine must **earn its confidence**. This phase builds the backtesting infrastructure:
-
-- [ ] **Prediction Ledger**: Store all model predictions with timestamps
-- [ ] **Outcome Reconciliation**: Automated grading against final scores
-- [ ] **Calibration Metrics**:
+- **Prediction Ledger**: Stores all model predictions with timestamps.
+- **Outcome Reconciliation**: Automated grading against final scores.
+- **Calibration Metrics**:
   - Brier Score (probability accuracy)
   - Log Loss (confidence calibration)
   - Hit Rate by Edge Bucket (5%+ edge should hit >55%)
-- [ ] **Parameter Tuning**: Auto-calibrator adjusts Markov transition probabilities based on historical performance
-- [ ] **CLV Tracking**: Compare entry odds vs closing line to validate edge detection
+- **Parameter Tuning**: Auto-calibrator adjusts Markov transition probabilities based on historical performance.
+- **CLV Tracking**: Compare entry odds vs closing line to validate edge detection.
 
-### Phase 3: The Analyst Interface 📋 (Planned)
-
-Deep integration with LLMs for complex analytical queries:
-
-- [ ] **Text-to-SQL Layer**: Natural language → JSONB queries
-  - *"Show me all QBs with >10% variance in passing yards vs market lines"*
-  - *"Which players have hit their prop over in 4+ of last 5 games?"*
-- [ ] **Contextual Narratives**: Simulation results + injury reports + historical matchups → Written analysis
-- [ ] **Scenario Modeling**: "What if Player X is ruled out?" → Re-run simulations with adjusted rosters
-- [ ] **Portfolio View**: Track aggregate exposure across correlated bets
+**⚠️ Important**: Until Phase 2 is complete, all probabilities and edge recommendations should be considered **experimental**. Do not use for real-money betting.
 
 ---
 
-## Key Files Reference
+## 🧩 Key Files Reference
 
 | Path | Purpose |
-| ------ | --------- |
+|------|---------|
 | `src/simulation/simulation_engine.py` | Monte Carlo engine, `OmegaSimulationEngine` class |
 | `src/simulation/markov_engine.py` | Play-by-play Markov simulator |
 | `src/betting/kelly_staking.py` | Quarter-Kelly stake recommendations |
-| `src/betting/odds_eval.py` | EV/edge calculations |
-| `src/data/schedule_api.py` | ESPN schedule fetching |
-| `src/data/stats_ingestion.py` | Team/player context retrieval |
-| `src/db/schema.py` | Hybrid Schema (SQLAlchemy 2.0) |
-| `src/utils/entity_resolver.py` | Alias → UUID resolution |
+| `src/betting/odds_eval.py` | EV/edge calculations (with vig removal) |
+| `src/data/orchestration/` | Main entry point for data retrieval flows |
+| `src/data/models/` | Canonical data structures (Game, Market, PlayerProp, etc.) |
+| `src/calibration/prediction_audit.py` | Prediction logging and grading |
+| `src/calibration/calibrator.py` | Calibration metrics and parameter tuning |
 
 ---
 
-## Setup
+## 🤖 LLM Agent Integration Guide
+
+OmegaSportsAgent is designed to be driven by an LLM agent that gathers context, runs simulations, and interprets results. The following sections summarize the key knowledge base articles (KBAs) located in `knowledgebase/`. Agents should follow these guidelines when interacting with the system.
+
+### 1. Context Gathering Per Sport (KB-A1)
+
+Before calling OmegaSportsAgent, the agent must collect structured game context via web search/APIs.
+
+**Common game-level context (all sports):**
+- Basic identifiers: date, league, teams (canonical names), home/away.
+- Market data: spread, total, moneyline odds (with vig).
+- Team recent form: last N games record, average margin, key trends.
+- Injuries/absences: list of out/questionable players, impact label.
+- Venue context: home/away, travel/rest days.
+
+**Sport-specific requirements:**
+- **NBA**: offensive/defensive ratings, pace, shooting profile, home/road splits.
+- **NFL**: offensive/defensive efficiency (points per drive, EPA), tempo, weather, injuries to key players.
+- **NCAAB/NCAAF**: similar to NBA/NFL but with college-specific adjustments.
+- **Soccer/Hockey**: goals for/against, xG, home/away splits, schedule congestion.
+
+**Player props (NBA example):**
+- Player scoring and minutes (season, last 5/10).
+- Usage rate, starter/bench status.
+- Game pace, opponent defensive rating.
+- Market line and odds.
+
+The agent should compute derived parameters (e.g., expected λ for Poisson models) and construct a clean JSON payload matching OmegaSportsAgent’s input contracts.
+
+### 2. Game Market Probability Calculation (KB-G1)
+
+Given simulation outputs (scores per iteration), the agent can compute:
+- Win probabilities: `P_home_win = count(margin > 0) / N`
+- Spread probabilities: `P_home_cover = count(margin > spread_line) / N`
+- Total probabilities: `P_over = count(total > total_line) / N`
+- Predicted spread/total: mean of margins/totals.
+
+These probabilities feed into edge calculation.
+
+### 3. Player Prop Modeling (KB-P1, KB-P2)
+
+For count-based props (points, rebounds, assists), use a Poisson-style model:
+- Estimate baseline λ from recent and season averages.
+- Adjust for minutes, pace, and matchup defense.
+- Compute `P_over` and `P_under` using Poisson CDF.
+- Pass true probabilities to OmegaSportsAgent for edge and Kelly.
+
+### 4. Edge and Kelly Staking (KB-B1)
+
+Given true probability `p` and market odds (American):
+- Convert odds to decimal and implied probability `q`.
+- Compute edge percentage: `(p - q) * 100`.
+- If EV > 0, apply Kelly formula: `f* = (p*(odds_decimal-1) - (1-p)) / (odds_decimal-1)`.
+- Use fractional Kelly (e.g., 0.25 or 0.5) based on confidence tier.
+- Apply bankroll constraints and tier caps.
+
+### 5. Markov Possession-Based Models (KB-M1)
+
+For sports where play-by-play dynamics matter (NBA, NFL, hockey), the engine uses a Markov chain. The agent does not need to implement this but should understand that:
+- States represent possession, time, score, and sport-specific context.
+- Transition probabilities are calibrated from historical data.
+- The engine outputs final scores and derived probabilities.
+
+### 6. Calibration Loop (KB-C1)
+
+To improve model accuracy, the agent should participate in the Predict–Grade–Tune loop:
+- **Predict**: Log each bet recommendation with true probability, odds, stake, and identifiers.
+- **Grade**: After games settle, record outcomes (win/loss/push) and closing lines.
+- **Tune**: Periodically run calibration to adjust shrinkage, caps, or recalibrate probabilities.
+
+The calibration engine computes Brier score, ECE, and updates parameters in `league_calibrations.yaml`.
+
+---
+
+## 🚀 Setup
 
 ### Requirements
-
 - Python 3.10+
 - PostgreSQL 15+ (for JSONB GIN indexing)
 - Docker (recommended)
 
 ### Installation
-
 ```bash
 # Clone repository
 git clone https://github.com/cameronlaxton/OmegaSportsAgent.git
@@ -351,16 +292,15 @@ pip install -r requirements.txt
 ```
 
 ### Environment Variables
-
 ```bash
 # .env file
 DATABASE_URL=postgresql://user:pass@localhost:5432/omega_sports
+# Optional: API keys for fallback direct calls
 ODDS_API_KEY=your_odds_api_key
 BALLDONTLIE_API_KEY=your_balldontlie_key
 ```
 
 ### Database Setup
-
 ```bash
 # Start PostgreSQL (Docker)
 docker-compose up -d postgres
@@ -373,7 +313,6 @@ python -m src.db.seed
 ```
 
 ### Running
-
 ```bash
 # Run example simulation with league filtering
 python main.py --league NBA
@@ -387,23 +326,48 @@ python main.py --league NBA --home "Celtics" --away "Heat" --json
 
 ---
 
-## Supported Leagues
+## 📚 Knowledge Base
 
-| League | Game Simulation | Player Props | Data Collector | Status |
-| -------- | ----------------- | -------------- | ---------------- | -------- |
-| NBA | ✅ Full | ✅ Full | ✅ NBA Stats API | Production |
-| NFL | ✅ Full | ✅ Full | ✅ ESPN / PFR | Production |
-| NCAAB | ✅ Full | ⚠️ Limited | ⚠️ ESPN (generic) | Beta |
-| NCAAF | ✅ Full | ⚠️ Limited | ⚠️ ESPN (generic) | Beta |
-| MLB | ⚠️ Basic | ❌ Not yet | ❌ None (sim-only) | Development |
-| NHL | ⚠️ Basic | ❌ Not yet | ❌ None (sim-only) | Development |
+Detailed guidelines for LLM agents are maintained in the `knowledgebase/` directory:
+
+| File | Description |
+|------|-------------|
+| `KB-A1_Context_per_Sport.txt` | Required context for different sports and markets. |
+| `KB-G1_Generic_Game_Markets.txt` | Turning simulation outputs into game market metrics. |
+| `KB-B1_Kelly_Staking.txt` | Computing and interpreting Kelly stakes. |
+| `KB-M1_Markov_Models.txt` | Using Markov chains for possession-based sports. |
+| `KB-S1_NBA_Full_Game.txt` | NBA full-game modeling specifics. |
+| `KB-P2_NBA_Points_Prop.txt` | NBA points prop modeling. |
+| `KB-P1_Player_Props_Count_Models.txt` | General count models for player props. |
+| `KB-C1_Calibration.txt` | Probability calibration and Predict–Grade–Tune loop. |
+
+Agents should consult these files for detailed instructions.
 
 ---
 
-## License
+## 📈 Supported Leagues
+
+| League | Game Simulation | Player Props | Data Collector | Status |
+|--------|-----------------|--------------|----------------|--------|
+| NBA | ✅ Full | ✅ Full | Search-first + NBA Stats API | Production |
+| NFL | ✅ Full | ✅ Full | Search-first + ESPN / PFR | Production |
+| NCAAB | ✅ Full | Beta | Search-first | Beta |
+| NCAAF | ✅ Full | Beta | Search-first | Beta |
+| MLB | ❌ Not yet | ❌ None | Development | Development |
+| NHL | ❌ Not yet | ❌ None | Development | Development |
+
+---
+
+## 📄 License
 
 Private repository - authorized use only.
 
 ---
 
-## "The goal is not to predict the future. The goal is to have a more accurate probability distribution than the market."
+## ⚠️ Disclaimer
+
+**The goal is not to predict the future. The goal is to have a more accurate probability distribution than the market.**  
+This software is for research and informational purposes only. Always gamble responsibly. Never bet money you cannot afford to lose.
+```
+
+This README now fully integrates the search-first data architecture, the detailed KBA guidelines, and the previous content. It serves as a comprehensive guide for both developers and LLM agents.
