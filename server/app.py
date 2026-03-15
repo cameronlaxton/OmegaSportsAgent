@@ -89,6 +89,7 @@ import os as _os
 _default_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
 _extra = _os.environ.get("CORS_ORIGINS", "")
 _origins = _default_origins + [o.strip() for o in _extra.split(",") if o.strip()]
+logger.info("CORS allowed origins: %s", _origins)
 
 app.add_middleware(
     CORSMiddleware,
@@ -120,7 +121,7 @@ async def log_requests(request: Request, call_next):
 # ── Endpoints ───────────────────────────────────────────────
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     """Root health check for Render."""
     return {"status": "ok"}
