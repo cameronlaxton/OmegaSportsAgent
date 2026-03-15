@@ -25,7 +25,7 @@ function topEdge(edges: EdgeDetail[]): EdgeDetail | null {
 }
 
 function getDataQuality(analysis: GameAnalysisResponse): number {
-  const meta = analysis.metadata as Record<string, unknown>;
+  const meta = analysis.metadata as unknown as Record<string, unknown>;
   if (meta && "data_quality_score" in meta) return meta.data_quality_score as number;
   if (analysis.status === "success" && analysis.edges.length > 0) return 0.6;
   if (analysis.status === "success") return 0.5;

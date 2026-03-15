@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: omegasportsagent-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+    buildFilter:
+      paths:
+        - frontend/**
+    cacheDirectories:
+      - frontend/.next/cache
+      - frontend/node_modules

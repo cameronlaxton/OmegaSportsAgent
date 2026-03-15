@@ -26,7 +26,7 @@ function bestTier(analysis: GameAnalysisResponse): string {
 
 function dataQuality(analysis: GameAnalysisResponse): number {
   // Extract from metadata or structured data if available; default 0.5
-  const meta = analysis.metadata as Record<string, unknown> | undefined;
+  const meta = analysis.metadata as unknown as Record<string, unknown> | undefined;
   if (meta && typeof meta === "object" && "data_quality_score" in meta) {
     return meta.data_quality_score as number;
   }
