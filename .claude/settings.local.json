@@ -75,7 +75,15 @@
       "Bash(PYTHONPATH=. python -m pytest src/data/tests/test_fusion.py::TestFactFuser::test_disagreeing_sources_prefer_higher_tier -v)",
       "Bash(PYTHONPATH=. python -c \"from src.data.orchestration.retrieval_orchestrator import retrieve_facts; print\\(''OK: retrieval_orchestrator imports''\\)\")",
       "Bash(PYTHONPATH=. python -c \"from agent.fact_gatherer import gather_facts; from agent.models import GatherSlot; print\\(''OK: fact_gatherer delegates to pipeline''\\)\")",
-      "Bash(PYTHONPATH=. python -m pytest tests/ src/data/tests/ -v --tb=short)"
+      "Bash(PYTHONPATH=. python -m pytest tests/ src/data/tests/ -v --tb=short)",
+      "Bash(grep -r knowledgebase C:UserscamerOneDriveDesktopOmegaSportsAgent-main --include=*.py --include=*.yaml --include=*.json)",
+      "Bash(grep -r \"\\\\.txt\\\\|\\\\.md\\\\|pathlib\\\\|Path\\\\|open\\(\" C:UserscamerOneDriveDesktopOmegaSportsAgent-mainagent --include=*.py)",
+      "Bash(grep -l \"PROMPT\\\\|prompt\\\\|system\" \"C:\\\\Users\\\\camer\\\\OneDrive\\\\Desktop\\\\OmegaSportsAgent-main\\\\agent\"/*.py)",
+      "Bash(grep -l \"PROMPT\\\\|prompt\" \"C:\\\\Users\\\\camer\\\\OneDrive\\\\Desktop\\\\OmegaSportsAgent-main/agent\"/*.py)",
+      "Bash(find /c/Users/camer/OneDrive/Desktop/OmegaSportsAgent-main -type f \\\\\\(-name *.html -o -name *.jsx -o -name *.tsx -o -name *.css -o -name *.scss \\\\\\))",
+      "Bash(grep -E \"\\\\.py$\")",
+      "Bash(npx next:*)",
+      "Bash(node_modules/.bin/next build:*)"
     ]
   }
 }

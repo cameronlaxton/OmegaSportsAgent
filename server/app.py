@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict
 
-from fastapi import FastAPI, Request
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
@@ -80,6 +80,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+api_router = APIRouter(prefix="/api")
+
 # CORS — allow the Next.js frontend (dev and production)
 # Set CORS_ORIGINS env var to a comma-separated list for production origins.
 import os as _os
@@ -116,6 +118,12 @@ async def log_requests(request: Request, call_next):
 
 
 # ── Endpoints ───────────────────────────────────────────────
+
+
+@app.get("/")
+async def root():
+    """Root health check for Render."""
+    return {"status": "ok"}
 
 
 @app.get("/health")
@@ -289,3 +297,16 @@ async def chat_endpoint(request: ChatRequest):
             "X-Accel-Buffering": "no",
         },
     )
+
+
+# ── /api/* mirror routes ──────────────────────────────────────
+# Register the same handlers under /api so the frontend can call
+# the backend directly (without the Next.js rewrite proxy).
+
+api_router.add_api_route("/health", health, methods=["GET"])
+api_router.add_api_route("/analyze/game", analyze_game_endpoint, methods=["POST"], response_model=GameAnalysisResponse)
+api_router.add_api_route("/analyze/prop", analyze_prop_endpoint, methods=["POST"], response_model=PlayerPropResponse)
+api_router.add_api_route("/analyze/slate", analyze_slate_endpoint, methods=["POST"], response_model=SlateAnalysisResponse)
+api_router.add_api_route("/chat", chat_endpoint, methods=["POST"])
+
+app.include_router(api_router)
