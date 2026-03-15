@@ -17,8 +17,9 @@ Produces a structured response dict that:
 
 from __future__ import annotations
 
+import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from agent.models import (
     AnswerPlan,
@@ -28,6 +29,9 @@ from agent.models import (
     OutputPackage,
     QueryUnderstanding,
 )
+
+if TYPE_CHECKING:
+    from agent.llm_client import LLMClient
 
 logger = logging.getLogger("omega.agent.response_composer")
 
@@ -279,6 +283,64 @@ def _build_limited_context(
             "Analysis is based on incomplete information.",
         ],
     }
+
+
+# ---------------------------------------------------------------------------
+# LLM-enhanced response composition
+# ---------------------------------------------------------------------------
+
+NARRATIVE_SYSTEM_PROMPT = """You are the response writer for OmegaSportsAgent, a quantitative sports analytics engine.
+
+Given structured data from a simulation or research pipeline, write a concise, insightful narrative paragraph for the user. Rules:
+- Be quantitative: cite specific numbers (probabilities, edges, scores).
+- Be transparent: note data quality issues or missing data.
+- Match the user's tone (analytical, conversational, or brief).
+- Never fabricate data — only use what is provided in the structured data.
+- Keep it to 2-4 sentences unless the data warrants more.
+- If data quality is low, caveat your conclusions.
+"""
+
+
+def compose_response_with_llm(
+    understanding: QueryUnderstanding,
+    plan: AnswerPlan,
+    execution_result: ExecutionResult,
+    facts: List[GatheredFact],
+    llm_client: "LLMClient",
+) -> Dict[str, Any]:
+    """Compose response with LLM-generated narratives for each section.
+
+    Calls the base ``compose_response()`` first, then enriches sections
+    that have ``requires_narrative: True`` with a natural-language paragraph.
+    Falls back to the plain structured response if LLM generation fails.
+    """
+    response = compose_response(understanding, plan, execution_result, facts)
+
+    if response.get("type") != "answer":
+        return response
+
+    for section in response.get("sections", []):
+        if not section.get("requires_narrative"):
+            continue
+
+        # Build a focused prompt for this section
+        section_data = {k: v for k, v in section.items() if k not in ("requires_narrative", "narrative")}
+        prompt = (
+            f"User query: {understanding.raw_prompt}\n"
+            f"Desired tone: {understanding.tone}\n"
+            f"Section type: {section.get('package', 'unknown')}\n"
+            f"Section data:\n{json.dumps(section_data, indent=2, default=str)}"
+        )
+
+        narrative = llm_client.generate_text(
+            system=NARRATIVE_SYSTEM_PROMPT,
+            prompt=prompt,
+            max_tokens=512,
+        )
+        if narrative:
+            section["narrative"] = narrative
+
+    return response
 
 
 # ---------------------------------------------------------------------------

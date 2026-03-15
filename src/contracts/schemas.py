@@ -206,3 +206,33 @@ class ErrorResponse(BaseModel):
         default=None,
         description="Machine-readable missing inputs for agent self-healing",
     )
+
+
+# -- Chat Models ---------------------------------------------------------------
+
+
+class ChatMessage(BaseModel):
+    """A single message in a chat conversation."""
+
+    role: str = Field(description="'user', 'assistant', or 'system'")
+    content: str = Field(description="Message text content")
+    timestamp: Optional[str] = Field(default=None, description="ISO 8601 timestamp")
+    structured_data: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Structured data attached to assistant messages (simulation results, edges, etc.)",
+    )
+
+
+class ChatRequest(BaseModel):
+    """Request to the /chat endpoint."""
+
+    session_id: Optional[str] = Field(default=None, description="Session ID; server generates one if absent")
+    message: str = Field(description="User message text")
+
+
+class ChatStreamEvent(BaseModel):
+    """A single SSE event emitted by the /chat endpoint."""
+
+    event_type: str = Field(description="stage_update, partial_text, structured_data, done, error")
+    data: Any = Field(default=None, description="Event payload — varies by event_type")
+    session_id: str = Field(default="", description="Session this event belongs to")

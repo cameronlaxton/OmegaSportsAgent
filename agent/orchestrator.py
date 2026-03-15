@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
+from agent.llm_client import LLMClient
 from agent.answer_strategist import build_answer_plan
 from agent.fact_gatherer import (
     build_data_completeness,
@@ -46,7 +47,7 @@ from agent.models import (
 )
 from agent.quality_gate import apply_quality_gate
 from agent.requirement_planner import build_gather_list
-from agent.response_composer import compose_response
+from agent.response_composer import compose_response, compose_response_with_llm
 from src.contracts.schemas import (
     GameAnalysisRequest,
     OddsInput,
@@ -82,7 +83,12 @@ class AgentConfig:
 
     def __post_init__(self) -> None:
         if not self.llm_api_key:
-            self.llm_api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+            env_keys = {
+                "anthropic": "ANTHROPIC_API_KEY",
+                "openai": "OPENAI_API_KEY",
+            }
+            env_var = env_keys.get(self.llm_provider, "ANTHROPIC_API_KEY")
+            self.llm_api_key = os.environ.get(env_var, "")
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +159,11 @@ class AgentOrchestrator:
         self.config = config or AgentConfig()
         self.cache = AgentCache(self.config.cache_dir)
         self._http_client: Optional[httpx.Client] = None
+        self.llm = LLMClient(
+            provider=self.config.llm_provider,
+            model=self.config.llm_model,
+            api_key=self.config.llm_api_key,
+        )
 
     # ------------------------------------------------------------------
     # Public API
@@ -169,7 +180,7 @@ class AgentOrchestrator:
 
         # Stage 1: Intent Understanding
         try:
-            understanding = understand(user_prompt)
+            understanding = understand(user_prompt, llm_client=self.llm)
         except Exception as exc:
             logger.warning("Intent understanding failed: %s", exc)
             return self._error_response(AgentError(
@@ -202,7 +213,12 @@ class AgentOrchestrator:
         execution_result = self._execute(understanding, revised_plan, facts)
 
         # Stage 7: Response Composition
-        response = compose_response(understanding, revised_plan, execution_result, facts)
+        if self.llm.is_available():
+            response = compose_response_with_llm(
+                understanding, revised_plan, execution_result, facts, self.llm,
+            )
+        else:
+            response = compose_response(understanding, revised_plan, execution_result, facts)
 
         elapsed = _elapsed_ms(start_time)
         response.setdefault("metadata", {})["duration_ms"] = elapsed
@@ -221,6 +237,84 @@ class AgentOrchestrator:
                 session.close()
         except Exception:
             logger.debug("Failed to record execution audit trail", exc_info=True)
+
+        return response
+
+    # ------------------------------------------------------------------
+    # Chat API — multi-turn with progress callbacks
+    # ------------------------------------------------------------------
+
+    def handle_chat(
+        self,
+        user_prompt: str,
+        history: Optional[List[Dict[str, Any]]] = None,
+        progress_callback: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """Chat-oriented entry point with conversation history and progress.
+
+        Like ``handle_query`` but accepts conversation history for multi-turn
+        context and calls ``progress_callback(stage_name)`` at each stage.
+        """
+        logger.info("Chat query: %s", user_prompt[:120])
+        start_time = time.time()
+
+        def _progress(stage: str) -> None:
+            if progress_callback:
+                try:
+                    progress_callback(stage)
+                except Exception:
+                    pass
+
+        # Stage 1: Intent Understanding
+        _progress("intent_understanding")
+        try:
+            understanding = understand(user_prompt, llm_client=self.llm)
+        except Exception as exc:
+            logger.warning("Intent understanding failed: %s", exc)
+            return self._error_response(AgentError(
+                code="PARSE_FAILED",
+                message=str(exc),
+                fallback_hint="Rephrase with a specific matchup, e.g. 'Lakers vs Warriors NBA'",
+            ))
+
+        # Stage 2: Answer Strategy
+        _progress("answer_strategy")
+        plan = build_answer_plan(understanding)
+
+        if plan.clarification_needed:
+            return {
+                "type": "clarification",
+                "question": plan.clarification_question,
+                "metadata": {"execution_mode": "none", "duration_ms": _elapsed_ms(start_time)},
+            }
+
+        # Stage 3: Requirement Planning
+        _progress("requirement_planning")
+        gather_slots = build_gather_list(understanding, plan)
+
+        # Stage 4: Fact Gathering
+        _progress("fact_gathering")
+        facts = gather_facts(gather_slots)
+
+        # Stage 5: Quality Gate
+        _progress("quality_gate")
+        revised_plan = apply_quality_gate(plan, facts)
+
+        # Stage 6: Execution
+        _progress("execution")
+        execution_result = self._execute(understanding, revised_plan, facts)
+
+        # Stage 7: Response Composition
+        _progress("response_composition")
+        if self.llm.is_available():
+            response = compose_response_with_llm(
+                understanding, revised_plan, execution_result, facts, self.llm,
+            )
+        else:
+            response = compose_response(understanding, revised_plan, execution_result, facts)
+
+        elapsed = _elapsed_ms(start_time)
+        response.setdefault("metadata", {})["duration_ms"] = elapsed
 
         return response
 

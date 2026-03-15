@@ -68,3 +68,32 @@ export interface ErrorResponse {
   context: Record<string, unknown> | null;
   fallback_hint: string | null;
 }
+
+// -- Chat Types ---------------------------------------------------------------
+
+export interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+  timestamp?: string;
+  structured_data?: Record<string, unknown> | null;
+}
+
+export type ChatEventType =
+  | "stage_update"
+  | "partial_text"
+  | "structured_data"
+  | "done"
+  | "error";
+
+export interface ChatStreamEvent {
+  event_type: ChatEventType;
+  data: unknown;
+  session_id: string;
+}
+
+export interface ChatState {
+  messages: ChatMessage[];
+  sessionId: string | null;
+  isStreaming: boolean;
+  currentStage: string | null;
+}

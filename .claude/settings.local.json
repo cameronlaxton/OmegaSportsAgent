@@ -72,7 +72,10 @@
       "Bash(rm -rf src/providers/__pycache__)",
       "Bash(rmdir src/providers)",
       "Bash(PYTHONPATH=. python -m pytest src/data/tests/ -v)",
-      "Bash(PYTHONPATH=. python -m pytest src/data/tests/test_fusion.py::TestFactFuser::test_disagreeing_sources_prefer_higher_tier -v)"
+      "Bash(PYTHONPATH=. python -m pytest src/data/tests/test_fusion.py::TestFactFuser::test_disagreeing_sources_prefer_higher_tier -v)",
+      "Bash(PYTHONPATH=. python -c \"from src.data.orchestration.retrieval_orchestrator import retrieve_facts; print\\(''OK: retrieval_orchestrator imports''\\)\")",
+      "Bash(PYTHONPATH=. python -c \"from agent.fact_gatherer import gather_facts; from agent.models import GatherSlot; print\\(''OK: fact_gatherer delegates to pipeline''\\)\")",
+      "Bash(PYTHONPATH=. python -m pytest tests/ src/data/tests/ -v --tb=short)"
     ]
   }
 }

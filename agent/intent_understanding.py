@@ -12,10 +12,11 @@ signal, not a default assumption.
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from datetime import date
-from typing import List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from agent.models import (
     Entity,
@@ -24,6 +25,9 @@ from agent.models import (
     Subject,
     UserGoal,
 )
+
+if TYPE_CHECKING:
+    from agent.llm_client import LLMClient
 
 logger = logging.getLogger("omega.agent.intent")
 
@@ -254,7 +258,138 @@ def parse_heuristic(prompt: str) -> QueryUnderstanding:
     )
 
 
-def understand(prompt: str, llm_available: bool = False) -> QueryUnderstanding:
+# ---------------------------------------------------------------------------
+# LLM tool schema for intent classification
+# ---------------------------------------------------------------------------
+
+CLASSIFY_QUERY_TOOL: Dict[str, Any] = {
+    "name": "classify_query",
+    "description": (
+        "Classify a sports betting query into structured dimensions. "
+        "Extract subjects, entities, league, goal, and betting intent."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "subjects": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": [s.value for s in Subject],
+                },
+                "description": "What the prompt is about: game, player_prop, slate, comparison, bankroll, news_context, general_sports",
+            },
+            "league": {
+                "type": "string",
+                "nullable": True,
+                "description": "League code (NBA, NFL, MLB, NHL, EPL, UFC, ATP, PGA, CS2, etc.) or null if ambiguous",
+            },
+            "entities": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Team or player name"},
+                        "role": {"type": "string", "enum": [r.value for r in EntityRole]},
+                        "entity_type": {"type": "string", "enum": ["team", "player"]},
+                    },
+                    "required": ["name", "role", "entity_type"],
+                },
+                "description": "Teams or players mentioned in the query",
+            },
+            "goal": {
+                "type": "string",
+                "enum": [g.value for g in UserGoal],
+                "description": "User's goal: decide, analyze, compare, explain, discuss, summarize, learn, monitor",
+            },
+            "wants_betting_advice": {
+                "type": "boolean",
+                "description": "True only if the user explicitly wants betting recommendations (edges, units, plays)",
+            },
+            "wants_explanation": {"type": "boolean"},
+            "wants_alternatives": {"type": "boolean"},
+            "tone": {
+                "type": "string",
+                "enum": ["analytical", "conversational", "brief"],
+            },
+            "prop_type": {
+                "type": "string",
+                "nullable": True,
+                "description": "Stat type for player props: pts, reb, ast, 3pm, pass_yds, rush_yds, etc.",
+            },
+            "prop_line": {
+                "type": "number",
+                "nullable": True,
+                "description": "The over/under line for a player prop",
+            },
+            "explicit_constraints": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Explicit constraints like 'no_bets', 'analysis_only'",
+            },
+        },
+        "required": ["subjects", "goal", "wants_betting_advice", "tone"],
+    },
+}
+
+INTENT_SYSTEM_PROMPT = """You are a sports betting query classifier for OmegaSportsAgent, a quantitative sports analytics engine.
+
+Classify the user's query into structured dimensions:
+- **subjects**: What is this about? (game matchup, player prop, full slate, bankroll management, etc.)
+- **league**: Which league? Use standard codes: NBA, NFL, MLB, NHL, EPL, MLS, UFC, ATP, PGA, CS2, NCAAB, NCAAF, etc.
+- **entities**: Extract team/player names with roles (home, away, subject).
+  - For "X vs Y" or "X at Y": second team is home, first is away.
+  - For player props: player is "subject", their team opponent is "opponent".
+- **goal**: What does the user want? (decide=should I bet, analyze=break it down, compare, explain, discuss, summarize, learn, monitor)
+- **wants_betting_advice**: Only true if they explicitly want bet recommendations (edges, units, plays). Analysis alone is NOT betting advice.
+- **tone**: analytical (default), conversational (casual/opinion), brief (quick answer)
+- **prop_type/prop_line**: For player props, extract the stat type and line.
+
+Today's date: """ + date.today().isoformat()
+
+
+def _llm_classify(prompt: str, llm_client: "LLMClient") -> Optional[QueryUnderstanding]:
+    """Attempt LLM-based intent classification via tool use."""
+    result = llm_client.call_with_tools(
+        system=INTENT_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": prompt}],
+        tools=[CLASSIFY_QUERY_TOOL],
+    )
+    if result is None:
+        return None
+
+    try:
+        # Build entities from LLM output
+        entities = []
+        for ent in result.get("entities", []):
+            entities.append(Entity(
+                name=ent["name"],
+                role=EntityRole(ent["role"]),
+                entity_type=ent.get("entity_type", "team"),
+            ))
+
+        return QueryUnderstanding(
+            subjects=[Subject(s) for s in result.get("subjects", ["general_sports"])],
+            league=result.get("league"),
+            entities=entities,
+            markets=[],
+            prop_type=result.get("prop_type"),
+            prop_line=result.get("prop_line"),
+            date=date.today().isoformat(),
+            goal=UserGoal(result.get("goal", "analyze")),
+            wants_betting_advice=result.get("wants_betting_advice", False),
+            wants_explanation=result.get("wants_explanation", False),
+            wants_alternatives=result.get("wants_alternatives", False),
+            tone=result.get("tone", "analytical"),
+            explicit_constraints=result.get("explicit_constraints", []),
+            raw_prompt=prompt,
+        )
+    except (ValueError, KeyError):
+        logger.warning("Failed to parse LLM intent classification result", exc_info=True)
+        return None
+
+
+def understand(prompt: str, llm_client: Optional["LLMClient"] = None) -> QueryUnderstanding:
     """Top-level entry point for intent understanding.
 
     Uses LLM function-calling when available, otherwise falls back to
@@ -262,16 +397,16 @@ def understand(prompt: str, llm_available: bool = False) -> QueryUnderstanding:
 
     Args:
         prompt: Raw user input string.
-        llm_available: Whether an LLM is configured and reachable.
+        llm_client: Optional LLMClient instance for LLM-based classification.
 
     Returns:
         QueryUnderstanding with all four dimensions classified.
     """
-    if llm_available:
-        # TODO: Implement LLM-based intent classification via function-calling.
-        # The LLM receives the prompt + a tool schema matching QueryUnderstanding
-        # fields, and returns a structured classification.
-        # For now, fall through to heuristic.
-        pass
+    if llm_client is not None and llm_client.is_available():
+        result = _llm_classify(prompt, llm_client)
+        if result is not None:
+            logger.info("Intent classified via LLM")
+            return result
+        logger.info("LLM classification failed, falling back to heuristic")
 
     return parse_heuristic(prompt)
