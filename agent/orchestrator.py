@@ -39,11 +39,14 @@ from agent.fact_gatherer import (
 from agent.intent_understanding import understand
 from agent.models import (
     AnswerPlan,
+    Entity,
+    EntityRole,
     ExecutionMode,
     ExecutionResult,
     GatheredFact,
     OutputPackage,
     QueryUnderstanding,
+    Subject,
 )
 from agent.quality_gate import apply_quality_gate
 from agent.requirement_planner import build_gather_list
@@ -206,6 +209,14 @@ class AgentOrchestrator:
         # Stage 4: Fact Gathering
         facts = gather_facts(gather_slots)
 
+        # Stage 4b: Slate Expansion — expand schedule into per-game slots
+        if Subject.SLATE in understanding.subjects:
+            expanded_slots = self._expand_slate_slots(understanding, facts)
+            if expanded_slots:
+                logger.info("Slate expansion: %d additional slots", len(expanded_slots))
+                expanded_facts = gather_facts(expanded_slots)
+                facts.extend(expanded_facts)
+
         # Stage 5: Quality Gate — revise plan if data quality insufficient
         revised_plan = apply_quality_gate(plan, facts)
 
@@ -295,6 +306,15 @@ class AgentOrchestrator:
         # Stage 4: Fact Gathering
         _progress("fact_gathering")
         facts = gather_facts(gather_slots)
+
+        # Stage 4b: Slate Expansion — expand schedule into per-game slots
+        if Subject.SLATE in understanding.subjects:
+            _progress("slate_expansion")
+            expanded_slots = self._expand_slate_slots(understanding, facts)
+            if expanded_slots:
+                logger.info("Slate expansion: %d additional slots", len(expanded_slots))
+                expanded_facts = gather_facts(expanded_slots)
+                facts.extend(expanded_facts)
 
         # Stage 5: Quality Gate
         _progress("quality_gate")
@@ -500,6 +520,88 @@ class AgentOrchestrator:
                 except Exception:
                     logger.debug("Could not build OddsInput from %s", data)
         return None
+
+    # ------------------------------------------------------------------
+    # Slate Expansion
+    # ------------------------------------------------------------------
+
+    def _expand_slate_slots(
+        self,
+        understanding: QueryUnderstanding,
+        facts: List[GatheredFact],
+    ) -> List:
+        """Expand a slate query's schedule facts into per-game gather slots.
+
+        After the initial fact gathering for a slate query, the schedule fact
+        contains a list of games. This method creates per-game QueryUnderstanding
+        objects with home/away entities and generates gather slots for
+        odds, team stats, and injuries for each game.
+        """
+        from agent.requirement_planner import build_gather_list
+
+        league = understanding.league or "NBA"
+        games = []
+
+        # Find the schedule fact with games data
+        for fact in facts:
+            if fact.filled and fact.result and fact.slot.data_type == "schedule":
+                data = fact.result.data
+                if isinstance(data, dict) and "games" in data:
+                    games = data["games"]
+                    break
+
+        if not games:
+            logger.debug("No games found in schedule facts for slate expansion")
+            return []
+
+        # Collect existing slot keys to avoid duplicates
+        existing_keys = {f.slot.key for f in facts}
+
+        all_expanded_slots = []
+        for game in games:
+            home = game.get("home_team") or game.get("home", "")
+            away = game.get("away_team") or game.get("away", "")
+            if not home or not away:
+                continue
+
+            # Build a per-game QueryUnderstanding
+            game_understanding = QueryUnderstanding(
+                subjects=[Subject.GAME],
+                league=league,
+                entities=[
+                    Entity(name=home, role=EntityRole.HOME, entity_type="team"),
+                    Entity(name=away, role=EntityRole.AWAY, entity_type="team"),
+                ],
+                goal=understanding.goal,
+                wants_betting_advice=understanding.wants_betting_advice,
+                tone=understanding.tone,
+                raw_prompt=f"{away} @ {home} ({league})",
+            )
+
+            # Build a minimal plan for per-game data
+            game_plan = AnswerPlan(
+                output_packages=[OutputPackage.COMPACT_SUMMARY],
+                execution_modes=[ExecutionMode.NATIVE_SIM],
+                data_requirements=["odds", "team_stat", "injury"],
+                minimum_confidence=0.3,
+            )
+
+            game_slots = build_gather_list(game_understanding, game_plan)
+
+            # Filter out schedule slots (already have schedule) and duplicates
+            for slot in game_slots:
+                if slot.data_type == "schedule":
+                    continue
+                if slot.key in existing_keys:
+                    continue
+                existing_keys.add(slot.key)
+                all_expanded_slots.append(slot)
+
+        logger.info(
+            "Slate expansion: %d games → %d new gather slots",
+            len(games), len(all_expanded_slots),
+        )
+        return all_expanded_slots
 
     # ------------------------------------------------------------------
     # HTTP backend

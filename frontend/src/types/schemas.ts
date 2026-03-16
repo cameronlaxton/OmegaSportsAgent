@@ -90,12 +90,14 @@ export interface ChatMessage {
   content: string;
   timestamp?: string;
   structured_data?: Record<string, unknown> | null;
+  suggested_followups?: string[];
 }
 
 export type ChatEventType =
   | "stage_update"
   | "partial_text"
   | "structured_data"
+  | "suggested_followups"
   | "done"
   | "error";
 

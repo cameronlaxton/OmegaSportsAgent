@@ -274,6 +274,10 @@ async def chat_endpoint(request: ChatRequest):
                 full_narrative = "\n\n".join(narrative_parts)
                 yield _sse_event("partial_text", full_narrative, session_id)
 
+            # Send follow-up suggestions if present
+            if isinstance(result, dict) and result.get("suggested_followups"):
+                yield _sse_event("suggested_followups", result["suggested_followups"], session_id)
+
             # Record assistant response
             assistant_content = "\n\n".join(narrative_parts) if narrative_parts else json.dumps(result, default=str)
             session_store.append(session_id, ChatMessage(

@@ -291,21 +291,44 @@ def _build_limited_context(
 
 NARRATIVE_SYSTEM_PROMPT = """You are the reasoning and interpretation layer for OmegaSportsAgent, a quantitative sports analytics engine.
 
-You receive: the user's original question, retrieved evidence with source attributions, and OmegaSportsAgent engine outputs (simulations, edges, probabilities, confidence scores).
+You receive: the user's original question, retrieved evidence, and OmegaSportsAgent engine outputs (simulations, edges, probabilities, confidence scores).
 
-Your job is to explain the engine's findings clearly and insightfully, as if you ran the entire workflow end-to-end.
+Your job is to explain the engine's findings clearly and insightfully.
 
-STRICT RULES — VIOLATION OF THESE IS FORBIDDEN:
+STRICT RULES — VIOLATION IS FORBIDDEN:
 1. You may ONLY cite numbers that appear in the engine output or the retrieved source bundle below.
 2. You are FORBIDDEN from inventing, estimating, rounding, or interpolating any numbers not present in the data.
-3. If data is missing or incomplete, say so explicitly — do NOT fill gaps with guesses or "likely" estimates.
-4. Cite sources for retrieved data (e.g., "per DraftKings lines", "via ESPN").
-5. Flag confidence levels and missing-data caveats from the quality metadata.
-6. If the engine ran simulations, reference simulation outputs (win probability, edge %, expected value).
-7. If no simulation ran, clearly state the analysis is research-based, not model-driven.
-8. Be quantitative and precise — use the exact numbers from the data, not approximations.
-9. Match the user's tone (analytical, conversational, or brief).
-10. Keep responses concise (2-5 sentences per section) unless the data complexity warrants more.
+3. If data is missing or incomplete, say so explicitly — do NOT fill gaps with guesses.
+4. If the engine ran simulations, reference simulation outputs (win probability, edge %, expected value).
+5. If no simulation ran, clearly state the analysis is research-based, not model-driven.
+6. Be quantitative and precise — use the exact numbers from the data, not approximations.
+
+OMEGA OUTPUT CONTRACT — every bet recommendation MUST include ALL of these when available:
+- True probability (from simulation or model)
+- Market-implied probability (from odds)
+- Edge % (true prob minus implied prob)
+- Kelly fraction or recommended stake (units)
+- Confidence tier: A (strong edge, high confidence), B (moderate edge), C (marginal), or Pass
+- Bankroll cap warning if Kelly fraction exceeds 5%
+
+FORMAT RULES:
+- Use markdown formatting: **bold** for key numbers, tables for multi-bet comparisons.
+- For single-game analysis: lead with the top play, then supporting data.
+- For slate analysis: lead with a summary table, then per-game breakdowns.
+- Never use vague prose like "there may be value" — always quantify.
+- Keep responses concise (2-5 sentences per section) unless data complexity warrants more.
+- No source citations needed.
+"""
+
+
+FOLLOWUP_SYSTEM_PROMPT = """Generate 2-3 short follow-up questions (under 50 characters each) that a sports bettor would naturally ask after receiving this analysis. Return ONLY a JSON array of strings, nothing else.
+
+Examples of good follow-ups:
+- "What's the best parlay here?"
+- "Show me player props for this game"
+- "How does home court affect this?"
+- "What if the spread moves to -3?"
+- "Tell me your risk level for tonight"
 """
 
 
@@ -348,7 +371,50 @@ def compose_response_with_llm(
         if narrative:
             section["narrative"] = narrative
 
+    # Generate follow-up suggestions
+    followups = _generate_followups(understanding, response, llm_client)
+    if followups:
+        response["suggested_followups"] = followups
+
     return response
+
+
+def _generate_followups(
+    understanding: QueryUnderstanding,
+    response: Dict[str, Any],
+    llm_client: "LLMClient",
+) -> List[str]:
+    """Generate 2-3 contextual follow-up suggestions using the LLM."""
+    try:
+        # Build a brief summary of what was analyzed
+        packages = [s.get("package", "") for s in response.get("sections", [])]
+        prompt = (
+            f"User asked: {understanding.raw_prompt}\n"
+            f"We provided: {', '.join(packages)}\n"
+            f"Generate follow-up questions."
+        )
+
+        raw = llm_client.generate_text(
+            system=FOLLOWUP_SYSTEM_PROMPT,
+            prompt=prompt,
+            max_tokens=200,
+        )
+        if not raw:
+            return []
+
+        # Parse the JSON array from LLM output
+        raw = raw.strip()
+        # Handle case where LLM wraps in markdown code block
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
+        followups = json.loads(raw)
+        if isinstance(followups, list):
+            return [str(f)[:50] for f in followups[:3]]
+        return []
+    except Exception as exc:
+        logger.debug("Failed to generate followups: %s", exc)
+        return []
 
 
 # ---------------------------------------------------------------------------

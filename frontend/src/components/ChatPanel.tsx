@@ -92,6 +92,18 @@ export function ChatPanel({ context }: Props) {
             });
             break;
 
+          case "suggested_followups": {
+            const followupList = event.data as string[];
+            setMessages((prev) => {
+              const last = prev[prev.length - 1];
+              if (last?.role === "assistant") {
+                return [...prev.slice(0, -1), { ...last, suggested_followups: followupList }];
+              }
+              return prev;
+            });
+            break;
+          }
+
           case "done": {
             const doneData = event.data as { session_id?: string };
             if (doneData?.session_id) {
@@ -184,7 +196,7 @@ export function ChatPanel({ context }: Props) {
         )}
 
         {messages.map((msg, i) => (
-          <ChatMessageBubble key={i} message={msg} />
+          <ChatMessageBubble key={i} message={msg} onFollowup={handleSend} />
         ))}
 
         {isStreaming && currentStage && (

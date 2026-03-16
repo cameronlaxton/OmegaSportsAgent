@@ -89,8 +89,10 @@ def _call_schedule_api(slot: GatherSlot) -> Optional[ProviderResult]:
     if not games:
         return None
 
-    # If slot entity is specified, filter to matching games
-    if slot.entity:
+    # If slot entity is specified AND it's not a slate query (entity == league),
+    # filter to matching games. For slate queries we want ALL games.
+    is_slate_query = slot.entity and slot.entity.lower() == slot.league.lower()
+    if slot.entity and not is_slate_query:
         entity_lower = slot.entity.lower()
         matching = [
             g for g in games
