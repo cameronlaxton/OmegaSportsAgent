@@ -102,48 +102,64 @@ def _try_direct_api(slot: GatherSlot) -> Optional[ProviderResult]:
 
 
 def _try_web_search_pipeline(slot: GatherSlot) -> Optional[ProviderResult]:
-    """Stage 4: Web search → page fetch → extract → normalize → validate → fuse.
+    """Stage 4: Web search → extract → normalize → validate → fuse.
 
     This is the primary path for data not available via direct APIs.
+
+    When Perplexity returns pre-structured JSON (domain="perplexity.structured"),
+    we bypass the extractor layer entirely and convert directly to SportsFacts.
+    This eliminates the lossy regex/LLM extraction step.
     """
     try:
+        import json as _json
+
         # 4a. Search
         from src.data.acquisition.web_search import search_for_slot
         search_results = search_for_slot(slot)
         if not search_results:
             return None
 
-        # 4b. Fetch pages and extract facts
-        from src.data.acquisition.page_fetcher import fetch_page_text
-        from src.data.extractors.base_extractor import get_extractor
-
-        extractor = get_extractor(slot.data_type)
-        if extractor is None:
-            logger.debug("No extractor for data_type=%s", slot.data_type)
-            return None
-
-        all_facts: List[SportsFact] = []
-
-        for sr in search_results:
-            # Use snippet directly if available
-            text = sr.snippet
-            if not text and sr.url and not sr.url.startswith("perplexity://"):
-                text = fetch_page_text(sr.url)
-
-            if not text:
-                continue
-
-            trust_tier = get_trust_tier(sr.domain or sr.url)
-            attribution = SourceAttribution(
-                source_name=f"web_search:{sr.domain}" if sr.domain else "web_search",
-                source_url=sr.url if not sr.url.startswith("perplexity://") else None,
-                fetched_at=datetime.utcnow(),
-                trust_tier=trust_tier,
-                confidence=get_confidence_for_tier(trust_tier),
+        # 4b. Check for structured Perplexity results first (bypass extractors)
+        structured_facts = _extract_structured_results(search_results, slot)
+        if structured_facts:
+            logger.info(
+                "Using %d structured facts from Perplexity for slot %s (bypassing extractors)",
+                len(structured_facts), slot.key,
             )
+            all_facts: List[SportsFact] = structured_facts
+        else:
+            # Fall back to traditional extraction pipeline
+            from src.data.acquisition.page_fetcher import fetch_page_text
+            from src.data.extractors.base_extractor import get_extractor
 
-            facts = extractor.extract(text, slot, attribution)
-            all_facts.extend(facts)
+            extractor = get_extractor(slot.data_type)
+            if extractor is None:
+                logger.debug("No extractor for data_type=%s", slot.data_type)
+                return None
+
+            all_facts = []
+            for sr in search_results:
+                if sr.domain == "perplexity.structured":
+                    continue  # Already handled above
+
+                text = sr.snippet
+                if not text and sr.url and not sr.url.startswith(("perplexity://", "anthropic://")):
+                    text = fetch_page_text(sr.url)
+
+                if not text:
+                    continue
+
+                trust_tier = get_trust_tier(sr.domain or sr.url)
+                attribution = SourceAttribution(
+                    source_name=f"web_search:{sr.domain}" if sr.domain else "web_search",
+                    source_url=sr.url if not sr.url.startswith(("perplexity://", "anthropic://")) else None,
+                    fetched_at=datetime.utcnow(),
+                    trust_tier=trust_tier,
+                    confidence=get_confidence_for_tier(trust_tier),
+                )
+
+                facts = extractor.extract(text, slot, attribution)
+                all_facts.extend(facts)
 
         if not all_facts:
             return None
@@ -189,6 +205,55 @@ def _try_web_search_pipeline(slot: GatherSlot) -> Optional[ProviderResult]:
     except Exception as exc:
         logger.debug("Web search pipeline failed for slot %s: %s", slot.key, exc)
         return None
+
+
+def _extract_structured_results(
+    search_results: list, slot: GatherSlot
+) -> List[SportsFact]:
+    """Convert pre-structured Perplexity JSON results directly to SportsFacts.
+
+    Bypasses the extractor layer entirely — no regex parsing, no LLM extraction.
+    The JSON keys map directly to fact keys because the Perplexity prompt
+    was built from the same extractor schema.
+    """
+    import json as _json
+
+    facts: List[SportsFact] = []
+
+    for sr in search_results:
+        if sr.domain != "perplexity.structured":
+            continue
+
+        try:
+            data = _json.loads(sr.snippet)
+        except (ValueError, TypeError):
+            continue
+
+        if not isinstance(data, dict):
+            continue
+
+        attribution = SourceAttribution(
+            source_name="perplexity.structured",
+            source_url=None,
+            fetched_at=datetime.utcnow(),
+            trust_tier=2,  # Structured search with citations = high trust
+            confidence=0.80,
+        )
+
+        for key, value in data.items():
+            if value is None:
+                continue
+
+            facts.append(SportsFact(
+                key=key,
+                value=value,
+                data_type=slot.data_type,
+                entity=slot.entity,
+                league=slot.league,
+                attribution=attribution,
+            ))
+
+    return facts
 
 
 def _normalize_facts(facts: List[SportsFact], slot: GatherSlot) -> List[SportsFact]:

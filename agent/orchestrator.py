@@ -67,7 +67,7 @@ class AgentConfig:
     """Runtime configuration for the agent orchestrator."""
 
     llm_provider: str = "anthropic"
-    llm_model: str = "claude-sonnet-4-20250514"
+    llm_model: str = "claude-opus-4-20250115"
     llm_api_key: str = ""
 
     backend_mode: str = "in_process"

@@ -2,16 +2,16 @@
 LLM-powered web search — the primary data acquisition path for slots
 that direct APIs cannot serve.
 
-Uses Anthropic's server-side web_search tool as the primary backend,
-falling back to Perplexity if configured. Returns raw SearchResult
-objects for extraction by the extractor layer.
+Uses Perplexity Sonar as the primary backend (structured JSON output),
+falling back to Anthropic web_search tool if Perplexity is unavailable.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import os
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 from agent.models import GatherSlot
@@ -59,7 +59,7 @@ def search_for_slot(slot: GatherSlot, queries: Optional[List[str]] = None) -> Li
     results: List[SearchResult] = []
     for query in queries:
         try:
-            batch = _execute_search(query)
+            batch = _execute_search(query, slot)
             results.extend(batch)
         except Exception as exc:
             logger.debug("Search failed for query '%s': %s", query, exc)
@@ -76,26 +76,232 @@ def search_for_slot(slot: GatherSlot, queries: Optional[List[str]] = None) -> Li
     return unique
 
 
-def _execute_search(query: str) -> List[SearchResult]:
+def _execute_search(query: str, slot: Optional[GatherSlot] = None) -> List[SearchResult]:
     """Execute a single search query via the configured search backend.
 
     Priority:
-    1. Anthropic web_search tool (uses existing ANTHROPIC_API_KEY)
-    2. Perplexity API (legacy fallback, if PERPLEXITY_API_KEY set)
+    1. Perplexity Sonar structured (returns JSON matching extractor schema)
+    2. Anthropic web_search tool (fallback, returns prose)
     """
+    perplexity_key = os.environ.get("PERPLEXITY_API_KEY")
+    if perplexity_key and slot is not None:
+        results = _search_perplexity_structured(query, perplexity_key, slot)
+        if results:
+            return results
+
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     if anthropic_key:
         results = _search_anthropic(query, anthropic_key)
         if results:
             return results
 
-    perplexity_key = os.environ.get("PERPLEXITY_API_KEY")
-    if perplexity_key:
-        return _search_perplexity(query, perplexity_key)
-
-    logger.warning("No search backend configured (set ANTHROPIC_API_KEY)")
+    logger.warning("No search backend configured (set PERPLEXITY_API_KEY or ANTHROPIC_API_KEY)")
     return []
 
+
+# ---------------------------------------------------------------------------
+# Perplexity Sonar — structured JSON search (primary)
+# ---------------------------------------------------------------------------
+
+def _get_schema_for_slot(slot: GatherSlot) -> Dict[str, str]:
+    """Get the extractor schema for a slot type to embed in the Perplexity prompt."""
+    from src.data.extractors.base_extractor import get_extractor
+
+    extractor = get_extractor(slot.data_type)
+    if extractor is not None:
+        return extractor.schema_hint(slot)
+
+    # Fallback generic schema
+    return {"data": "str"}
+
+
+def _build_perplexity_system_prompt(slot: GatherSlot, schema: Dict[str, str]) -> str:
+    """Build a system prompt that tells Perplexity to return structured JSON."""
+    schema_json = json.dumps(schema, indent=2)
+    data_type = slot.data_type
+    entity = slot.entity
+    league = slot.league.upper()
+
+    # Type-specific instructions for better data quality
+    type_instructions = {
+        "odds": (
+            f"Search for current betting odds for {entity} in {league}. "
+            "Find moneyline, point spread, and over/under totals from major sportsbooks "
+            "(DraftKings, FanDuel, BetMGM, Caesars, etc.). "
+            "Use American odds format (e.g., -110, +150). "
+            "Spreads should be numeric (e.g., -3.5, +7). "
+            "Totals should be the over/under number (e.g., 224.5)."
+        ),
+        "team_stat": (
+            f"Search for current {league} season statistics for {entity}. "
+            "Find offensive rating, defensive rating, pace, shooting percentages, "
+            "rebounds, assists, turnovers per game, and win-loss record. "
+            "Use the current season stats."
+        ),
+        "player_stat": (
+            f"Search for current {league} season statistics for {entity}. "
+            "Find points, rebounds, assists, steals, blocks per game, "
+            "shooting percentages, and games played this season."
+        ),
+        "player_game_log": (
+            f"Search for recent game logs for {entity} in {league}. "
+            "Find the last 5-10 games with points, rebounds, assists, and minutes. "
+            "Calculate averages if possible."
+        ),
+        "injury": (
+            f"Search for the current {league} injury report for {entity}. "
+            "Find all injured or questionable players, their injury type, "
+            "and their status (out, doubtful, questionable, probable, day-to-day)."
+        ),
+        "schedule": (
+            f"Search for today's {league} schedule involving {entity}. "
+            "Find the opponent, game time, venue, and home/away designation."
+        ),
+    }
+
+    instruction = type_instructions.get(data_type, (
+        f"Search for current {data_type} data for {entity} in {league}."
+    ))
+
+    return (
+        f"You are a sports data retrieval agent. Your ONLY job is to search the web "
+        f"and return structured data.\n\n"
+        f"{instruction}\n\n"
+        f"Return ONLY a valid JSON object with these fields:\n"
+        f"{schema_json}\n\n"
+        f"RULES:\n"
+        f"- Return ONLY the JSON object, no explanation or markdown\n"
+        f"- Use null for any field you cannot find\n"
+        f"- Numbers must be numeric (not strings)\n"
+        f"- Use the most recent data available\n"
+        f"- If multiple sources disagree, use the consensus or most reputable source"
+    )
+
+
+def _search_perplexity_structured(
+    query: str, api_key: str, slot: GatherSlot
+) -> List[SearchResult]:
+    """Search using Perplexity Sonar and request structured JSON output.
+
+    The key innovation: instead of getting prose and parsing it, we ask
+    Perplexity to return data in the exact schema our extractors expect.
+    This eliminates the lossy search→extract two-step.
+    """
+    import httpx
+
+    schema = _get_schema_for_slot(slot)
+    system_prompt = _build_perplexity_system_prompt(slot, schema)
+
+    try:
+        resp = httpx.post(
+            "https://api.perplexity.ai/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "sonar",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": query},
+                ],
+                "temperature": 0.0,
+            },
+            timeout=20.0,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        citations = data.get("citations", [])
+
+        if not content:
+            logger.warning("Perplexity returned empty content for: %s", query[:60])
+            return []
+
+        # Try to parse as JSON — this is the structured path
+        parsed_json = _try_parse_json(content)
+
+        results: List[SearchResult] = []
+
+        if parsed_json is not None:
+            # SUCCESS: Perplexity returned structured JSON
+            # Store the JSON string in snippet, tagged with special domain
+            logger.info(
+                "Perplexity structured search succeeded for slot %s (%s): %d fields",
+                slot.key, slot.data_type, len(parsed_json),
+            )
+            results.append(SearchResult(
+                url="perplexity://structured",
+                title=f"Perplexity Structured: {slot.data_type} for {slot.entity}",
+                snippet=json.dumps(parsed_json),
+                domain="perplexity.structured",
+            ))
+        else:
+            # Perplexity returned prose instead of JSON — still usable by extractors
+            logger.info(
+                "Perplexity returned prose (not JSON) for slot %s, falling back to extraction",
+                slot.key,
+            )
+            results.append(SearchResult(
+                url="perplexity://search",
+                title=f"Perplexity: {query[:80]}",
+                snippet=content,
+                domain="perplexity.ai",
+            ))
+
+        # Add citation URLs as additional results for potential page fetching
+        for url in citations:
+            domain = _extract_domain(url)
+            results.append(SearchResult(
+                url=url,
+                title=f"Source: {domain}",
+                snippet="",
+                domain=domain,
+            ))
+
+        return results
+
+    except Exception as exc:
+        logger.warning("Perplexity structured search failed: %s", exc)
+        return []
+
+
+def _try_parse_json(text: str) -> Optional[Dict[str, Any]]:
+    """Try to parse JSON from Perplexity response, handling markdown code blocks."""
+    import re
+
+    text = text.strip()
+
+    # Strip markdown code blocks if present
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*\n?", "", text)
+        text = re.sub(r"\n?```\s*$", "", text)
+        text = text.strip()
+
+    try:
+        result = json.loads(text)
+        if isinstance(result, dict):
+            return result
+    except json.JSONDecodeError:
+        pass
+
+    # Try to find a JSON object in the response
+    match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", text, re.DOTALL)
+    if match:
+        try:
+            result = json.loads(match.group())
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Anthropic web_search tool (fallback)
+# ---------------------------------------------------------------------------
 
 def _search_anthropic(query: str, api_key: str) -> List[SearchResult]:
     """Search using Anthropic's server-side web_search tool.
@@ -182,68 +388,6 @@ def _search_anthropic(query: str, api_key: str) -> List[SearchResult]:
 
     except Exception as exc:
         logger.warning("Anthropic web search failed: %s", exc)
-        return []
-
-
-def _search_perplexity(query: str, api_key: str) -> List[SearchResult]:
-    """Search using Perplexity API and extract structured results."""
-    import httpx
-
-    try:
-        resp = httpx.post(
-            "https://api.perplexity.ai/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "sonar",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a sports data research assistant. "
-                            "Return factual, current sports statistics and information. "
-                            "Always cite your sources with URLs."
-                        ),
-                    },
-                    {"role": "user", "content": query},
-                ],
-            },
-            timeout=15.0,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-
-        # Extract citations from Perplexity response
-        citations = data.get("citations", [])
-        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-
-        results: List[SearchResult] = []
-
-        # Create a result for the main response content
-        if content:
-            results.append(SearchResult(
-                url="perplexity://search",
-                title=f"Perplexity: {query[:80]}",
-                snippet=content,
-                domain="perplexity.ai",
-            ))
-
-        # Add citation URLs as additional results
-        for url in citations:
-            domain = _extract_domain(url)
-            results.append(SearchResult(
-                url=url,
-                title=f"Source: {domain}",
-                snippet="",  # Would need page fetch to get content
-                domain=domain,
-            ))
-
-        return results
-
-    except Exception as exc:
-        logger.debug("Perplexity search failed: %s", exc)
         return []
 
 
