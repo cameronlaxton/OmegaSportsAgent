@@ -99,10 +99,8 @@ DIRECT_API_CAPABILITIES: Dict[str, Dict[str, Set[str]]] = {
         "data_types": {"schedule"},
         "leagues": {"NBA", "NFL", "MLB", "NHL", "NCAAB", "NCAAF", "WNBA"},
     },
-    "odds_scraper": {
-        "data_types": {"odds"},
-        "leagues": {"NBA", "NFL", "MLB", "NHL", "NCAAB", "NCAAF"},
-    },
+    # odds_scraper removed — ODDS_API_KEY is not integrated; odds come via
+    # Perplexity structured search or Anthropic web search instead.
     "stats_scraper": {
         "data_types": {"team_stat", "player_stat"},
         "leagues": {"NBA", "NFL", "MLB", "NHL", "NCAAB", "NCAAF"},

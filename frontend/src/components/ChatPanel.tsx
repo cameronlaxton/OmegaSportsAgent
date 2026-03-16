@@ -12,15 +12,51 @@ interface Props {
   context?: string | null;
 }
 
+// Session storage keys for side-panel conversation persistence
+const PANEL_STORAGE_MESSAGES = "omega_panel_messages";
+const PANEL_STORAGE_SESSION = "omega_panel_session_id";
+
+function loadPanelMessages(): ChatMessage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = sessionStorage.getItem(PANEL_STORAGE_MESSAGES);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadPanelSession(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return sessionStorage.getItem(PANEL_STORAGE_SESSION);
+  } catch {
+    return null;
+  }
+}
+
 export function ChatPanel({ context }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>(loadPanelMessages);
+  const [sessionId, setSessionId] = useState<string | null>(loadPanelSession);
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentStage, setCurrentStage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Persist panel messages and session to sessionStorage
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(PANEL_STORAGE_MESSAGES, JSON.stringify(messages));
+    } catch {}
+  }, [messages]);
+
+  useEffect(() => {
+    try {
+      if (sessionId) sessionStorage.setItem(PANEL_STORAGE_SESSION, sessionId);
+    } catch {}
+  }, [sessionId]);
 
   useEffect(() => {
     if (scrollRef.current) {

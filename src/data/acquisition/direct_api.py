@@ -63,8 +63,6 @@ def _call_module(module_name: str, slot: GatherSlot) -> Optional[ProviderResult]
     """
     if module_name == "schedule_api":
         return _call_schedule_api(slot)
-    elif module_name == "odds_scraper":
-        return _call_odds_scraper(slot)
     elif module_name == "stats_scraper":
         return _call_stats_scraper(slot)
     elif module_name == "nba_stats_api":
@@ -111,39 +109,6 @@ def _call_schedule_api(slot: GatherSlot) -> Optional[ProviderResult]:
         confidence=0.95,
     )
 
-
-def _call_odds_scraper(slot: GatherSlot) -> Optional[ProviderResult]:
-    from src.data.odds_scraper import get_upcoming_games
-
-    games = get_upcoming_games(slot.league)
-    if not games:
-        return None
-
-    # Filter to entity if specified
-    if slot.entity:
-        entity_lower = slot.entity.lower()
-        matching = [
-            g for g in games
-            if entity_lower in str(g.get("home_team", "")).lower()
-            or entity_lower in str(g.get("away_team", "")).lower()
-        ]
-        if matching:
-            games = matching
-
-    # Only return as filled if games actually have bookmaker odds data.
-    # The ESPN fallback returns games with empty bookmakers arrays, which
-    # is useless for odds analysis — let the web search pipeline handle it.
-    has_odds = any(g.get("bookmakers") for g in games)
-    if not has_odds:
-        logger.debug("Odds scraper returned games but no bookmaker data — skipping")
-        return None
-
-    return ProviderResult(
-        data={"odds": games} if len(games) > 1 else games[0] if games else {"odds": games},
-        source="odds_api",
-        fetched_at=datetime.utcnow(),
-        confidence=0.95,
-    )
 
 
 def _call_stats_scraper(slot: GatherSlot) -> Optional[ProviderResult]:

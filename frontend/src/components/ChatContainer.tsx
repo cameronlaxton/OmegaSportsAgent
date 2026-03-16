@@ -7,14 +7,50 @@ import { ChatMessageBubble } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { PipelineProgress } from "./PipelineProgress";
 
+// Session storage keys for conversation persistence across page refreshes
+const STORAGE_KEY_MESSAGES = "omega_chat_messages";
+const STORAGE_KEY_SESSION = "omega_chat_session_id";
+
+function loadMessages(): ChatMessage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY_MESSAGES);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadSessionId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return sessionStorage.getItem(STORAGE_KEY_SESSION);
+  } catch {
+    return null;
+  }
+}
+
 export function ChatContainer() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>(loadMessages);
+  const [sessionId, setSessionId] = useState<string | null>(loadSessionId);
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentStage, setCurrentStage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Persist messages and sessionId to sessionStorage on every change
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(messages));
+    } catch { /* quota exceeded — silently ignore */ }
+  }, [messages]);
+
+  useEffect(() => {
+    try {
+      if (sessionId) sessionStorage.setItem(STORAGE_KEY_SESSION, sessionId);
+    } catch {}
+  }, [sessionId]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {

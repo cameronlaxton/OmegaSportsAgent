@@ -299,9 +299,11 @@ STRICT RULES — VIOLATION IS FORBIDDEN:
 1. You may ONLY cite numbers that appear in the engine output or the retrieved source bundle below.
 2. You are FORBIDDEN from inventing, estimating, rounding, or interpolating any numbers not present in the data.
 3. If data is missing or incomplete, say so explicitly — do NOT fill gaps with guesses.
-4. If the engine ran simulations, reference simulation outputs (win probability, edge %, expected value).
-5. If no simulation ran, clearly state the analysis is research-based, not model-driven.
-6. Be quantitative and precise — use the exact numbers from the data, not approximations.
+4. NEVER reference teams, matchups, odds, or scores that are not in the data. If no specific games are in the data, do NOT invent placeholder matchups.
+5. If the engine ran simulations, reference simulation outputs (win probability, edge %, expected value).
+6. If no simulation ran, clearly state the analysis is research-based, not model-driven.
+7. Be quantitative and precise — use the exact numbers from the data, not approximations.
+8. If schedule data shows no games or the tournament bracket isn't set yet, say so clearly and provide what context IS available from the data (e.g., tournament dates, seeding status, futures odds).
 
 OMEGA OUTPUT CONTRACT — every bet recommendation MUST include ALL of these when available:
 - True probability (from simulation or model)
@@ -354,13 +356,24 @@ def compose_response_with_llm(
         if not section.get("requires_narrative"):
             continue
 
-        # Build a focused prompt for this section
+        # Build a focused prompt for this section, with size guard
         section_data = {k: v for k, v in section.items() if k not in ("requires_narrative", "narrative")}
+        section_json = json.dumps(section_data, indent=2, default=str)
+
+        # Truncate to avoid 413 Request Too Large — keep under ~60KB
+        MAX_SECTION_CHARS = 60_000
+        if len(section_json) > MAX_SECTION_CHARS:
+            logger.info(
+                "Section data too large (%d chars), truncating to %d",
+                len(section_json), MAX_SECTION_CHARS,
+            )
+            section_json = section_json[:MAX_SECTION_CHARS] + "\n... [truncated]"
+
         prompt = (
             f"User query: {understanding.raw_prompt}\n"
             f"Desired tone: {understanding.tone}\n"
             f"Section type: {section.get('package', 'unknown')}\n"
-            f"Section data:\n{json.dumps(section_data, indent=2, default=str)}"
+            f"Section data:\n{section_json}"
         )
 
         narrative = llm_client.generate_text(
@@ -449,14 +462,31 @@ def _build_metadata(
 # ---------------------------------------------------------------------------
 
 def _summarize_facts(facts: List[GatheredFact]) -> List[Dict[str, Any]]:
-    """Summarize gathered facts for inclusion in response sections."""
+    """Summarize gathered facts for inclusion in response sections.
+
+    Limits individual fact data size to prevent 413 errors when the
+    section JSON is sent to the LLM for narrative generation.
+    """
+    MAX_FACT_STR_LEN = 2000  # chars — prevent single fact from blowing up payload
     summaries = []
     for fact in facts:
         if not fact.filled or not fact.result:
             continue
+        data = fact.result.data
+        # Truncate oversized data blobs (e.g. raw page text)
+        data_str = json.dumps(data, default=str) if not isinstance(data, str) else data
+        if len(data_str) > MAX_FACT_STR_LEN:
+            if isinstance(data, dict):
+                # Keep only keys with short values, drop huge nested blobs
+                data = {
+                    k: v for k, v in data.items()
+                    if len(json.dumps(v, default=str)) < 500
+                }
+            elif isinstance(data, str):
+                data = data[:MAX_FACT_STR_LEN] + "..."
         summaries.append({
             "key": fact.slot.key,
-            "data": fact.result.data,
+            "data": data,
             "source": fact.result.source,
             "confidence": fact.result.confidence,
         })
