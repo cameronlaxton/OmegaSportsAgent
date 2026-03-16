@@ -128,6 +128,14 @@ def _call_odds_scraper(slot: GatherSlot) -> Optional[ProviderResult]:
         if matching:
             games = matching
 
+    # Only return as filled if games actually have bookmaker odds data.
+    # The ESPN fallback returns games with empty bookmakers arrays, which
+    # is useless for odds analysis — let the web search pipeline handle it.
+    has_odds = any(g.get("bookmakers") for g in games)
+    if not has_odds:
+        logger.debug("Odds scraper returned games but no bookmaker data — skipping")
+        return None
+
     return ProviderResult(
         data={"odds": games} if len(games) > 1 else games[0] if games else {"odds": games},
         source="odds_api",
