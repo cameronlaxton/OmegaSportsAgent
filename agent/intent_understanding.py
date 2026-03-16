@@ -29,6 +29,16 @@ from agent.models import (
 if TYPE_CHECKING:
     from agent.llm_client import LLMClient
 
+
+def _unwrap_scalar(value: Any) -> Any:
+    """Unwrap a single-element list to its scalar value.
+
+    LLMs sometimes return ["analyze"] instead of "analyze" for enum fields.
+    """
+    if isinstance(value, list) and len(value) == 1:
+        return value[0]
+    return value
+
 logger = logging.getLogger("omega.agent.intent")
 
 # ---------------------------------------------------------------------------
@@ -376,7 +386,7 @@ def _llm_classify(prompt: str, llm_client: "LLMClient") -> Optional[QueryUnderst
             prop_type=result.get("prop_type"),
             prop_line=result.get("prop_line"),
             date=date.today().isoformat(),
-            goal=UserGoal(result.get("goal", "analyze")),
+            goal=UserGoal(_unwrap_scalar(result.get("goal", "analyze"))),
             wants_betting_advice=result.get("wants_betting_advice", False),
             wants_explanation=result.get("wants_explanation", False),
             wants_alternatives=result.get("wants_alternatives", False),

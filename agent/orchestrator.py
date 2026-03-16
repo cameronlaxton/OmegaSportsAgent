@@ -559,8 +559,14 @@ class AgentOrchestrator:
 
         all_expanded_slots = []
         for game in games:
-            home = game.get("home_team") or game.get("home", "")
-            away = game.get("away_team") or game.get("away", "")
+            home_raw = game.get("home_team") or game.get("home", "")
+            away_raw = game.get("away_team") or game.get("away", "")
+
+            # Team values may be dicts ({"name": "...", "abbreviation": "..."})
+            # or plain strings — normalize to string team names
+            home = home_raw.get("name", "") if isinstance(home_raw, dict) else str(home_raw)
+            away = away_raw.get("name", "") if isinstance(away_raw, dict) else str(away_raw)
+
             if not home or not away:
                 continue
 
